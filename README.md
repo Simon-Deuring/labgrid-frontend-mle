@@ -9,7 +9,7 @@ Run `npm install` to download all required dependencies.
 
 ### Running the server
 
-Run `npm run start` to execute the backend. Navigate to `http://localhost:4200/` to test GET requests or use Postman to test other requests.
+Run `npm run start` to execute the backend. Navigate to `http://localhost:4201/` to test GET requests or use Postman to test other requests.
 
 ## Web client
 
