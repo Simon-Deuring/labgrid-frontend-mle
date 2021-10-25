@@ -1,4 +1,4 @@
-# labgrid-frotend-mle
+# labgrid-frontend-mle
 A web frontend for labgrid in cooperation with MLE.
 
 ## Web server
