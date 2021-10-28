@@ -1,6 +1,9 @@
 var express = require('express');
 var app = express();
 
+var autobahn = require('autobahn');
+
+// REST methods
 app.get('/', function (req, res) {
    res.send('Hello World');
 })
