@@ -8,6 +8,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  
+  #app {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+  }
+
   .material-icons {
     padding: 0;
     border: none;
@@ -20,11 +31,30 @@
   .spacer {
     flex: 1 1 auto;
   }
+
+  .page-container {
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    flex: 1 1 auto;
+  }
+
+  .main-content {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .sidenav-content {
+    width: 300px;
+    padding: 20px;
+  }
 </style>
+
+<div id="app">
 
 <!-- Toolbar -->
 <mat-toolbar color="primary">
-  <button mat-icon-button class="material-icons" aria-label="Menu icon">
+  <button mat-icon-button class="material-icons" (click)="drawer.toggle()" aria-label="Menu icon">
     <mat-icon>menu</mat-icon>
   </button>
   <span class="spacer"></span>
@@ -35,4 +65,15 @@
   </button>
 </mat-toolbar>
 
-<router-outlet></router-outlet>
+<!-- Sidebar and main area -->
+<mat-drawer-container class="page-container" autosize>
+  <mat-drawer #drawer class="sidenav-content" mode="side" opened>
+    <h2>Places</h2>
+  </mat-drawer>
+
+  <div class="main-content">
+    <h2>Welcome!</h2>
+    <router-outlet></router-outlet>
+  </div>
+</mat-drawer-container>
+</div>
