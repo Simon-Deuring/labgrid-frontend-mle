@@ -10,9 +10,6 @@ var connection = new autobahn.Connection({
    realm: "realm1"
 });
 connection.onopen = function (session, details) {
-   console.log('Connection successfully accomplished')
-};
-connection.onopen = function (session, details) {
    // Request places from coordinator
    session.call('org.labgrid.coordinator.get_places').then(res => places = res);
    //places = await session.call('org.labgrid.coordinator.get_places');
@@ -20,9 +17,11 @@ connection.onopen = function (session, details) {
    // Request hardware resources from coordinator
    session.call('org.labgrid.coordinator.get_resources').then(res => resources = res);
    //resources = await session.call('org.labgrid.coordinator.get_places');
+
+   console.log('Connection successfully accomplished');
 };
 connection.onclose = function (reason, details) {
-   // handle connection lost
+   // Handle connection lost
 }
 connection.open();
 
@@ -32,8 +31,8 @@ app.get('/', function (req, res) {
 })
 
 var server = app.listen(4201, function () {
-   var host = '127.0.0.1'
-   var port = server.address().port
+   var host = '127.0.0.1';
+   var port = server.address().port;
    
-   console.log("Example app listening at http://%s:%s", host, port)
+   console.log("Example app listening at http://%s:%s", host, port);
 })
