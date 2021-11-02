@@ -19,7 +19,12 @@
     height: 100%;
   }
 
-  .material-icons {
+  .mat-toolbar {
+    position: relative;
+    z-index: 2;
+  }
+
+  .material-buttons {
     padding: 0;
     border: none;
     background: none;
@@ -34,7 +39,6 @@
 
   .page-container {
     width: 100%;
-    border: 1px solid rgba(0, 0, 0, 0.5);
     flex: 1 1 auto;
   }
 
@@ -47,27 +51,28 @@
   .sidenav-content {
     width: 300px;
     padding: 20px;
+    color: #ffffff;
   }
 </style>
 
 <div id="app">
 
 <!-- Toolbar -->
-<mat-toolbar color="primary">
-  <button mat-icon-button class="material-icons" (click)="drawer.toggle()" aria-label="Menu icon">
+<mat-toolbar color="primary" class="mat-elevation-z4">
+  <button mat-icon-button class="material-buttons" (click)="drawer.toggle()" aria-label="Menu icon">
     <mat-icon>menu</mat-icon>
   </button>
   <span class="spacer"></span>
   <span>Labgrid Web Client</span>
   <span class="spacer"></span>
-  <button mat-icon-button class="material-icons" aria-label="Gear icon">
+  <button mat-icon-button class="material-buttons" aria-label="Gear icon">
     <mat-icon>settings</mat-icon>
   </button>
 </mat-toolbar>
 
 <!-- Sidebar and main area -->
 <mat-drawer-container class="page-container" autosize>
-  <mat-drawer #drawer class="sidenav-content" mode="side" opened>
+  <mat-drawer #drawer style="background-color: #3F51B5" class="sidenav-content" mode="side" opened>
     <h2>Places</h2>
   </mat-drawer>
 
