@@ -16,11 +16,10 @@
 <!-- Sidebar and main area -->
 <mat-drawer-container class="page-container" autosize>
   <mat-drawer #drawer style="background-color: #E0E0E0" class="sidenav-content" mode="side" opened>
-    <h2>Places</h2>
+    <app-sidebar></app-sidebar>
   </mat-drawer>
 
   <div class="main-content">
-    <h2>Welcome!</h2>
     <router-outlet></router-outlet>
   </div>
 </mat-drawer-container>
