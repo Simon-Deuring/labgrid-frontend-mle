@@ -1,0 +1,28 @@
+@startuml labby
+rectangle "labby" {
+
+   !$router = "WAMP Router"
+   !$comps = "Components for RPC"
+   !$auth = "wss"
+   !$coord = "Coordinator"
+   [$comps] -> [$router]
+   [$router] <- $auth
+   $auth-> [Client]
+   ' functions
+   [$router] .d. run_server
+   ' TODO
+   [$router] .d. stop_server
+   
+   [$comps] -d- [Camera]
+   [$comps] -d- [Board]
+   [$comps] -d- [...]
+
+   [$router] <..> [$coord]
+   [Client] <..> [$coord]
+   ' resource capabilities
+   [Camera] -d- Video : exposes
+   [Board]  -d- GPIO : exposes
+   interface "Resource Functions" as RF
+   [...]    -d- RF : exposes
+}
+@enduml
