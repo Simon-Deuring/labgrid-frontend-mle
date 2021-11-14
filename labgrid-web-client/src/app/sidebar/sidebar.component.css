@@ -1,0 +1,23 @@
+.sidebar-item{
+    width:100%;
+}
+
+.sidebar-item > span {
+    width: 200px;
+}
+
+.sidebar-item > mat-icon {
+    font-size: 15px;
+}
+
+.available{
+    color: green;
+}
+
+.reserved{
+    color: yellow;
+}
+
+.occupied{
+    color: red;
+}

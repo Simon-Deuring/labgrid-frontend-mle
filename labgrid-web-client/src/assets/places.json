@@ -18,5 +18,12 @@
     "aquired": "pfanne-bionic2/tobias",
     "aquired resources": [
     ]
+  },
+  {
+    "name": "test-place2",
+    "matches": "cup/test-place/*",
+    "aquired": "",
+    "aquired resources": [
+    ]
   }
 ]
