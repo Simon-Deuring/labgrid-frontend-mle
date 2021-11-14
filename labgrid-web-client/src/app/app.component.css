@@ -43,13 +43,10 @@ html, body {
 }
 
 .main-content {
-  display: flex;
-  justify-content: center;
+  justify-content: left;
   padding: 20px;
 }
 
 .sidenav-content {
-  display: inline-block;
-  width: 300px;
-  padding: 20px;
+  width: 320px;
 }

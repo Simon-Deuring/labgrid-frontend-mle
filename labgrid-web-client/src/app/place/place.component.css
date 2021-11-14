@@ -1,0 +1,13 @@
+.place-overview{
+    width:100%;
+    margin: 20px;
+}
+
+.resource-bar{
+    width:100%;
+    margin-bottom: 20px;
+}
+
+.resource-bar > button{
+    margin-right: 5px;
+}

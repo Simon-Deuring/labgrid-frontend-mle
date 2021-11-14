@@ -1,8 +1,29 @@
-.sidebar-item{
-    width:100%;
+.sidebar-container{
+
 }
 
-.sidebar-item > span {
+#sidebar-header{
+    padding: 20px;
+}
+
+.sidebar-item{
+    display:flex;
+    width:100%;
+
+    padding: 20px;
+}
+
+.sidebar-item:hover{
+    background-color: #7280ce;
+    color: white;
+}
+
+.sidebar-item:active{
+    background-color: #3f51b5;
+    color: white;
+}
+
+.sidebar-item > div {
     width: 200px;
 }
 
@@ -11,7 +32,7 @@
 }
 
 .available{
-    color: green;
+    color: #98DFAF;
 }
 
 .reserved{
@@ -19,5 +40,9 @@
 }
 
 .occupied{
-    color: red;
+    color: #FF595E;
+}
+
+.selected{
+    color: #3f51b5;
 }

@@ -6,6 +6,9 @@ import { BrowserModule } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon'
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatCardModule} from '@angular/material/card';
+import {MatButtonModule} from '@angular/material/button';
+import {MatDividerModule} from '@angular/material/divider';
 
 import { AppComponent } from './app.component';
 import { ErrorComponent } from './error/error.component';
@@ -15,13 +18,16 @@ import { WelcomeComponent } from './welcome/welcome.component';
 import { AppRoutingModule } from './app-routing.module';
 import { HttpClientModule } from '@angular/common/http';
 import { PlaceService } from './place.service';
+import { PlaceComponent } from './place/place.component';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
   declarations: [
     AppComponent,
     SidebarComponent,
     WelcomeComponent,
-    ErrorComponent
+    ErrorComponent,
+    PlaceComponent
   ],
   imports: [
     BrowserModule,
@@ -30,7 +36,13 @@ import { PlaceService } from './place.service';
     HttpClientModule,
     MatIconModule,
     MatSidenavModule,
-    MatToolbarModule
+    MatToolbarModule,
+    MatCardModule,
+    MatButtonModule,
+    MatDividerModule,
+    RouterModule.forRoot([
+      {path: "place", component: PlaceComponent}
+    ])
   ],
   providers: [
     PlaceService

@@ -1,9 +1,14 @@
-<h2>Places</h2>
+<div class="sidebar-container">
 
-<div class="sidebar-item" *ngFor="let place of places">
-    <span>{{ place.name }}</span>
-    <mat-icon [ngClass] = "{
+    <h2 id="sidebar-header">Places</h2>
+
+    <div class="sidebar-item" *ngFor="let place of places" (click)="navigateToPlace(place.name)">
+        <mat-icon [ngClass]="{
         'available' : !place.aquired,
         'occupied' : place.aquired
-    }">circle</mat-icon>
+    }"
+    >circle</mat-icon>
+        <div>{{ place.name }}</div>
+    </div>
+
 </div>
