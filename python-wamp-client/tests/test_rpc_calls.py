@@ -23,7 +23,9 @@ class Component(ApplicationSession):
         print(f"Polling resource from {res['places'][1]}")
         res = await self.call('localhost.resource', res['places'][1])
         print(f"Received resources: {res}")
-
+        print(f"Polling ALL resource")
+        res = await self.call('localhost.resource')
+        print(f"Received resources: {res}")
         self.leave()
 
     def onDisconnect(self):
