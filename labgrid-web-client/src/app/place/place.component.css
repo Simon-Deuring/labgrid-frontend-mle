@@ -1,13 +1,14 @@
-.place-overview{
+.place-overview {
     width:100%;
     margin: 20px;
 }
 
-.resource-bar{
+.resource-bar {
     width:100%;
     margin-bottom: 20px;
 }
 
-.resource-bar > button{
-    margin-right: 5px;
+.resource-bar > button {
+    margin-right: 10px;
+    margin-bottom: 10px;
 }

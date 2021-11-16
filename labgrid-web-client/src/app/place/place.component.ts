@@ -35,7 +35,7 @@ export class PlaceComponent implements OnInit {
 
   private getResources(): void {
     this._rs.getResourcesForPlace(this.place.name).then(resources => {
-      console.warn(resources);
+      this.resources = resources;
     });
   }
 
