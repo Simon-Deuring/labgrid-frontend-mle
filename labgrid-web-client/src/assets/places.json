@@ -3,7 +3,7 @@
     "name": "mle-lg-ref-1",
     "matches": "cup/mle-lg-ref-1/*",
     "aquired": "pfanne-bionic2/tobias",
-    "aquired resources": [
+    "aquiredResources": [
       "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
       "cup/mle-lg-ref-1/PDUDaemonPort/PDUDaemonPort",
       "cup/mle-lg-ref-1/NetworkUSBVideo/USBVideo",
@@ -16,7 +16,14 @@
     "name": "test-place",
     "matches": "cup/test-place/*",
     "aquired": "pfanne-bionic2/tobias",
-    "aquired resources": [
+    "aquiredResources": [
+    ]
+  },
+  {
+    "name": "test-place2",
+    "matches": "cup/test-place/*",
+    "aquired": "",
+    "aquiredResources": [
     ]
   }
 ]

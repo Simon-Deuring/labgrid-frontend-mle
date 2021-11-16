@@ -23,16 +23,6 @@ html, body {
   z-index: 2;
 }
 
-.material-buttons {
-  padding: 0;
-  border: none;
-  background: none;
-  color: #ffffff;
-  height: 24px;
-  width: 24px;
-  cursor: pointer;
-}
-
 .spacer {
   flex: 1 1 auto;
 }
@@ -43,12 +33,10 @@ html, body {
 }
 
 .main-content {
-  display: flex;
-  justify-content: center;
+  justify-content: left;
   padding: 20px;
 }
 
 .sidenav-content {
-  width: 300px;
-  padding: 20px;
+  width: 320px;
 }

@@ -1,0 +1,42 @@
+#sidebar-header{
+    padding: 20px;
+}
+
+.sidebar-item{
+    display:flex;
+    padding: 20px;
+}
+
+.sidebar-item:hover{
+    background-color: #7280ce;
+    color: white;
+}
+
+.sidebar-item:active{
+    background-color: #3f51b5;
+    color: white;
+}
+
+.sidebar-item > div {
+    width: 200px;
+}
+
+.sidebar-item > mat-icon {
+    font-size: 15px;
+}
+
+.available{
+    color: #98DFAF;
+}
+
+.reserved{
+    color: yellow;
+}
+
+.occupied{
+    color: #FF595E;
+}
+
+.selected{
+    color: #3f51b5;
+}

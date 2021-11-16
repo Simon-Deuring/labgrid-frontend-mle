@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { PlaceService } from '../place.service';
 
 @Component({
@@ -10,7 +11,7 @@ export class SidebarComponent implements OnInit {
 
   public places: any = [];
 
-  constructor(private _ps: PlaceService) { }
+  constructor(private _ps: PlaceService, private router: Router) { }
 
   ngOnInit(): void {
     this._ps.getPlaces()
@@ -18,4 +19,10 @@ export class SidebarComponent implements OnInit {
         this.places = data;
       });
   }
+
+  navigateToPlace(placeName: string){
+    this.router.navigate(['']);
+    this.router.navigate(['place/', placeName]);
+  }
+
 }
