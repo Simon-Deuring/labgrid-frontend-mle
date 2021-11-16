@@ -10,14 +10,12 @@ export class PlaceService {
   constructor(private _http: HttpClient) { }
 
   public async getPlaces(): Promise<Place[]> {
-
     const places = await this._http.get('../assets/places.json').toPromise() as Place[];
     
     return places;
   }
 
   public async getPlace(placeName: string): Promise<Place> {
-
     const places = await this._http.get('../assets/places.json').toPromise() as Place[];
     const place = places.find(element => element.name === placeName);
 
