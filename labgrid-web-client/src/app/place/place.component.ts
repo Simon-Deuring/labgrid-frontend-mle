@@ -16,7 +16,7 @@ export class PlaceComponent implements OnInit {
   place: Place = new Place('','','','');
   resources: Resource[] = [];
 
-  constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute, router: Router) {
+  constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute, private router: Router) {
     route.params.subscribe(val => {
       const currentRoute = route.snapshot.url[route.snapshot.url.length-1].path;
       this._ps.getPlace(currentRoute).then(data => {
@@ -34,6 +34,10 @@ export class PlaceComponent implements OnInit {
     this._rs.getResourcesForPlace(this.place.name).then(resources => {
       this.resources = resources;
     });
+  }
+
+  public navigateToResource(resourceName: string) {
+    this.router.navigate(['resource/', resourceName]);
   }
 
 }

@@ -1,5 +1,12 @@
 <div class="resource-bar" *ngIf="resources.length > 0; else elseBlock">
-    <button mat-stroked-button color="primary" *ngFor="let res of resources">{{ res.name }}</button>
+    <button
+        mat-stroked-button
+        color="primary"
+        *ngFor="let res of resources"
+        (click)="navigateToResource(res.name)"
+    >
+        {{ res.name }}
+    </button>
 </div>
 <ng-template #elseBlock>
     <p>This place has no resources acquired.</p>

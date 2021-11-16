@@ -20,8 +20,7 @@ export class SidebarComponent implements OnInit {
       });
   }
 
-  navigateToPlace(placeName: string){
-    this.router.navigate(['']);
+  navigateToPlace(placeName: string) {
     this.router.navigate(['place/', placeName]);
   }
 
