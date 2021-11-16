@@ -15,11 +15,13 @@ import { ErrorComponent } from './error/error.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { WelcomeComponent } from './welcome/welcome.component';
 
+import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { HttpClientModule } from '@angular/common/http';
-import { PlaceService } from './place.service';
+
+import { PlaceService } from './services/place.service';
 import { PlaceComponent } from './place/place.component';
-import { RouterModule } from '@angular/router';
+import { ResourceService } from './services/resource.service';
 
 @NgModule({
   declarations: [
@@ -45,7 +47,8 @@ import { RouterModule } from '@angular/router';
     ])
   ],
   providers: [
-    PlaceService
+    PlaceService,
+    ResourceService
   ],
   bootstrap: [
     AppComponent

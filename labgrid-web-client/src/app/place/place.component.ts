@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { PlaceService } from '../place.service';
+import { PlaceService } from '../services/place.service';
 import { Place } from '../../models/place';
 
 @Component({
