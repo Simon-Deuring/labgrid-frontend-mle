@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+
 import { PlaceService } from '../services/place.service';
 import { Place } from '../../models/place';
+import { ResourceService } from '../services/resource.service';
+import { Resource } from '../../models/resource';
 
 @Component({
   selector: 'app-place',
@@ -10,14 +13,17 @@ import { Place } from '../../models/place';
 })
 export class PlaceComponent implements OnInit {
 
-  place = new Place('','','','');
-  currentRoute = '';
+  currentRoute: string = '';
 
-  constructor(private placeService: PlaceService, private route: ActivatedRoute, router: Router) {
+  place: Place = new Place('','','','');
+  resources: Resource[] = [];
+
+  constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute, router: Router) {
     route.params.subscribe(val => {
       this.currentRoute = route.snapshot.url[route.snapshot.url.length-1].path;
-      this.placeService.getPlace(this.currentRoute).then(data => {
+      this._ps.getPlace(this.currentRoute).then(data => {
         this.place = data;
+        this.getResources();
       });
     })
 
@@ -25,7 +31,12 @@ export class PlaceComponent implements OnInit {
 
   ngOnInit(): void {
 
-    
+  }
+
+  private getResources(): void {
+    this._rs.getResourcesForPlace(this.place.name).then(resources => {
+      console.warn(resources);
+    });
   }
 
 }

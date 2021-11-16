@@ -15,14 +15,10 @@ export class ResourceService {
     return resources;
   }
 
-  public async getResource(matches: string): Promise<Resource> {
+  public async getResourcesForPlace(placeName: string): Promise<Resource[]> {
     const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-    const resource = resources.find(element => element.matches === matches);
-
-    if(!resource){
-      throw new Error('No such resource');
-    }
+    const matchingResources = resources.filter(element => element.acquired === placeName);
     
-    return resource;
+    return matchingResources;
   }
 }
