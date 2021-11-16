@@ -22,6 +22,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { PlaceService } from './services/place.service';
 import { PlaceComponent } from './place/place.component';
 import { ResourceService } from './services/resource.service';
+import { ResourceComponent } from './resource/resource.component';
 
 @NgModule({
   declarations: [
@@ -29,7 +30,8 @@ import { ResourceService } from './services/resource.service';
     SidebarComponent,
     WelcomeComponent,
     ErrorComponent,
-    PlaceComponent
+    PlaceComponent,
+    ResourceComponent
   ],
   imports: [
     BrowserModule,

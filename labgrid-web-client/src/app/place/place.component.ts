@@ -13,20 +13,17 @@ import { Resource } from '../../models/resource';
 })
 export class PlaceComponent implements OnInit {
 
-  currentRoute: string = '';
-
   place: Place = new Place('','','','');
   resources: Resource[] = [];
 
   constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute, router: Router) {
     route.params.subscribe(val => {
-      this.currentRoute = route.snapshot.url[route.snapshot.url.length-1].path;
-      this._ps.getPlace(this.currentRoute).then(data => {
+      const currentRoute = route.snapshot.url[route.snapshot.url.length-1].path;
+      this._ps.getPlace(currentRoute).then(data => {
         this.place = data;
         this.getResources();
       });
     })
-
   }
 
   ngOnInit(): void {
