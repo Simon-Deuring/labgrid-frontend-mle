@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { Resource } from 'src/models/resource';
+import { ResourceService } from '../services/resource.service';
 
 @Component({
   selector: 'app-resource-overview',
@@ -7,9 +9,16 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ResourceOverviewComponent implements OnInit {
 
-  constructor() { }
+  resources: Resource[] = [];
+
+  constructor(private _rs: ResourceService) {
+    this._rs.getResources().then(data => {
+      this.resources = data;
+    });
+  }
 
   ngOnInit(): void {
+    
   }
 
 }
