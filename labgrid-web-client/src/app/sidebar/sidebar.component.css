@@ -1,5 +1,6 @@
-#sidebar-header {
+.sidebar-header {
     padding: 20px;
+    margin: 0px;
 }
 
 .sidebar-item {

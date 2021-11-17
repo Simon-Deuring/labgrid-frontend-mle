@@ -23,6 +23,7 @@ import { PlaceService } from './services/place.service';
 import { PlaceComponent } from './place/place.component';
 import { ResourceService } from './services/resource.service';
 import { ResourceComponent } from './resource/resource.component';
+import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +32,8 @@ import { ResourceComponent } from './resource/resource.component';
     WelcomeComponent,
     ErrorComponent,
     PlaceComponent,
-    ResourceComponent
+    ResourceComponent,
+    ResourceOverviewComponent
   ],
   imports: [
     BrowserModule,

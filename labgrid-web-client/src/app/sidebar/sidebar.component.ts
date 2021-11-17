@@ -24,4 +24,8 @@ export class SidebarComponent implements OnInit {
     this.router.navigate(['place/', placeName]);
   }
 
+  navigateToResources() {
+    this.router.navigate(['resourceOverview']);
+  }
+
 }
