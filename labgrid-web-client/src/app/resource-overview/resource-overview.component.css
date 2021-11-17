@@ -1,0 +1,9 @@
+.resource-bar {
+    width:100%;
+    margin-bottom: 20px;
+}
+
+.resource-bar > button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
