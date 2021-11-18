@@ -4,11 +4,12 @@ import { BrowserModule } from '@angular/platform-browser';
 
 // Import of Angular Material components
 import { MatIconModule } from '@angular/material/icon'
-import {MatSidenavModule} from '@angular/material/sidenav';
-import {MatToolbarModule} from '@angular/material/toolbar';
-import {MatCardModule} from '@angular/material/card';
-import {MatButtonModule} from '@angular/material/button';
-import {MatDividerModule} from '@angular/material/divider';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTableModule } from '@angular/material/table';
 
 import { AppComponent } from './app.component';
 import { ErrorComponent } from './error/error.component';
@@ -46,6 +47,7 @@ import { ResourceOverviewComponent } from './resource-overview/resource-overview
     MatCardModule,
     MatButtonModule,
     MatDividerModule,
+    MatTableModule,
     RouterModule.forRoot([
       {path: "place", component: PlaceComponent}
     ])

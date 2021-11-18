@@ -13,16 +13,46 @@ export class ResourceComponent implements OnInit {
 
   resource: Resource = new Resource('', '', '', false, '', {});
 
+  resourceAttributes: Array<{name: string, value: string}> = [];
+  displayedColumns: Array<string> = ['attr-name', 'attr-value'];
+
+  dataReady: boolean = false;
+
   constructor(private _rs: ResourceService, private route: ActivatedRoute) {
     route.params.subscribe(() => {
       const resourceName = route.snapshot.url[route.snapshot.url.length-1].path;
       this._rs.getResourceByName(resourceName).then(data => {
         this.resource = data;
+        this.readResourceAttributes();
       });
     })
   }
 
   ngOnInit(): void {
+
+  }
+
+  private readResourceAttributes(): void {
+    if (this.resource.cls) {
+      this.resourceAttributes.push({name: 'Type: ', value: this.resource.cls});
+    }
+    if (this.resource.acquired) {
+      this.resourceAttributes.push({name: 'Place name: ', value: this.resource.acquired});
+    }
+    if (this.resource.avail) {
+      this.resourceAttributes.push({name: 'Available: ', value: String(this.resource.avail)});
+    }
+    if (this.resource.params.host) {
+      this.resourceAttributes.push({name: 'Host: ', value: this.resource.params.host});
+    }
+    if (this.resource.params.port) {
+      this.resourceAttributes.push({name: 'Port: ', value: String(this.resource.params.speed)});
+    }
+    if (this.resource.params.speed) {
+      this.resourceAttributes.push({name: 'Speed: ', value: String(this.resource.params.speed)});
+    }
+
+    this.dataReady = true;
   }
 
 }
