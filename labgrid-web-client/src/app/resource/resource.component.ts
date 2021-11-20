@@ -45,6 +45,15 @@ export class ResourceComponent implements OnInit {
     if (this.resource.params.host) {
       this.resourceAttributes.push({name: 'Host: ', value: this.resource.params.host});
     }
+    if (this.resource.params.pdu) {
+      this.resourceAttributes.push({name: 'PDU: ', value: this.resource.params.pdu});
+    }
+    if (this.resource.params.serial) {
+      this.resourceAttributes.push({name: 'Serial: ', value: this.resource.params.serial});
+    }
+    if (this.resource.params.index) {
+      this.resourceAttributes.push({name: 'Index:', value: String(this.resource.params.index)});
+    }
     if (this.resource.params.port) {
       this.resourceAttributes.push({name: 'Port: ', value: String(this.resource.params.speed)});
     }
