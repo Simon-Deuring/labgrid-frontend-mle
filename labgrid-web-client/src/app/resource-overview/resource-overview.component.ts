@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Resource } from 'src/models/resource';
-import { ResourceService } from '../services/resource.service';
+import { ResourceService } from '../_services/resource.service';
 
 @Component({
   selector: 'app-resource-overview',

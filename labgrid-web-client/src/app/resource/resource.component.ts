@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ResourceService } from '../services/resource.service';
+import { ResourceService } from '../_services/resource.service';
 import { Resource } from 'src/models/resource';
 
 @Component({
