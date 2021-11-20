@@ -4,22 +4,27 @@ import { BrowserModule } from '@angular/platform-browser';
 
 // Import of Angular Material components
 import { MatIconModule } from '@angular/material/icon'
-import {MatSidenavModule} from '@angular/material/sidenav';
-import {MatToolbarModule} from '@angular/material/toolbar';
-import {MatCardModule} from '@angular/material/card';
-import {MatButtonModule} from '@angular/material/button';
-import {MatDividerModule} from '@angular/material/divider';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTableModule } from '@angular/material/table';
 
 import { AppComponent } from './app.component';
 import { ErrorComponent } from './error/error.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { WelcomeComponent } from './welcome/welcome.component';
 
+import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { HttpClientModule } from '@angular/common/http';
-import { PlaceService } from './place.service';
+
+import { PlaceService } from './services/place.service';
 import { PlaceComponent } from './place/place.component';
-import { RouterModule } from '@angular/router';
+import { ResourceService } from './services/resource.service';
+import { ResourceComponent } from './resource/resource.component';
+import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +32,9 @@ import { RouterModule } from '@angular/router';
     SidebarComponent,
     WelcomeComponent,
     ErrorComponent,
-    PlaceComponent
+    PlaceComponent,
+    ResourceComponent,
+    ResourceOverviewComponent
   ],
   imports: [
     BrowserModule,
@@ -40,12 +47,14 @@ import { RouterModule } from '@angular/router';
     MatCardModule,
     MatButtonModule,
     MatDividerModule,
+    MatTableModule,
     RouterModule.forRoot([
       {path: "place", component: PlaceComponent}
     ])
   ],
   providers: [
-    PlaceService
+    PlaceService,
+    ResourceService
   ],
   bootstrap: [
     AppComponent

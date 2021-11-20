@@ -1,10 +1,16 @@
-
-<div class="resource-bar">
-    <button mat-stroked-button color="primary">Button1</button>
-    <button mat-stroked-button color="primary">Button3</button>
-    <button mat-stroked-button color="primary">Button4</button>
-    <button mat-stroked-button color="primary">Button2</button>
+<div class="resource-bar" *ngIf="resources.length > 0; else elseBlock">
+    <button
+        mat-stroked-button
+        color="primary"
+        *ngFor="let res of resources"
+        (click)="navigateToResource(res.name)"
+    >
+        {{ res.name }}
+    </button>
 </div>
+<ng-template #elseBlock>
+    <p>This place has no resources acquired.</p>
+</ng-template>
 <mat-divider></mat-divider>
 <div class="place-overview">
     <h1>{{ place.name }}</h1>

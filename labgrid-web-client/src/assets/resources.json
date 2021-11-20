@@ -1,0 +1,115 @@
+[
+  {
+    "name": "USBSerialPort",
+    "matches": "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
+    "acquired": "mle-lg-ref-1",
+    "avail": true,
+    "cls": "NetworkSerialPort",
+    "params": {
+      "extra": {
+        "path": "/dev/ttyUSB0",
+        "proxy": "cup.mle",
+        "proxy_required": false
+      },
+      "host": "cup",
+      "port": 36393,
+      "speed": 115200
+    }
+  },
+  {
+    "name": "PDUDaemonPort",
+    "matches": "cup/mle-lg-ref-1/PDUDaemonPort/PDUDaemonPort",
+    "acquired": "mle-lg-ref-1",
+    "avail": true,
+    "cls": "PDUDaemonPort",
+    "params": {
+      "host": "brett.mle",
+      "index": 1,
+      "pdu": "sonoff-5.mle"
+    }
+  },
+  {
+    "name": "USBVideo",
+    "matches": "cup/mle-lg-ref-1/NetworkUSBVideo/USBVideo",
+    "acquired": "mle-lg-ref-1",
+    "avail": true,
+    "cls": "NetworkUSBVideo",
+    "params": {
+      "busnu,": 3,
+      "devnum": 4,
+      "extra": {
+        "proxy": "cup.mle",
+        "proxy_required": false
+      },
+      "host": "cup",
+      "model_id": 2093,
+      "path": "/dev/video1",
+      "vendor_id": 1133
+    }
+  },
+  {
+    "name": "USBSDMuxDevice",
+    "matches": "cup/mle-lg-ref-1/NetworkUSBSDMuxDevice/USBSDMuxDevice",
+    "acquired": "mle-lg-ref-1",
+    "avail": true,
+    "cls": "NetworkUSBSDMuxDevice",
+    "params": {
+      "busnu,": 3,
+      "control_path": "/dev/sg2",
+      "devnum": 9,
+      "extra": {
+        "proxy": "cup.mle",
+        "proxy_required": false
+      },
+      "host": "cup",
+      "model_id": 16449,
+      "path": "/dev/sdb",
+      "vendor_id": 1060
+    }
+  },
+  {
+    "name": "NetworkService",
+    "matches": "cup/mle-lg-ref-1/NetworkService/NetworkService",
+    "acquired": "mle-lg-ref-1",
+    "avail": true,
+    "cls": "NetworkService",
+    "params": {
+      "address": "10.89.228.85",
+      "extra": {
+        "proxy": "cup.mle",
+        "proxy_required": false
+      },
+      "password": "root",
+      "username": "root"
+    }
+  },
+  {
+    "name": "XilinxUSBJTAG",
+    "matches": "cup/mle-lg-ref-1/NetworkXilinxUSBJTAG/XilinxUSBJTAG",
+    "acquired": "mle-lg-ref-1",
+    "avail": false,
+    "cls": "NetworkXilinxUSBJTAG",
+    "params": {
+      "agent_url": "tcp::3122",
+      "extra": {
+        "proxy": "cup.mle",
+        "proxy_required": false
+      },
+      "extra_args": [
+        "-S"
+      ],
+      "gdb_port": 4000,
+      "host": "cup",
+      "hw_server_cmd": [
+        "source ",
+        "/opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh ",
+        "&& hw_server"
+      ],
+      "log_level": [
+        "events",
+        "protocol"
+      ],
+      "serial": ""
+    }
+  }
+]

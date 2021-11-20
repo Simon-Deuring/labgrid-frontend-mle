@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { PlaceService } from '../place.service';
+import { PlaceService } from '../services/place.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -20,9 +20,12 @@ export class SidebarComponent implements OnInit {
       });
   }
 
-  navigateToPlace(placeName: string){
-    this.router.navigate(['']);
+  navigateToPlace(placeName: string) {
     this.router.navigate(['place/', placeName]);
+  }
+
+  navigateToResources() {
+    this.router.navigate(['resourceOverview']);
   }
 
 }
