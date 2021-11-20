@@ -39,7 +39,7 @@ export class ResourceComponent implements OnInit {
     if (this.resource.acquired) {
       this.resourceAttributes.push({name: 'Place name: ', value: this.resource.acquired});
     }
-    if (this.resource.avail) {
+    if (this.resource.avail != undefined && this.resource.avail != null) {
       this.resourceAttributes.push({name: 'Available: ', value: String(this.resource.avail)});
     }
     if (this.resource.params.host) {
