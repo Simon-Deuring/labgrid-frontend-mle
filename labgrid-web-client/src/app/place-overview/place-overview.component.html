@@ -16,13 +16,13 @@
     <table mat-table [dataSource]="dataSource" class="mat-elevation-z4">
         <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef> Name </th>
-            <td mat-cell *matCellDef="let place"> {{place.name}} </td>
+            <td class="clickable" mat-cell *matCellDef="let place" (click)="navigateToPlace(place.name)"> {{place.name}} </td>
         </ng-container>
 
         <ng-container matColumnDef="aquiredResources">
             <th mat-header-cell *matHeaderCellDef id="resource-column"> Resources </th>
             <td mat-cell *matCellDef="let place">
-                <span class="resource-label" *ngFor="let resource of place.aquiredResources">
+                <span class="resource-label"  *ngFor="let resource of place.aquiredResources" (click)="navigateToResource(getResourceName(resource))">
                     {{getResourceName(resource)}}
                 </span>
             </td>

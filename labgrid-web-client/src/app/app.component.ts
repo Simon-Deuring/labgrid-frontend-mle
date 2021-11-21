@@ -9,10 +9,8 @@ import { Router } from '@angular/router';
 export class AppComponent {
   title = 'labgrid-web-client';
 
+  constructor(private router: Router) {}
 
-  constructor(private router: Router) {
-
-  }
   navigateToPlaceOverview(){
     this.router.navigate(['/']);
   }
