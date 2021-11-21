@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { PlaceService } from '../services/place.service';
+import { PlaceService } from '../_services/place.service';
 import { Place } from '../../models/place';
-import { ResourceService } from '../services/resource.service';
+import { ResourceService } from '../_services/resource.service';
 import { Resource } from '../../models/resource';
 
 @Component({

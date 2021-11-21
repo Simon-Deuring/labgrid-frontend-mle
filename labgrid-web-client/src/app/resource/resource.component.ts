@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ResourceService } from '../services/resource.service';
+import { ResourceService } from '../_services/resource.service';
 import { Resource } from 'src/models/resource';
 
 @Component({
@@ -39,11 +39,20 @@ export class ResourceComponent implements OnInit {
     if (this.resource.acquired) {
       this.resourceAttributes.push({name: 'Place name: ', value: this.resource.acquired});
     }
-    if (this.resource.avail) {
+    if (this.resource.avail != undefined && this.resource.avail != null) {
       this.resourceAttributes.push({name: 'Available: ', value: String(this.resource.avail)});
     }
     if (this.resource.params.host) {
       this.resourceAttributes.push({name: 'Host: ', value: this.resource.params.host});
+    }
+    if (this.resource.params.pdu) {
+      this.resourceAttributes.push({name: 'PDU: ', value: this.resource.params.pdu});
+    }
+    if (this.resource.params.serial) {
+      this.resourceAttributes.push({name: 'Serial: ', value: this.resource.params.serial});
+    }
+    if (this.resource.params.index) {
+      this.resourceAttributes.push({name: 'Index:', value: String(this.resource.params.index)});
     }
     if (this.resource.params.port) {
       this.resourceAttributes.push({name: 'Port: ', value: String(this.resource.params.speed)});

@@ -20,9 +20,9 @@ import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { HttpClientModule } from '@angular/common/http';
 
-import { PlaceService } from './services/place.service';
+import { PlaceService } from './_services/place.service';
 import { PlaceComponent } from './place/place.component';
-import { ResourceService } from './services/resource.service';
+import { ResourceService } from './_services/resource.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 

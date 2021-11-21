@@ -3,7 +3,7 @@
 <mat-divider></mat-divider>
 
 <h2 style="margin-top: 16px">Evaluation Boards:</h2>
-<div class="resource-bar" *ngIf="evaluationBoards.length > 0; else elseBlock">
+<div class="resource-bar" *ngIf="evaluationBoards.length > 0; else noEBs">
     <button
         mat-stroked-button
         color="primary"
@@ -13,6 +13,21 @@
         {{ eval.name }}
     </button>
 </div>
-<ng-template #elseBlock>
+<ng-template #noEBs>
     <p>Currently there are no evaluation boards.</p>
+</ng-template>
+
+<h2 style="margin-top: 16px">Power Distribution Units:</h2>
+<div class="resource-bar" *ngIf="PDUs.length > 0; else noPDUs">
+    <button
+        mat-stroked-button
+        color="primary"
+        *ngFor="let pdu of PDUs"
+        (click)="navigateToResource(pdu.name)"
+    >
+        {{ pdu.name }}
+    </button>
+</div>
+<ng-template #noPDUs>
+    <p>Currently there are no PDUs.</p>
 </ng-template>
