@@ -28,4 +28,8 @@ export class SidebarComponent implements OnInit {
     this.router.navigate(['resourceOverview']);
   }
 
+  navigateToOverview() {
+    this.router.navigate(['/']);
+  }
+
 }

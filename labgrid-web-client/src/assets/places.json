@@ -2,6 +2,7 @@
   {
     "name": "mle-lg-ref-1",
     "matches": "cup/mle-lg-ref-1/*",
+    "isRunning": true,
     "aquired": "pfanne-bionic2/tobias",
     "aquiredResources": [
       "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
@@ -15,6 +16,7 @@
   {
     "name": "test-place",
     "matches": "cup/test-place/*",
+    "isRunning": false,
     "aquired": "pfanne-bionic2/tobias",
     "aquiredResources": [
     ]
@@ -22,6 +24,46 @@
   {
     "name": "test-place2",
     "matches": "cup/test-place/*",
+    "isRunning": true,
+    "aquired": "",
+    "aquiredResources": [
+      "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
+      "cup/mle-lg-ref-1/NetworkUSBVideo/USBVideo",
+      "cup/mle-lg-ref-1/NetworkUSBSDMuxDevice/USBSDMuxDevice",
+      "cup/mle-lg-ref-1/NetworkService/NetworkService"
+    ]
+  },
+  {
+    "name": "test-place3",
+    "matches": "cup/mle-lg-ref-1/*",
+    "isRunning": true,
+    "aquired": "pfanne-bionic2/tobias",
+    "aquiredResources": [
+      "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
+      "cup/mle-lg-ref-1/PDUDaemonPort/PDUDaemonPort",
+      "cup/mle-lg-ref-1/NetworkXilinxUSBJTAG/XilinxUSBJTAG"
+    ]
+  },
+  {
+    "name": "test-place4",
+    "matches": "cup/test-place/*",
+    "isRunning": false,
+    "aquired": "pfanne-bionic2/tobias",
+    "aquiredResources": [
+    ]
+  },
+  {
+    "name": "test-place5",
+    "matches": "cup/test-place/*",
+    "isRunning": true,
+    "aquired": "",
+    "aquiredResources": [
+    ]
+  },
+  {
+    "name": "test-place6",
+    "matches": "cup/test-place/*",
+    "isRunning": true,
     "aquired": "",
     "aquiredResources": [
     ]

@@ -25,4 +25,13 @@ export class PlaceService {
     
     return place;
   }
+
+
+  public getAquiredName(aquired: string): string {
+    return aquired.substring(aquired.lastIndexOf('/') + 1)
+  }
+
+  public getResourceName(resource: string): string {
+    return resource.substring(resource.lastIndexOf('/') + 1)
+  }
 }

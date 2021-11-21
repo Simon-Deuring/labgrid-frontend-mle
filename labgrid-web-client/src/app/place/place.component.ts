@@ -13,7 +13,7 @@ import { Resource } from '../../models/resource';
 })
 export class PlaceComponent implements OnInit {
 
-  place: Place = new Place('','','','');
+  place: Place = new Place('', false, '','',[]);
   resources: Resource[] = [];
 
   constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute, private router: Router) {

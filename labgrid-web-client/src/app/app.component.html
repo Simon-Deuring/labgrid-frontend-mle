@@ -6,7 +6,7 @@
     <mat-icon>menu</mat-icon>
   </button>
   <span class="spacer"></span>
-  <span>Labgrid Web Client</span>
+  <span (click)="navigateToPlaceOverview()" id="home">Labgrid Web Client</span>
   <span class="spacer"></span>
   <button mat-icon-button aria-label="Gear icon">
     <mat-icon>settings</mat-icon>
@@ -15,7 +15,7 @@
 
 <!-- Sidebar and main area -->
 <mat-drawer-container class="page-container" autosize>
-  <mat-drawer #drawer style="background-color: #E0E0E0" class="sidenav-content" mode="side" opened>
+  <mat-drawer #drawer style="background-color: #E0E0E0" class="sidenav-content" mode="side" closed>
     <app-sidebar></app-sidebar>
   </mat-drawer>
 
