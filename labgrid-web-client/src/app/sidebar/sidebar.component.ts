@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { PlaceService } from '../services/place.service';
+import { PlaceService } from '../_services/place.service';
 
 @Component({
   selector: 'app-sidebar',
