@@ -2,8 +2,8 @@ import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef } from '@
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { Place } from 'src/models/place';
-import { PlaceService } from '../services/place.service';
-import { ResourceService } from '../services/resource.service';
+import { PlaceService } from '../_services/place.service';
+import { ResourceService } from '../_services/resource.service';
 
 @Component({
   selector: 'app-place-overview',
@@ -18,12 +18,12 @@ export class PlaceOverviewComponent implements OnInit {
   
   @ViewChild('paginator') paginator!: MatPaginator;
 
-  constructor(private placeService: PlaceService, private resourceService: ResourceService) {
+  constructor(private _placeService: PlaceService, private _resourceService: ResourceService) {
     this.dataSource= new MatTableDataSource(this.places)
   }
   
   ngOnInit(): void {
-    this.placeService.getPlaces()
+    this._placeService.getPlaces()
       .then(data => {
         this.places = data;
         this.dataSource = new MatTableDataSource(this.places);
@@ -34,11 +34,11 @@ export class PlaceOverviewComponent implements OnInit {
 
 
   getAquiredName (aquired: string): string {
-    return this.placeService.getAquiredName(aquired);
+    return this._placeService.getAquiredName(aquired);
   }
 
   getResourceName(resource: string): string {
-    return this.placeService.getResourceName(resource);
+    return this._placeService.getResourceName(resource);
   }
 
   getRunningIcon (isRunning: boolean): string {
