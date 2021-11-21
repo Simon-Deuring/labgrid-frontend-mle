@@ -14,7 +14,6 @@ import { MatTableModule } from '@angular/material/table';
 import { AppComponent } from './app.component';
 import { ErrorComponent } from './error/error.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
-import { WelcomeComponent } from './welcome/welcome.component';
 
 import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
@@ -25,16 +24,21 @@ import { PlaceComponent } from './place/place.component';
 import { ResourceService } from './services/resource.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
+import { PlaceOverviewComponent } from './place-overview/place-overview.component';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input'
+
 
 @NgModule({
   declarations: [
     AppComponent,
     SidebarComponent,
-    WelcomeComponent,
     ErrorComponent,
     PlaceComponent,
     ResourceComponent,
-    ResourceOverviewComponent
+    ResourceOverviewComponent,
+    PlaceOverviewComponent
   ],
   imports: [
     BrowserModule,
@@ -48,6 +52,9 @@ import { ResourceOverviewComponent } from './resource-overview/resource-overview
     MatButtonModule,
     MatDividerModule,
     MatTableModule,
+    MatPaginatorModule,
+    MatFormFieldModule,
+    MatInputModule,
     RouterModule.forRoot([
       {path: "place", component: PlaceComponent}
     ])

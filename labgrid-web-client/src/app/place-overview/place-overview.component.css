@@ -1,0 +1,39 @@
+.mat-table {
+    width: 100%;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.running {
+    color: #98DFAF;
+}
+
+
+.notRunning {
+    color: #FF595E;
+}
+
+.mat-paginator {
+    width: 100%;
+}
+
+.resource-label {
+    background-color: #7280ce;
+    border-radius: 25px;
+    color: white;
+    margin: 5px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+#resource-column {
+    
+    width: 70%;
+}
+#search-input{
+    padding-left: 5px;
+    display: flex;
+    justify-content: flex-end;
+}

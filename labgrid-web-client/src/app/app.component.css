@@ -18,6 +18,10 @@ html, body {
   height: 100%;
 }
 
+#home {
+    cursor: pointer;
+}
+
 .mat-toolbar {
   position: relative;
   z-index: 2;
