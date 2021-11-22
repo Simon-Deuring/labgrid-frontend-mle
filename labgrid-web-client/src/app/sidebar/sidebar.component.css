@@ -7,6 +7,7 @@
     display:flex;
     padding: 10px;
     padding-left: 20px;
+    cursor: pointer;
 }
 
 .sidebar-item:hover {
