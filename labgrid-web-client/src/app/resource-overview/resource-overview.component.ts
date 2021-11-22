@@ -12,7 +12,8 @@ export class ResourceOverviewComponent implements OnInit {
 
   resources: Resource[] = [];
   evaluationBoards: Resource[] = [];
-  PDUs: Resource[]= [];
+  PDUs: Resource[] = [];
+  videoStreams: Resource[] = [];
 
   constructor(private _rs: ResourceService, private router: Router) {
     this._rs.getResources().then(data => {
