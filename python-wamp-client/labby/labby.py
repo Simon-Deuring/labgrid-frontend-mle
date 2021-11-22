@@ -3,7 +3,6 @@ A wamp client which registers a rpc function
 """
 from autobahn.asyncio.component import Component,run
 from typing import List, Dict, Optional
-from os import getenv
 
 from .labbyError import LabbyError, ErrorKind
 
@@ -74,4 +73,3 @@ def url_from_parts(domain : Optional[str], port : Optional[int], url : Optional[
 
 def run_server(realm : str, domain : str, port : int, url : str = None):
     labby = LabbyClient(realm, domain, port)
-    labby.run()

@@ -1,1 +1,1 @@
-autobahn[asyncio,serialization,encryption]
+autobahn[twisted,asyncio,serialization,encryption]
