@@ -31,3 +31,18 @@
 <ng-template #noPDUs>
     <p>Currently there are no PDUs.</p>
 </ng-template>
+
+<h2 style="margin-top: 16px">Video Streams:</h2>
+<div class="resource-bar" *ngIf="videoStreams.length > 0; else noVSs">
+    <button
+        mat-stroked-button
+        color="primary"
+        *ngFor="let video of videoStreams"
+        (click)="navigateToResource(video.name)"
+    >
+        {{ video.name }}
+    </button>
+</div>
+<ng-template #noVSs>
+    <p>Currently there are no video streams.</p>
+</ng-template>

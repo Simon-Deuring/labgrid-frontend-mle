@@ -60,6 +60,9 @@ export class ResourceComponent implements OnInit {
     if (this.resource.params.speed) {
       this.resourceAttributes.push({name: 'Speed: ', value: String(this.resource.params.speed)});
     }
+    if (this.resource.params.url) {
+      this.resourceAttributes.push({name: 'URL: ', value: String(this.resource.params.url)});
+    }
 
     this.dataReady = true;
   }

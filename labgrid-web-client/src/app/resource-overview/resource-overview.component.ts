@@ -12,7 +12,8 @@ export class ResourceOverviewComponent implements OnInit {
 
   resources: Resource[] = [];
   evaluationBoards: Resource[] = [];
-  PDUs: Resource[]= [];
+  PDUs: Resource[] = [];
+  videoStreams: Resource[] = [];
 
   constructor(private _rs: ResourceService, private router: Router) {
     this._rs.getResources().then(data => {
@@ -31,8 +32,10 @@ export class ResourceOverviewComponent implements OnInit {
         this.evaluationBoards.push(resource);
       } else if (resource.cls === 'PDUDaemonPort' || resource.cls.endsWith('PowerPort')) {
         this.PDUs.push(resource);
+      } else if (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') {
+        this.videoStreams.push(resource);
       }
-    })
+    });
   }
 
   public navigateToResource(resourceName: string) {

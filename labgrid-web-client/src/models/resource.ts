@@ -24,6 +24,7 @@ export class Resource {
         port?: number;
         serial?: string;
         speed?: number;
+        url?: string;
         username?: string;
         vendor_id?: number;
     };
