@@ -2,15 +2,15 @@
 
 ## Places
 
-* Request
+- Request
 
-   ```place```
+  `place`
 
-* Response
+- Response
 
 ```json
 {
-   "places": 
+   "places":
       [
          "place1", "place2", ...
       ]
@@ -19,11 +19,11 @@
 
 ## Resource
 
-* Request
+- Request
 
-```resource(place_name)```
+`resource(place_name)`
 
-* Response
+- Response
 
 ```json
 {
@@ -31,18 +31,18 @@
 }
 ```
 
+- Request
 
-* Request
+`resource`
 
-```resource```
+- Response
+  - place-resource tuples
 
-* Response
-   * place-resource tuples
 ```json
 {
    "resources": [
       { "place1" : [ "resource 1", ...]}
-      { "place2" : ["resource 2", ...]},
+      { "place2" : [ "resource 2", ...]},
       ...
       ]
 }
@@ -63,5 +63,5 @@ On errors RPC return an error object
 
 ### Error Kind
 
-* InvalidParameter
-* NotFound
+- InvalidParameter
+- NotFound

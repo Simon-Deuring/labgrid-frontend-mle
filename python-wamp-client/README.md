@@ -2,6 +2,13 @@
 
 ## Usage
 
+```sh
+
+$ python run.py [-h] [--url URL] [--realm REALM]
+
+
+```
+
 ## Components
 
 ## Unittests

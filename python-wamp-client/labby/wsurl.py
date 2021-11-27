@@ -17,7 +17,7 @@ def validate_uri(url : str):
         return False
 
 def url_from_parts(
-        protocol : Union[Protocol, str],
+        scheme : Union[Protocol, str],
         user : Optional[str],
         domain : str,
         port : int,
@@ -25,7 +25,7 @@ def url_from_parts(
         ) -> Optional[str]:
     if domain is None:
         return None
-    protocol = protocol.value if isinstance(protocol, Protocol) else protocol
+    protocol = scheme.value if isinstance(scheme, Protocol) else scheme
     user = "" if user is None else (user + ":")
     #domain = domain
     if (port.bit_length() > 16) or (port < 0):

@@ -1,5 +1,5 @@
 import unittest
-from labby.wsurl import url_from_parts, Protocol
+from ..labby.wsurl import url_from_parts, Protocol
 import random
 
 def rand_ip() -> str:
@@ -15,7 +15,7 @@ class TestUrlParse(unittest.TestCase):
         for _ in range(100):
             protocol = random.choice([Protocol.WS, Protocol.WSS, "ws", "wss"])
             user = random.choice([None, f"user{random.randint(0,1000)}"])
-            domain = random.choice(["localhost", "127.0.0.1", 
+            domain = random.choice(["localhost", "127.0.0.1",
                 rand_ip(),
                 "google.com",]
             )

@@ -1,75 +1,99 @@
 """
 A wamp client which registers a rpc function
 """
-from autobahn.asyncio.component import Component,run
-from typing import List, Dict, Optional
+from typing import Dict, Callable
 
-from .labbyError import LabbyError, ErrorKind
+from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 
-def get_resources() -> Dict[str, List[str]] :
+from . import rpc
+
+class RPC():
     """
-    Utility function to read currently available resources
+    Wrapper for remote procedure call functions
     """
 
-    return {
-        "place1" : ["video"],
-        "place2" : ["video", "power_button"]
+    def __init__(self, endpoint: str, func: Callable):
+        assert not endpoint is None
+        assert not func is None
+        self.endpoint = endpoint
+        self.func = func
+
+    def __repr__(self):
+        from inspect import signature
+
+        sig = signature(self.func)
+        ret_type = sig.return_annotation
+        params = sig.parameters
+        return f"{self.endpoint}\
+            ({', '.join([f'{x.name}:{x.annotation}'for x in params.values()])}) -> {ret_type}"
+
+    def bind(self, *args, **kwargs):
+        """
+        Bind RPC to specific context, e.g LabbyClient Session, or pass immutables into func
+        """
+        return lambda *a, **kw: self.func( *args, *a, **kwargs, **kw)
+
+
+LOADED_RPC_FUNCTIONS: Dict[str, RPC]
+
+
+class LabbyClient(ApplicationSession):
+    """
+    Specializes Application Session to handle Communication specifically with the labgrid-frontend and the labgrid coordinator
+    """
+    def onConnect(self):
+        self.log.info(
+            f"Connected to Coordinator, joining realm '{self.config.realm}'")
+        self.join(self.config.realm, ['ticket'], "public")
+
+    def onChallenge(self, challenge):
+        self.log.info("Authencticating.")
+        # authid = "public"
+        if challenge.method == 'ticket':
+            return ""
+        else:
+            # TODO (Kevin) handle other authentication methods
+            self.log.error(
+                "Only Ticket authentication enabled, atm. Aborting...")
+            raise NotImplementedError(
+                "Only Ticket authentication enabled, atm")
+
+    def register(self, func_key: str, *args, **kwargs):
+        """
+        Register functions from RPC store from key, overrides ApplicationSession::register
+        """
+        assert not func_key is None
+        func = LOADED_RPC_FUNCTIONS[func_key]
+        self.log.info(f"Registered function for endpoint {func.endpoint}.")
+        super().register(func.bind(self, *args, **kwargs), func.endpoint)
+
+    def onJoin(self, details):
+        self.log.info("Joined Session.")
+
+        try:
+            self.register("places",)
+            self.register("resource", target='cup')
+        except Exception as err:
+            self.log.error(f"Could not register procedure: {err}.\n{err.with_traceback()}")
+
+    def onLeave(self, details):
+        self.log.info("Session disconnected.")
+        self.disconnect()
+
+
+def run_router(url: str, realm: str):
+    """
+    Connect to labgrid coordinator and start local crossbar router
+    """
+    global LOADED_RPC_FUNCTIONS
+    LOADED_RPC_FUNCTIONS = {
+        "places":   RPC("localhost.places", rpc.places),
+        "resource": RPC("localhost.resource", rpc.resource)
     }
-
-class LabbyClient:
-
-    def __init__(self, realm : str, domain : str, port : int) -> None:
-        self.realm = realm
-        self.domain = domain
-        self.port = port
-
-        self.component = Component(
-            transports=u"ws://{}:{}/ws".format(domain, port),
-            realm=f'{realm}'
-        )
-
-        self.resource_map = get_resources()
-
-    def run(self) -> None:
-        @self.component.on_join
-        def joined(session, details):
-            print("session ready")
-
-            def places() -> Dict[str, List[str]] :
-                """
-                returns registered places as dict of lists
-                """
-                #TODO actually read places
-                return {'places' : ["place1", "place2", "place3", "place4", "place5", ]}
-
-            def resource(place : Optional[str] = None):
-                """
-                rpc: returns resources registered for given place
-                """
-                #TODO(Kevin) do we need sanitization?
-                if place is None:
-                        return {'resources' : self.resource_map}
-                    #TODO(Kevin) actually read resources for given place
-                else:
-                    if place in self.resource_map.keys():
-                        return {'resources' : self.resource_map[place]}
-                    else:
-                        return LabbyError(ErrorKind.InvalidParameter, "Invalid place or no resources for place")
-                    #TODO(Kevin) actually read resources for given place
-
-            try:
-                session.register(places, u'localhost.places')
-                session.register(resource, u'localhost.resource')
-                print("procedure registered")
-            except Exception as e:
-                print("could not register procedure: {0}".format(e))
-
-        run([self.component])
-
-def url_from_parts(domain : Optional[str], port : Optional[int], url : Optional[str] = None) -> Optional[str]:
-    if domain is not None and port is not None:
-        return f"ws://{domain}:{port}"
-
-
-def run_server(realm : str, domain : str, port : int, url : str = None):
-    labby = LabbyClient(realm, domain, port)
+    runner = ApplicationRunner(url=url, realm=realm, extra=None)
+    try:
+        print(f"Connecting to {url} on realm {realm}")
+        runner.run(LabbyClient)
+    except ConnectionRefusedError as err:
+        from sys import stderr
+        print(err.strerror,file=stderr)
