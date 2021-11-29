@@ -14,6 +14,7 @@ export class ResourceOverviewComponent implements OnInit {
   serialPorts: Resource[] = [];
   PDUs: Resource[] = [];
   videoStreams: Resource[] = [];
+  otherResources: Resource[] = [];
 
   constructor(private _rs: ResourceService, private router: Router) {
     this._rs.getResources().then(data => {
@@ -34,6 +35,8 @@ export class ResourceOverviewComponent implements OnInit {
         this.PDUs.push(resource);
       } else if (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') {
         this.videoStreams.push(resource);
+      } else {
+        this.otherResources.push(resource);
       }
     });
   }

@@ -46,3 +46,15 @@
 <ng-template #noVSs>
     <p>Currently there are no video streams.</p>
 </ng-template>
+
+<h2 style="margin-top: 16px" *ngIf="otherResources.length > 0">Other resources:</h2>
+<div class="resource-bar" *ngIf="otherResources.length > 0">
+    <button
+        mat-stroked-button
+        color="primary"
+        *ngFor="let other of otherResources"
+        (click)="navigateToResource(other.name)"
+    >
+        {{ other.name }}
+    </button>
+</div>
