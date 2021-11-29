@@ -11,7 +11,7 @@ import { ResourceService } from '../_services/resource.service';
 export class ResourceOverviewComponent implements OnInit {
 
   resources: Resource[] = [];
-  evaluationBoards: Resource[] = [];
+  serialPorts: Resource[] = [];
   PDUs: Resource[] = [];
   videoStreams: Resource[] = [];
 
@@ -28,8 +28,8 @@ export class ResourceOverviewComponent implements OnInit {
 
   public splitResources() {
     this.resources.forEach(resource => {
-      if (resource.cls === 'RawSerialPort' || resource.cls === 'NetworkSerialPort' || resource.cls === 'USBSerialPort') {
-        this.evaluationBoards.push(resource);
+      if (resource.cls.endsWith('SerialPort')) {
+        this.serialPorts.push(resource);
       } else if (resource.cls === 'PDUDaemonPort' || resource.cls.endsWith('PowerPort')) {
         this.PDUs.push(resource);
       } else if (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') {

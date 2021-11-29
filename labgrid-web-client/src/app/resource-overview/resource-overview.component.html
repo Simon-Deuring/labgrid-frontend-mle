@@ -2,19 +2,19 @@
 
 <mat-divider></mat-divider>
 
-<h2 style="margin-top: 16px">Evaluation Boards:</h2>
-<div class="resource-bar" *ngIf="evaluationBoards.length > 0; else noEBs">
+<h2 style="margin-top: 16px">Serial Ports:</h2>
+<div class="resource-bar" *ngIf="serialPorts.length > 0; else noSerials">
     <button
         mat-stroked-button
         color="primary"
-        *ngFor="let eval of evaluationBoards"
-        (click)="navigateToResource(eval.name)"
+        *ngFor="let sp of serialPorts"
+        (click)="navigateToResource(sp.name)"
     >
-        {{ eval.name }}
+        {{ sp.name }}
     </button>
 </div>
-<ng-template #noEBs>
-    <p>Currently there are no evaluation boards.</p>
+<ng-template #noSerials>
+    <p>Currently there are no serial ports.</p>
 </ng-template>
 
 <h2 style="margin-top: 16px">Power Distribution Units:</h2>
