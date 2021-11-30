@@ -1,1 +1,2 @@
-autobahn[asyncio,serialization,encryption]
+autobahn[asyncio,serialization,encryption],
+crossbar

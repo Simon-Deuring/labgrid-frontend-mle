@@ -2,13 +2,45 @@
 Generic RPC functions for labby
 """
 
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, Callable
 
 import labby.labby_error as le
 
 
-async def places(
-        context) -> List[str]:
+class RPC():
+    """
+    Wrapper for remote procedure call functions
+    """
+
+    def __init__(self, endpoint: str, func: Callable):
+        assert not endpoint is None
+        assert not func is None
+        self.endpoint = endpoint
+        self.func = func
+
+    def __repr__(self):
+        from inspect import signature
+
+        sig = signature(self.func)
+        ret_type = sig.return_annotation
+        params = sig.parameters
+        return f"{self.endpoint}\
+            ({', '.join([f'{x.name}:{x.annotation}'for x in params.values()])}) -> {ret_type}"
+
+    def bind(self, *args, **kwargs):
+        """
+        Bind RPC to specific context, e.g LabbyClient Session, or pass immutables into func
+        """
+        return lambda *a, **kw: self.func(*args, *a, **kwargs, **kw)
+
+    def bind_frontend(self, context : Callable, *args, **kwargs):
+        """
+        Bind RPC to specific context,to be called by the frontend
+        """
+        return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
+
+
+async def places(context) -> List[str]:
     """
     returns registered places as dict of lists
     """

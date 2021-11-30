@@ -6,3 +6,4 @@ from .wsurl import url_from_parts, Protocol
 from .labby_error import ErrorKind, LabbyError, invalid_parameter, not_found
 
 from . import rpc
+from . import wsurl
