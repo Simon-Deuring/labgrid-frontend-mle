@@ -36,7 +36,7 @@ export class ResourceOverviewComponent implements OnInit {
         this.PDUs.push(resource);
       } else if (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') {
         this.videoStreams.push(resource);
-      } else if (resource.cls.endsWith('USBDebugger')) {
+      } else if (resource.cls.includes('JTAG') || resource.cls.endsWith('USBDebugger')) {
         this.JTAGResources.push(resource);
       } else {
         this.otherResources.push(resource);
