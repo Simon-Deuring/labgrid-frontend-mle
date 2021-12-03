@@ -14,6 +14,7 @@ export class ResourceOverviewComponent implements OnInit {
   serialPorts: Resource[] = [];
   PDUs: Resource[] = [];
   videoStreams: Resource[] = [];
+  JTAGResources: Resource[] = [];
   otherResources: Resource[] = [];
 
   constructor(private _rs: ResourceService, private router: Router) {
@@ -35,6 +36,8 @@ export class ResourceOverviewComponent implements OnInit {
         this.PDUs.push(resource);
       } else if (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') {
         this.videoStreams.push(resource);
+      } else if (resource.cls.includes('JTAG') || resource.cls.endsWith('USBDebugger')) {
+        this.JTAGResources.push(resource);
       } else {
         this.otherResources.push(resource);
       }

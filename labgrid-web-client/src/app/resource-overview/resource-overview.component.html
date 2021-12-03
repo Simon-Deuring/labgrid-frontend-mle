@@ -14,7 +14,7 @@
     </button>
 </div>
 <ng-template #noSerials>
-    <p>Currently there are no serial ports.</p>
+    <p class="else-block">Currently there are no serial ports.</p>
 </ng-template>
 
 <h2 style="margin-top: 16px">Power Distribution Units:</h2>
@@ -29,7 +29,7 @@
     </button>
 </div>
 <ng-template #noPDUs>
-    <p>Currently there are no PDUs.</p>
+    <p class="else-block">Currently there are no PDUs.</p>
 </ng-template>
 
 <h2 style="margin-top: 16px">Video Streams:</h2>
@@ -44,7 +44,22 @@
     </button>
 </div>
 <ng-template #noVSs>
-    <p>Currently there are no video streams.</p>
+    <p class="else-block">Currently there are no video streams.</p>
+</ng-template>
+
+<h2 style="margin-top: 16px">JTAG Resources:</h2>
+<div class="resource-bar" *ngIf="JTAGResources.length > 0; else noJTAGs">
+    <button
+        mat-stroked-button
+        color="primary"
+        *ngFor="let jtag of JTAGResources"
+        (click)="navigateToResource(jtag.name)"
+    >
+        {{ jtag.name }}
+    </button>
+</div>
+<ng-template #noJTAGs>
+    <p class="else-block">Currently there are no JTAG resources.</p>
 </ng-template>
 
 <h2 style="margin-top: 16px" *ngIf="otherResources.length > 0">Other resources:</h2>
