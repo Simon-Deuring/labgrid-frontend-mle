@@ -26,7 +26,7 @@
   
     <!-- Attribute value -->
     <ng-container matColumnDef="state-value">
-      <td mat-cell *matCellDef="let element"> {{element.value}} </td>
+      <td mat-cell *matCellDef="let element"> {{element.value}} <mat-icon id="invalidIcon" *ngIf="allocationStateInvalid && element.name === 'Allocation: '">bolt</mat-icon> </td>
     </ng-container>
 
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>

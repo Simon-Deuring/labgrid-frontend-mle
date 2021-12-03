@@ -23,7 +23,7 @@ export class PlaceComponent implements OnInit {
   placeStates: Array<{name: string, value: string}> = [];
   displayedColumns: Array<string> = ['state-name', 'state-value'];
 
-  dataReady: boolean = false;
+  allocationStateInvalid = false;
 
   constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute, private router: Router) {
     route.params.subscribe(val => {
@@ -44,7 +44,7 @@ export class PlaceComponent implements OnInit {
 
   private getResources(): void {
     this._rs.getResourcesForPlace(this.place.name).then(resources => {
-      this.resources = resources;
+      this.resources = resources; 
     });
   }
 
@@ -55,6 +55,7 @@ export class PlaceComponent implements OnInit {
   private readPlaceState(): void {
 
     this.placeStates = [];
+    this.allocationStateInvalid = false;
 
     if (this.place.matches) {
       this.placeStates.push({name: 'Matches: ', value: this.place.matches});
@@ -73,25 +74,25 @@ export class PlaceComponent implements OnInit {
     const allocationEnum = (<any>AllocationState)[this.place.allocation];
     switch (allocationEnum){
       case AllocationState.Allocated: 
-        this.placeStates.push({name: 'allocation state: ', value: this.place.allocation});
+        this.placeStates.push({name: 'Allocation: ', value: this.place.allocation});
         break;
       case AllocationState.Aquired: 
-        this.placeStates.push({name: 'allocation state: ', value: this.place.allocation});
+        this.placeStates.push({name: 'Allocation: ', value: this.place.allocation});
         break;
       case AllocationState.Expired: 
-        this.placeStates.push({name: 'allocation state: ', value: this.place.allocation});
+        this.placeStates.push({name: 'Allocation: ', value: this.place.allocation});
         break;
       case AllocationState.Invalid:
-        this.placeStates.push({name: 'allocation state: ', value: this.place.allocation});
+        this.placeStates.push({name: 'Allocation: ', value: this.place.allocation});
+        this.allocationStateInvalid = true;
         break;
       case AllocationState.Waiting:
-        this.placeStates.push({name: 'allocation state: ', value: this.place.allocation});
+        this.placeStates.push({name: 'Allocation: ', value: this.place.allocation});
         break;
       default:
-        this.placeStates.push({name: 'allocation state: ', value: 'something went wrong: ' + this.place.allocation});
+        this.placeStates.push({name: 'Allocation: ', value: 'something went wrong: ' + this.place.allocation});
         break;
     }
-    this.dataReady = true;
   }
 
 }
