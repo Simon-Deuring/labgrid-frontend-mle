@@ -17,19 +17,19 @@
     <p class="else-block">Currently there are no serial ports.</p>
 </ng-template>
 
-<h2 style="margin-top: 16px">Power Distribution Units:</h2>
-<div class="resource-bar" *ngIf="PDUs.length > 0; else noPDUs">
+<h2 style="margin-top: 16px">Power Ports:</h2>
+<div class="resource-bar" *ngIf="powerPorts.length > 0; else noPDUs">
     <button
         mat-stroked-button
         color="primary"
-        *ngFor="let pdu of PDUs"
+        *ngFor="let pdu of powerPorts"
         (click)="navigateToResource(pdu.name)"
     >
         {{ pdu.name }}
     </button>
 </div>
 <ng-template #noPDUs>
-    <p class="else-block">Currently there are no PDUs.</p>
+    <p class="else-block">Currently there are no power ports.</p>
 </ng-template>
 
 <h2 style="margin-top: 16px">Video Streams:</h2>
