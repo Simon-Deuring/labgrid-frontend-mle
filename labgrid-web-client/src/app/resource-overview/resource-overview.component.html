@@ -33,7 +33,7 @@
 </ng-template>
 
 <h2 style="margin-top: 16px">Video Streams:</h2>
-<div class="resource-bar" *ngIf="videoStreams.length > 0; else noVSs">
+<div class="resource-bar" *ngIf="videoStreams.length > 0; else noVideos">
     <button
         mat-stroked-button
         color="primary"
@@ -43,8 +43,23 @@
         {{ video.name }}
     </button>
 </div>
-<ng-template #noVSs>
+<ng-template #noVideos>
     <p class="else-block">Currently there are no video streams.</p>
+</ng-template>
+
+<h2 style="margin-top: 16px">Network Interfaces:</h2>
+<div class="resource-bar" *ngIf="networkInterfaces.length > 0; else noNetworks">
+    <button
+        mat-stroked-button
+        color="primary"
+        *ngFor="let network of networkInterfaces"
+        (click)="navigateToResource(network.name)"
+    >
+        {{ network.name }}
+    </button>
+</div>
+<ng-template #noNetworks>
+    <p class="else-block">Currently there are no network interfaces.</p>
 </ng-template>
 
 <h2 style="margin-top: 16px">JTAG Resources:</h2>
@@ -62,7 +77,7 @@
     <p class="else-block">Currently there are no JTAG resources.</p>
 </ng-template>
 
-<h2 style="margin-top: 16px" *ngIf="otherResources.length > 0">Other resources:</h2>
+<h2 style="margin-top: 16px" *ngIf="otherResources.length > 0">Other Resources:</h2>
 <div class="resource-bar" *ngIf="otherResources.length > 0">
     <button
         mat-stroked-button
