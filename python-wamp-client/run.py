@@ -7,9 +7,7 @@ from labby import run_router
 if __name__ == '__main__':
     import json
     from os import path
-    from urllib.parse import urlsplit
     import argparse
-    import sys
 
     CONFIG_PATH = "./.labby_config.json"
 
@@ -39,6 +37,4 @@ if __name__ == '__main__':
 
     URL = config["url"]
     REALM = config["realm"]
-    PORT = urlsplit(URL).port
-    PORT = PORT if not PORT is None else 80
     run_router(URL, REALM)

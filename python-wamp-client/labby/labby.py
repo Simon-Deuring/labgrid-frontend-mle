@@ -1,46 +1,36 @@
 """
 A wamp client which registers a rpc function
 """
-from typing import Dict, Callable
+from typing import Dict
+from time import sleep
 
+import asyncio
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
+import autobahn.wamp.exception as wexception
 
 from . import rpc
-
-class RPC():
-    """
-    Wrapper for remote procedure call functions
-    """
-
-    def __init__(self, endpoint: str, func: Callable):
-        assert not endpoint is None
-        assert not func is None
-        self.endpoint = endpoint
-        self.func = func
-
-    def __repr__(self):
-        from inspect import signature
-
-        sig = signature(self.func)
-        ret_type = sig.return_annotation
-        params = sig.parameters
-        return f"{self.endpoint}\
-            ({', '.join([f'{x.name}:{x.annotation}'for x in params.values()])}) -> {ret_type}"
-
-    def bind(self, *args, **kwargs):
-        """
-        Bind RPC to specific context, e.g LabbyClient Session, or pass immutables into func
-        """
-        return lambda *a, **kw: self.func( *args, *a, **kwargs, **kw)
+from .rpc import RPC
+from .router import Router
 
 
 LOADED_RPC_FUNCTIONS: Dict[str, RPC]
+CALLBACK_REF = None
+
+
+def get_callback():
+    return globals()["CALLBACK_REF"]
 
 
 class LabbyClient(ApplicationSession):
     """
     Specializes Application Session to handle Communication specifically with the labgrid-frontend and the labgrid coordinator
     """
+
+    def __init__(self, config: None):
+
+        globals()["CALLBACK_REF"] = self
+        super().__init__(config=config)
+
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
@@ -52,9 +42,7 @@ class LabbyClient(ApplicationSession):
         if challenge.method == 'ticket':
             return ""
         else:
-            # TODO (Kevin) handle other authentication methods
-            self.log.error(
-                "Only Ticket authentication enabled, atm. Aborting...")
+            self.log.error("Only Ticket authentication enabled, atm. Aborting...")
             raise NotImplementedError(
                 "Only Ticket authentication enabled, atm")
 
@@ -67,13 +55,38 @@ class LabbyClient(ApplicationSession):
         self.log.info(f"Registered function for endpoint {func.endpoint}.")
         super().register(func.bind(self, *args, **kwargs), func.endpoint)
 
+    async def onJoin(self, details):
+        self.log.info("Joined Coordinator Session.")
+    def onLeave(self, details):
+        self.log.info("Coordinator session disconnected.")
+        self.disconnect()
+
+
+class RouterInterface(ApplicationSession):
+
+    def onConnect(self):
+        self.log.info(
+            f"Connected to Coordinator, joining realm '{self.config.realm}'")
+        self.join(self.config.realm)
+
+    def register(self, func_key: str, *args, **kwargs):
+        """
+        Register functions from RPC store from key, overrides ApplicationSession::register
+        """
+        assert not func_key is None
+        callback = LOADED_RPC_FUNCTIONS[func_key]
+        endpoint = callback.endpoint
+        func = callback.bind_frontend(get_callback, *args, **kwargs)
+        self.log.info(f"Registered function for endpoint {endpoint}.")
+        super().register(func, endpoint)
+
     def onJoin(self, details):
-        self.log.info("Joined Session.")
+        self.log.info("Joined Frontend Session.")
 
         try:
-            self.register("places",)
+            self.register("places")
             self.register("resource", target='cup')
-        except Exception as err:
+        except wexception.Error as err:
             self.log.error(f"Could not register procedure: {err}.\n{err.with_traceback()}")
 
     def onLeave(self, details):
@@ -85,15 +98,32 @@ def run_router(url: str, realm: str):
     """
     Connect to labgrid coordinator and start local crossbar router
     """
-    global LOADED_RPC_FUNCTIONS
-    LOADED_RPC_FUNCTIONS = {
-        "places":   RPC("localhost.places", rpc.places),
-        "resource": RPC("localhost.resource", rpc.resource)
+    globals()['LOADED_RPC_FUNCTIONS'] = {
+        "places":   RPC(u"localhost.places", rpc.places),
+        "resource": RPC(u"localhost.resource", rpc.resource)
     }
-    runner = ApplicationRunner(url=url, realm=realm, extra=None)
+    labby_runner = ApplicationRunner(url=url, realm=realm, extra=None)
+    labby_coro = labby_runner.run(LabbyClient, start_loop=False)
+    frontend_runner = ApplicationRunner(
+        url='ws://localhost:8083/ws', realm='frontend', extra=None)
+    frontend_coro = frontend_runner.run(RouterInterface, start_loop=False)
+
+    asyncio.log.logger.info("Starting Frontend Router")
+    router = Router("labby/router/.crossbar")
+    sleep(5)
+    loop = asyncio.get_event_loop()
     try:
-        print(f"Connecting to {url} on realm {realm}")
-        runner.run(LabbyClient)
+        asyncio.log.logger.info(f"Connecting to {url} on realm {realm}")
+        loop.run_until_complete(labby_coro)
+        loop.run_until_complete(frontend_coro)
+        loop.run_forever()
     except ConnectionRefusedError as err:
         from sys import stderr
-        print(err.strerror,file=stderr)
+        asyncio.log.logger.info(err.strerror, file=stderr)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        frontend_coro.close()
+        labby_coro.close()
+        asyncio.get_event_loop().close()
+        router.stop()

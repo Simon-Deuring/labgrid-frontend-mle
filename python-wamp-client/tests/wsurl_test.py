@@ -1,5 +1,5 @@
 import unittest
-from ..labby.wsurl import url_from_parts, Protocol
+from labby.wsurl import url_from_parts, Protocol
 import random
 
 def rand_ip() -> str:
@@ -13,7 +13,7 @@ class TestUrlParse(unittest.TestCase):
 
     def test_url_parse_fuzzy(self) -> None:
         for _ in range(100):
-            protocol = random.choice([Protocol.WS, Protocol.WSS, "ws", "wss"])
+            scheme = random.choice([Protocol.WS, Protocol.WSS, "ws", "wss"])
             user = random.choice([None, f"user{random.randint(0,1000)}"])
             domain = random.choice(["localhost", "127.0.0.1",
                 rand_ip(),
@@ -26,7 +26,7 @@ class TestUrlParse(unittest.TestCase):
             ])
             self.assertIsNotNone(
                 url_from_parts(
-                    protocol=protocol,
+                    scheme=scheme,
                     user=user,
                     domain=domain,
                     port=port,
