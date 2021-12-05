@@ -3,12 +3,8 @@ Test all available remote procedure calls
 """
 # TODO(Kevin) convert into unit test, requires launcher/launchoptions for router and must start RPC provider
 
-
 import asyncio
-from os import environ
-from autobahn.wamp.types import CallResult
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
-
 
 class Component(ApplicationSession):
     """
@@ -36,7 +32,7 @@ class Component(ApplicationSession):
         print(f"Polling resource from {place}")
         res = await self.call(u'localhost.resource', place)
         print(f"Received resources: {res}")
-        print(f"Polling ALL resource")
+        print("Polling ALL resource")
         res = await self.call(u'localhost.resource')
         print(f"Received resources: {res}")
         self.leave()
