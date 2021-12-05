@@ -14,9 +14,7 @@ export class Place {
         this.matches = matches;
         this.isRunning = isRunning;
         this.aquired = aquired;
-        
         this.allocation = allocation;
-        // this.allocation = AllocationState[allocation as keyof typeof AllocationState];
         this.aquiredResources = aquiredResources;
     }
 }

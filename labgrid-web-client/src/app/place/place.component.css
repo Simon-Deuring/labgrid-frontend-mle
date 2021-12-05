@@ -1,6 +1,6 @@
 .place-overview {
     width:100%;
-    margin: 20px;
+    margin-top: 20px;
 }
 
 .resource-bar {
@@ -16,11 +16,11 @@
 .place-table {
     width: 800px;
     margin-top: 16px;
-    column-width: 400px !important;
+    column-width: 50% !important;
 }
 
-.place-table > td{
-    width: 400px !important;
+.place-table td{
+    width: 50% !important;
 }
 
 #invalidIcon{
