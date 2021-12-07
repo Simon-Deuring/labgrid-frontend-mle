@@ -12,8 +12,9 @@ export class ResourceOverviewComponent implements OnInit {
 
   resources: Resource[] = [];
   serialPorts: Resource[] = [];
-  PDUs: Resource[] = [];
+  powerPorts: Resource[] = [];
   videoStreams: Resource[] = [];
+  networkInterfaces: Resource[] = [];
   JTAGResources: Resource[] = [];
   otherResources: Resource[] = [];
 
@@ -33,9 +34,11 @@ export class ResourceOverviewComponent implements OnInit {
       if (resource.cls.endsWith('SerialPort')) {
         this.serialPorts.push(resource);
       } else if (resource.cls === 'PDUDaemonPort' || resource.cls.endsWith('PowerPort')) {
-        this.PDUs.push(resource);
+        this.powerPorts.push(resource);
       } else if (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') {
         this.videoStreams.push(resource);
+      } else if (resource.cls === 'NetworkService' || resource.cls.endsWith('NetworkInterface')) {
+        this.networkInterfaces.push(resource);
       } else if (resource.cls.includes('JTAG') || resource.cls.endsWith('USBDebugger')) {
         this.JTAGResources.push(resource);
       } else {

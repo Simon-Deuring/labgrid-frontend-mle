@@ -51,6 +51,9 @@ export class ResourceComponent implements OnInit {
     if (this.resource.params.gdb_port) {
       this.resourceAttributes.push({name: 'GDB port: ', value: String(this.resource.params.gdb_port)});
     }
+    if (this.resource.params.username) {
+      this.resourceAttributes.push({name: 'Username: ', value: String(this.resource.params.username)});
+    }
     if (this.resource.params.url) {
       this.resourceAttributes.push({name: 'URL: ', value: String(this.resource.params.url)});
     }
