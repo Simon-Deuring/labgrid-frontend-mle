@@ -1,6 +1,6 @@
 .place-overview {
     width:100%;
-    margin: 20px;
+    margin-top: 20px;
 }
 
 .resource-bar {
@@ -11,4 +11,19 @@
 .resource-bar > button {
     margin-right: 10px;
     margin-bottom: 10px;
+}
+
+.place-table {
+    width: 800px;
+    margin-top: 16px;
+    column-width: 50% !important;
+}
+
+.place-table td{
+    width: 50% !important;
+}
+
+#invalidIcon{
+    font-size: 15px;
+    color: #FF595E;
 }
