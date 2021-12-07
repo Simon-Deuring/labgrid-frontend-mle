@@ -33,7 +33,7 @@ class RPC():
         """
         return lambda *a, **kw: self.func(*args, *a, **kwargs, **kw)
 
-    def bind_frontend(self, context : Callable, *args, **kwargs):
+    def bind_frontend(self, context: Callable, *args, **kwargs):
         """
         Bind RPC to specific context,to be called by the frontend
         """
@@ -47,7 +47,12 @@ async def places(context) -> List[str]:
     context.log.info("Fetching places.")
     targets = await context.call("org.labgrid.coordinator.get_places")
     # first level is target
-    return list(targets.keys())
+    return [{
+        'name': name,
+        'isRunning' : True,
+        **target,
+        # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
+    } for name, target in targets.items()]
 
 
 async def resource(context,
