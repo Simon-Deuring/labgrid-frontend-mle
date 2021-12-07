@@ -68,11 +68,11 @@ async def resource(context,
 
     def resource_for_place():
         if place is None:
-            return {"resources": targets[target]}
+            return targets[target]
         else:
             if not place in targets[target].keys():
                 return le.not_found(f"Place {place} not found on Target").to_json()
-            return {"resources": targets[target][place]}
+            return targets[target][place]
 
     if isinstance(target, str):
         if not target in targets:
