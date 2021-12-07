@@ -28,7 +28,7 @@ class Component(ApplicationSession):
         print("Polling places from router")
         res = await self.call(u"localhost.places")
         print(f"Received places: {res}")
-        place = res[0]
+        place = res[0]['name']
         print(f"Polling resource from {place}")
         res = await self.call(u'localhost.resource', place)
         print(f"Received resources: {res}")
