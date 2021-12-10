@@ -19,8 +19,13 @@
     column-width: 50% !important;
 }
 
-.place-table td{
+.place-table td {
     width: 50% !important;
+}
+
+.action-bar {
+    margin-top: 16px;
+    margin-bottom: 16px;
 }
 
 #invalidIcon{

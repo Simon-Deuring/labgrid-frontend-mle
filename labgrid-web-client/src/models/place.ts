@@ -9,7 +9,7 @@ export class Place {
     public allocation: string;
     public aquiredResources: string[];
 
-    constructor(name: string, isRunning: boolean, matches: string, aquired: string, allocation: string, aquiredResources: string[]){
+    constructor(name: string, isRunning: boolean, matches: string, aquired: string, allocation: string, aquiredResources: string[]) {
         this.name = name;
         this.matches = matches;
         this.isRunning = isRunning;

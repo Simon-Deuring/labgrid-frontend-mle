@@ -1,4 +1,4 @@
-export enum AllocationState{
+export enum AllocationState {
     Waiting,
     Allocated,
     Aquired,

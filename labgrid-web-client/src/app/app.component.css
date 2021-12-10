@@ -44,3 +44,12 @@ html, body {
 .sidenav-content {
   width: 320px;
 }
+
+::ng-deep .success-snackbar {
+  background: #98DFAF;
+  color: #01200b;
+}
+
+::ng-deep .success-snackbar .mat-simple-snackbar-action {
+  color: #01200b;
+}
