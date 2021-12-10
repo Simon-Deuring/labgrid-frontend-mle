@@ -19,12 +19,12 @@ export class PlaceOverviewComponent implements OnInit {
   
   @ViewChild('paginator') paginator!: MatPaginator;
 
-  constructor(private _placeService: PlaceService, private _resourceService: ResourceService, private router: Router) {
+  constructor(private _ps: PlaceService, private _resourceService: ResourceService, private router: Router) {
     this.dataSource= new MatTableDataSource(this.places)
   }
   
   ngOnInit(): void {
-    this._placeService.getPlaces()
+    this._ps.getPlaces()
       .then(data => {
         this.places = data;
         this.dataSource = new MatTableDataSource(this.places);
@@ -33,11 +33,11 @@ export class PlaceOverviewComponent implements OnInit {
   }
 
   getAquiredName (aquired: string): string {
-    return this._placeService.getAquiredName(aquired);
+    return this._ps.getAquiredName(aquired);
   }
 
   getResourceName(resource: string): string {
-    return this._placeService.getResourceName(resource);
+    return this._ps.getResourceName(resource);
   }
 
   getRunningIcon (isRunning: boolean): string {
