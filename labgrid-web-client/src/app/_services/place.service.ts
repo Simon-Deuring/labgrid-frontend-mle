@@ -73,12 +73,4 @@ export class PlaceService {
     // If the python-wamp-client is not available the following line can be used to load test data
     // const place = await this.session.call('localhost.places');
   }
-
-  public getAquiredName(aquired: string): string {
-    return aquired.substring(aquired.lastIndexOf('/') + 1)
-  }
-
-  public getResourceName(resource: string): string {
-    return resource.substring(resource.lastIndexOf('/') + 1)
-  }
 }

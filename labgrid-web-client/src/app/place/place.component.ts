@@ -17,7 +17,7 @@ export class PlaceComponent implements OnInit {
 
   @ViewChild('placeStateTable') table!: MatTable<any>;
 
-  place: Place = new Place('', false, '', '', "Invalid", []);
+  place: Place = new Place('', [], false, [], '', AllocationState.Invalid);
   resources: Resource[] = [];
   placeStates: Array<{ name: string, value: string }> = [];
   displayedColumns: Array<string> = ['state-name', 'state-value'];
@@ -53,7 +53,8 @@ export class PlaceComponent implements OnInit {
     this.allocationStateInvalid = false;
 
     if (this.place.matches) {
-      this.placeStates.push({ name: 'Host name: ', value: this.place.matches.split('/')[0] });
+      // TODO: get real host name
+      this.placeStates.push({ name: 'Host name: ', value: 'cup' });
     }
     if (this.place.isRunning) {
       this.placeStates.push({ name: 'Is running: ', value: 'yes' });
@@ -61,33 +62,33 @@ export class PlaceComponent implements OnInit {
       this.placeStates.push({ name: 'Is running: ', value: 'no' });
     }
 
-    const allocationEnum = (<any>AllocationState)[this.place.allocation];
+    /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
     switch (allocationEnum) {
       case AllocationState.Allocated:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       case AllocationState.Aquired:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       case AllocationState.Expired:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       case AllocationState.Invalid:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         this.allocationStateInvalid = true;
         break;
       case AllocationState.Waiting:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       default:
-        this.placeStates.push({ name: 'Allocation status: ', value: 'something went wrong: ' + this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: 'something went wrong: ' + this.place.reservation.toString() });
         break;
-    }
+    }*/
 
-    if (!this.place.aquired) {
+    if (!this.place.acquired) {
       this.placeStates.push({ name: 'Aquired: ', value: 'no' });
     } else {
-      this.placeStates.push({ name: 'Aquired: ', value: this.place.aquired });
+      this.placeStates.push({ name: 'Aquired: ', value: this.place.acquired });
     }
   }
 

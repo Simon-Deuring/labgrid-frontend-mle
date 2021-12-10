@@ -32,14 +32,6 @@ export class PlaceOverviewComponent implements OnInit {
       });
   }
 
-  getAquiredName (aquired: string): string {
-    return this._ps.getAquiredName(aquired);
-  }
-
-  getResourceName(resource: string): string {
-    return this._ps.getResourceName(resource);
-  }
-
   getRunningIcon (isRunning: boolean): string {
     if (isRunning) {
       return 'check_circle';

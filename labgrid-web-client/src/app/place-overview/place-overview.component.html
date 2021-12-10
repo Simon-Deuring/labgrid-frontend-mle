@@ -20,8 +20,8 @@
         <ng-container matColumnDef="aquiredResources">
             <th mat-header-cell *matHeaderCellDef id="resource-column"> Resources </th>
             <td mat-cell *matCellDef="let place">
-                <span class="resource-label"  *ngFor="let resource of place.aquiredResources" (click)="navigateToResource(getResourceName(resource))">
-                    {{getResourceName(resource)}}
+                <span class="resource-label"  *ngFor="let resource of place.acquired_resources" (click)="navigateToResource(resource[3])">
+                    {{ resource[3] }}
                 </span>
             </td>
         </ng-container>
@@ -29,7 +29,7 @@
         <ng-container matColumnDef="aquired">
             <th mat-header-cell *matHeaderCellDef> Aquired </th>
             <!-- <td mat-cell *matCellDef="let place"> {{place.aquired}} </td> -->
-            <td mat-cell *matCellDef="let place"> {{ getAquiredName(place.aquired) }}</td>
+            <td mat-cell *matCellDef="let place"> {{ place.acquired }}</td>
         </ng-container>
 
         <ng-container matColumnDef="isRunning">
