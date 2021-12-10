@@ -1,6 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+//import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
 import { Place } from '../../models/place';
+import { AllocationState } from '../_enums/allocation-state';
+
 import * as autobahn from 'autobahn-browser';
 
 @Injectable({
@@ -73,4 +76,18 @@ export class PlaceService {
     // If the python-wamp-client is not available the following line can be used to load test data
     // const place = await this.session.call('localhost.places');
   }
+
+  public async acquirePlace(placeName: string): Promise<boolean> {
+    let body = await this.getPlace(placeName) as Place;
+
+    if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
+      console.log('This place is already acquired.');
+      return false;
+    } else {
+      console.log('Place not yet acquired. Try to acquire.');
+      // TODO: connect to server 
+      return true;
+    }
+  }
+
 }

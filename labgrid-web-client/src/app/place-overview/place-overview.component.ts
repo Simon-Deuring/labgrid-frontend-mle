@@ -15,7 +15,7 @@ export class PlaceOverviewComponent implements OnInit {
   
   places: Place[] = [];
   dataSource: MatTableDataSource<any> = new MatTableDataSource();
-  displayedColumns: string[] = ['name', 'aquiredResources', 'aquired', 'isRunning'];
+  displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isRunning'];
   
   @ViewChild('paginator') paginator!: MatPaginator;
 

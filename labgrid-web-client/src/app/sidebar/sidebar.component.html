@@ -4,8 +4,8 @@
     <div class="sidebar-item" (click)="navigateToOverview()"> Place Overview</div>
     <div class="sidebar-item" *ngFor="let place of places" (click)="navigateToPlace(place.name)">
         <mat-icon [ngClass]="{
-                'available' : !place.aquired,
-                'occupied' : place.aquired
+                'available' : !place.acquired,
+                'occupied' : place.acquired
             }"
         >circle</mat-icon>
         <div>{{ place.name }}</div>

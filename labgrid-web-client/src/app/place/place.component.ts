@@ -7,6 +7,7 @@ import { ResourceService } from '../_services/resource.service';
 import { Resource } from '../../models/resource';
 import { AllocationState } from '../_enums/allocation-state';
 import { MatTable } from '@angular/material/table';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-place',
@@ -22,8 +23,9 @@ export class PlaceComponent implements OnInit {
   placeStates: Array<{ name: string, value: string }> = [];
   displayedColumns: Array<string> = ['state-name', 'state-value'];
   allocationStateInvalid = false;
+  isAcquired = false;
 
-  constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute, private router: Router) {
+  constructor(private _ps: PlaceService, private _rs: ResourceService, private _snackBar: MatSnackBar, private route: ActivatedRoute, private router: Router) {
     route.params.subscribe(val => {
       const currentRoute = route.snapshot.url[route.snapshot.url.length - 1].path;
       this._ps.getPlace(currentRoute).then(data => {
@@ -68,7 +70,7 @@ export class PlaceComponent implements OnInit {
       case AllocationState.Allocated:
         this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
-      case AllocationState.Aquired:
+      case AllocationState.Acquired:
         this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       case AllocationState.Expired:
@@ -87,9 +89,23 @@ export class PlaceComponent implements OnInit {
     }*/
 
     if (!this.place.acquired) {
-      this.placeStates.push({ name: 'Aquired: ', value: 'no' });
+      this.placeStates.push({ name: 'Acquired: ', value: 'no' });
+      this.isAcquired = false;
     } else {
-      this.placeStates.push({ name: 'Aquired: ', value: this.place.acquired });
+      this.placeStates.push({ name: 'Acquired: ', value: this.place.acquired });
+      this.isAcquired = true;
+    }
+  }
+
+  public async acquirePlace() {
+    const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+
+    if (ret) {
+      this._snackBar.open('Place was acquired succesfully!', 'OK',
+        {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
     }
   }
 

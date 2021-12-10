@@ -10,6 +10,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input'
+import { MatPaginatorModule } from '@angular/material/paginator';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
 
 import { AppComponent } from './app.component';
 import { ErrorComponent } from './error/error.component';
@@ -25,10 +29,6 @@ import { ResourceService } from './_services/resource.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import {MatInputModule} from '@angular/material/input'
-
 
 @NgModule({
   declarations: [
@@ -55,6 +55,7 @@ import {MatInputModule} from '@angular/material/input'
     MatPaginatorModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSnackBarModule,
     RouterModule.forRoot([
       {path: "place", component: PlaceComponent}
     ])

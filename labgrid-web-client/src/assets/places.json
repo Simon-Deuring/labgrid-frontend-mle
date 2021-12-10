@@ -1,7 +1,7 @@
 [
   {
-    "aquired": "cup/dummy",
-    "aquired_resources": [
+    "acquired": "cup/dummy",
+    "acquired_resources": [
       [
         "cup",
         "mle-lg-ref-1",

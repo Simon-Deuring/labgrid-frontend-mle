@@ -17,7 +17,7 @@
             <td class="clickable" mat-cell *matCellDef="let place" (click)="navigateToPlace(place.name)"> {{place.name}} </td>
         </ng-container>
 
-        <ng-container matColumnDef="aquiredResources">
+        <ng-container matColumnDef="acquired_resources">
             <th mat-header-cell *matHeaderCellDef id="resource-column"> Resources </th>
             <td mat-cell *matCellDef="let place">
                 <span class="resource-label"  *ngFor="let resource of place.acquired_resources" (click)="navigateToResource(resource[3])">
@@ -26,9 +26,9 @@
             </td>
         </ng-container>
 
-        <ng-container matColumnDef="aquired">
-            <th mat-header-cell *matHeaderCellDef> Aquired </th>
-            <!-- <td mat-cell *matCellDef="let place"> {{place.aquired}} </td> -->
+        <ng-container matColumnDef="acquired">
+            <th mat-header-cell *matHeaderCellDef> Acquired </th>
+            <!-- <td mat-cell *matCellDef="let place"> {{place.acquired}} </td> -->
             <td mat-cell *matCellDef="let place"> {{ place.acquired }}</td>
         </ng-container>
 
