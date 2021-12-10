@@ -85,7 +85,7 @@ export class PlaceService {
       return false;
     } else {
       console.log('Place not yet acquired. Try to acquire.');
-      // TODO: connect to server 
+      // TODO: Connect to server 
       return true;
     }
   }
