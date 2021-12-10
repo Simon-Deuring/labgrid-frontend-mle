@@ -53,9 +53,10 @@ export class PlaceComponent implements OnInit {
     this.allocationStateInvalid = false;
 
     if (this.place.matches) {
-      // TODO: get real host name
+      // TODO: Get real host name for places.
       this.placeStates.push({ name: 'Host name: ', value: 'cup' });
     }
+
     if (this.place.isRunning) {
       this.placeStates.push({ name: 'Is running: ', value: 'yes' });
     } else {
