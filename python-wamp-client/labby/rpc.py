@@ -40,19 +40,30 @@ class RPC():
         return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
 
 
-async def places(context) -> List[str]:
+async def places(context, place: Optional[str] = None) -> List[str]:
     """
     returns registered places as dict of lists
     """
     context.log.info("Fetching places.")
     targets = await context.call("org.labgrid.coordinator.get_places")
     # first level is target
-    return [{
-        'name': name,
-        'isRunning' : True,
-        **target,
-        # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
-    } for name, target in targets.items()]
+    if place is None:
+        return [{
+            'name': name,
+            'isRunning' : True,
+            **target,
+            # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
+        } for name, target in targets.items()]
+    else:
+        if not place in targets.keys():
+            return le.not_found(f"Place {place} not found.")
+        else:
+            return [{
+                'name': place,
+                'isRunning' : True,
+                **targets[place],
+                # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
+            }]
 
 
 async def resource(context,
@@ -89,3 +100,10 @@ async def resource(context,
         return resource_for_place()
 
     return {"resources": targets}
+
+
+async def power_state(context, place: Optional[str]) -> Dict:
+    """
+    rpc: return power state for a given place
+    """
+    assert not place is None

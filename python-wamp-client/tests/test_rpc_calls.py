@@ -5,7 +5,7 @@ Test all available remote procedure calls
 
 import asyncio
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
-
+from random import choice
 class Component(ApplicationSession):
     """
     Application component that calls procedures which
@@ -25,13 +25,20 @@ class Component(ApplicationSession):
             p = await self.call(u"wamp.registration.get", proc)
             print(p)
             procs.append(p)
+
         print("Polling places from router")
         res = await self.call(u"localhost.places")
         print(f"Received places: {res}")
+
+        print("Polling specific place")
+        res = await self.call(u"localhost.places", choice(res)["name"])
+        print(f"Received places: {res}")
+
         place = res[0]['name']
         print(f"Polling resource from {place}")
         res = await self.call(u'localhost.resource', place)
         print(f"Received resources: {res}")
+
         print("Polling ALL resource")
         res = await self.call(u'localhost.resource')
         print(f"Received resources: {res}")
