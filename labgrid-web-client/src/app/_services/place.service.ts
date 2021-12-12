@@ -11,7 +11,6 @@ import * as autobahn from 'autobahn-browser';
 })
 export class PlaceService {
 
-  private connection: any;
   private session: any;
   
   constructor(/*private _http: HttpClient*/) {
@@ -24,7 +23,6 @@ export class PlaceService {
     connection.onopen = async function (session: any, details: any) {
       service.session = session;
     }
-    this.connection = connection;
 
     connection.open();
   }
