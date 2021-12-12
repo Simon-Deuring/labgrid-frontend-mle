@@ -52,13 +52,13 @@
 
 - Request
 
-  `power_state`
+  `power_state(place_name)`
 
 - Response
 
 ```json
 {
-   "place" : "place1",
+   "place" : "place_name",
    "power_state" : "true"|"false"
 }
 ```
