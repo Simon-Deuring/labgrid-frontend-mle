@@ -40,7 +40,7 @@ class RPC():
         return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
 
 
-async def places(context, place: Optional[str] = None) -> List[str]:
+async def places(context, place: Optional[str] = None) -> List[Dict]:
     """
     returns registered places as dict of lists
     """
@@ -50,7 +50,7 @@ async def places(context, place: Optional[str] = None) -> List[str]:
     if place is None:
         return [{
             'name': name,
-            'isRunning' : True,
+            'isRunning': True,
             **target,
             # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
         } for name, target in targets.items()]
@@ -60,7 +60,7 @@ async def places(context, place: Optional[str] = None) -> List[str]:
         else:
             return [{
                 'name': place,
-                'isRunning' : True,
+                'isRunning': True,
                 **targets[place],
                 # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
             }]
@@ -102,8 +102,25 @@ async def resource(context,
     return {"resources": targets}
 
 
-async def power_state(context, place: Optional[str]) -> Dict:
+async def power_state(context,
+                      place: str,
+                      target: Union[str, int]
+                      ) -> Dict:
     """
     rpc: return power state for a given place
     """
-    assert not place is None
+    if place is None:
+        return le.invalid_parameter("Missing required parameter: place.").to_json()
+    if target is None:
+        return le.invalid_parameter("Missing required parameter: target.").to_json()
+    resources = await resource(context, place, target)
+    # a little hacky
+    # FIXME (Kevin) don't serialize in rpc functions
+    if "error" in resources.keys():
+        return resources
+    # TODO(Kevin) at the moment there is no way to do this any other way
+    # hacky way to check power state, just see if any resource in place is available
+    for res in resources.values():
+        if "avail" in res.keys():
+            return {"place": place, "power_state": bool(res["avail"])}
+    return {"place": place, "power_state": False}

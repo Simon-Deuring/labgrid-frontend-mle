@@ -57,6 +57,7 @@ class LabbyClient(ApplicationSession):
 
     async def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
+
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
@@ -86,6 +87,7 @@ class RouterInterface(ApplicationSession):
         try:
             self.register("places")
             self.register("resource", target='cup')
+            self.register("power_state", target='cup')
         except wexception.Error as err:
             self.log.error(f"Could not register procedure: {err}.\n{err.with_traceback()}")
 
@@ -99,8 +101,9 @@ def run_router(url: str, realm: str):
     Connect to labgrid coordinator and start local crossbar router
     """
     globals()['LOADED_RPC_FUNCTIONS'] = {
-        "places":   RPC(u"localhost.places", rpc.places),
-        "resource": RPC(u"localhost.resource", rpc.resource)
+        "places":   RPC("localhost.places", rpc.places),
+        "resource": RPC("localhost.resource", rpc.resource),
+        "power_state": RPC("localhost.power_state", rpc.power_state)
     }
     labby_runner = ApplicationRunner(url=url, realm=realm, extra=None)
     labby_coro = labby_runner.run(LabbyClient, start_loop=False)

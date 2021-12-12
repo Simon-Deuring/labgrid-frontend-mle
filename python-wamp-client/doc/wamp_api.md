@@ -36,7 +36,7 @@
 `resource`
 
 - Response
-  - place-resource tuples
+  - place-resource dict
 
 ```json
 {
@@ -45,6 +45,21 @@
       { "place2" : [ "resource 2", ...]},
       ...
       ]
+}
+```
+
+## Power states
+
+- Request
+
+  `power_state`
+
+- Response
+
+```json
+{
+   "place" : "place1",
+   "power_state" : "true"|"false"
 }
 ```
 
