@@ -2,19 +2,20 @@ import { Resource } from "./resource";
 import { AllocationState } from "../app/_enums/allocation-state";
 
 export class Place {
-    public name: string;
-    public matches: string;
+    public acquired: string;
+    public acquired_resources: object[];
     public isRunning: boolean;
-    public aquired: string;
-    public allocation: string;
-    public aquiredResources: string[];
+    public matches: object[];
+    public name: string;
+    public reservation: AllocationState;
+    
 
-    constructor(name: string, isRunning: boolean, matches: string, aquired: string, allocation: string, aquiredResources: string[]) {
-        this.name = name;
-        this.matches = matches;
+    constructor(acquired: string, acquired_resources: object[], isRunning: boolean, matches: object[], name: string, reservation: AllocationState){
+        this.acquired = acquired;
+        this.acquired_resources = acquired_resources;
         this.isRunning = isRunning;
-        this.aquired = aquired;
-        this.allocation = allocation;
-        this.aquiredResources = aquiredResources;
+        this.matches = matches;
+        this.name = name;
+        this.reservation = reservation;
     }
 }

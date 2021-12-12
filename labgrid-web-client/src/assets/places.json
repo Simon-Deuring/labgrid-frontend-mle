@@ -1,78 +1,55 @@
 [
   {
+    "acquired": "cup/dummy",
+    "acquired_resources": [
+      [
+        "cup",
+        "mle-lg-ref-1",
+        "NetworkService",
+        "NetworkService"
+      ],
+      [
+        "cup",
+        "mle-lg-ref-1",
+        "PDUDaemonPort",
+        "PDUDaemonPort"
+      ],
+      [
+        "cup",
+        "mle-lg-ref-1",
+        "NetworkUSBSDMuxDevice",
+        "USBSDMuxDevice"
+      ],
+      [
+        "cup",
+        "mle-lg-ref-1",
+        "NetworkSerialPort",
+        "USBSerialPort"
+      ],
+      [
+        "cup",
+        "mle-lg-ref-1",
+        "NetworkUSBVideo",
+        "USBVideo"
+      ],
+      [
+        "cup",
+        "mle-lg-ref-1",
+        "NetworkXilinxUSBJTAG",
+        "XilinxUSBJTAG"
+      ]
+    ],
+    "isRunning": true,
     "name": "mle-lg-ref-1",
-    "matches": "cup/mle-lg-ref-1/*",
-    "isRunning": true,
-    "aquired": "pfanne-bionic2/tobias",
-    "allocation": "Aquired",
-    "aquiredResources": [
-      "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
-      "cup/mle-lg-ref-1/PDUDaemonPort/PDUDaemonPort",
-      "cup/mle-lg-ref-1/NetworkUSBVideo/USBVideo",
-      "cup/mle-lg-ref-1/NetworkUSBSDMuxDevice/USBSDMuxDevice",
-      "cup/mle-lg-ref-1/NetworkService/NetworkService",
-      "cup/mle-lg-ref-1/NetworkXilinxUSBJTAG/XilinxUSBJTAG"
-    ]
-  },
-  {
-    "name": "test-place",
-    "matches": "cup/test-place/*",
-    "isRunning": false,
-    "aquired": "pfanne-bionic2/tobias",
-    "allocation": "Aquired",
-    "aquiredResources": [
-    ]
-  },
-  {
-    "name": "test-place2",
-    "matches": "cup/test-place/*",
-    "isRunning": true,
-    "aquired": "",
-    "allocation": "Waiting",
-    "aquiredResources": [
-      "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
-      "cup/mle-lg-ref-1/NetworkUSBVideo/USBVideo",
-      "cup/mle-lg-ref-1/NetworkUSBSDMuxDevice/USBSDMuxDevice",
-      "cup/mle-lg-ref-1/NetworkService/NetworkService"
-    ]
-  },
-  {
-    "name": "test-place3",
-    "matches": "cup/mle-lg-ref-1/*",
-    "isRunning": true,
-    "aquired": "pfanne-bionic2/tobias",
-    "allocation": "Waiting",
-    "aquiredResources": [
-      "cup/mle-lg-ref-1/NetworkSerialPort/USBSerialPort",
-      "cup/mle-lg-ref-1/PDUDaemonPort/PDUDaemonPort",
-      "cup/mle-lg-ref-1/NetworkXilinxUSBJTAG/XilinxUSBJTAG"
-    ]
-  },
-  {
-    "name": "test-place4",
-    "matches": "cup/test-place/*",
-    "isRunning": false,
-    "aquired": "pfanne-bionic2/tobias",
-    "allocation": "Invalid",
-    "aquiredResources": [
-    ]
-  },
-  {
-    "name": "test-place5",
-    "matches": "cup/test-place/*",
-    "isRunning": true,
-    "aquired": "",
-    "allocation": "Expired",
-    "aquiredResources": [
-    ]
-  },
-  {
-    "name": "test-place6",
-    "matches": "cup/test-place/*",
-    "isRunning": true,
-    "aquired": "",
-    "allocation": "Allocated",
-    "aquiredResources": [
-    ]
+    "matches": [
+      {
+        "cls": "*",
+        "exporter": "*",
+        "group": "mle-lg-ref-1",
+        "name": null,
+        "rename": null
+      }
+    ],
+    "reservation": null
   }
 ]

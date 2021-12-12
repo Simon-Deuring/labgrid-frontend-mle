@@ -18,12 +18,12 @@ export class PlaceComponent implements OnInit {
 
   @ViewChild('placeStateTable') table!: MatTable<any>;
 
-  place: Place = new Place('', false, '', '', "Invalid", []);
+  place: Place = new Place('', [], false, [], '', AllocationState.Invalid);
   resources: Resource[] = [];
   placeStates: Array<{ name: string, value: string }> = [];
   displayedColumns: Array<string> = ['state-name', 'state-value'];
   allocationStateInvalid = false;
-  isAquired = false;
+  isAcquired = false;
 
   constructor(private _ps: PlaceService, private _rs: ResourceService, private _snackBar: MatSnackBar, private route: ActivatedRoute, private router: Router) {
     route.params.subscribe(val => {
@@ -55,51 +55,53 @@ export class PlaceComponent implements OnInit {
     this.allocationStateInvalid = false;
 
     if (this.place.matches) {
-      this.placeStates.push({ name: 'Host name: ', value: this.place.matches.split('/')[0] });
+      // TODO: Get real host name for places.
+      this.placeStates.push({ name: 'Host name: ', value: 'cup' });
     }
+
     if (this.place.isRunning) {
       this.placeStates.push({ name: 'Is running: ', value: 'yes' });
     } else {
       this.placeStates.push({ name: 'Is running: ', value: 'no' });
     }
 
-    const allocationEnum = (<any>AllocationState)[this.place.allocation];
+    /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
     switch (allocationEnum) {
       case AllocationState.Allocated:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
-      case AllocationState.Aquired:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+      case AllocationState.Acquired:
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       case AllocationState.Expired:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       case AllocationState.Invalid:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         this.allocationStateInvalid = true;
         break;
       case AllocationState.Waiting:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
         break;
       default:
-        this.placeStates.push({ name: 'Allocation status: ', value: 'something went wrong: ' + this.place.allocation });
+        this.placeStates.push({ name: 'Allocation status: ', value: 'something went wrong: ' + this.place.reservation.toString() });
         break;
-    }
+    }*/
 
-    if (!this.place.aquired) {
-      this.placeStates.push({ name: 'Aquired: ', value: 'no' });
-      this.isAquired = false;
+    if (!this.place.acquired) {
+      this.placeStates.push({ name: 'Acquired: ', value: 'no' });
+      this.isAcquired = false;
     } else {
-      this.placeStates.push({ name: 'Aquired: ', value: this.place.aquired });
-      this.isAquired = true;
+      this.placeStates.push({ name: 'Acquired: ', value: this.place.acquired });
+      this.isAcquired = true;
     }
   }
 
-  public async aquirePlace() {
-    const ret = await this._ps.aquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+  public async acquirePlace() {
+    const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
 
     if (ret) {
-      this._snackBar.open('Place was aquired succesfully!', 'OK',
+      this._snackBar.open('Place was acquired succesfully!', 'OK',
         {
           duration: 3000,
           panelClass: ['success-snackbar']

@@ -1,7 +1,7 @@
 export enum AllocationState {
     Waiting,
     Allocated,
-    Aquired,
+    Acquired,
     Expired,
     Invalid
 }
