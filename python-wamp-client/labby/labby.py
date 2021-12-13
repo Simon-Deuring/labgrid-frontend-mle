@@ -4,7 +4,9 @@ A wamp client which registers a rpc function
 from typing import Dict
 from time import sleep
 
+import logging
 import asyncio
+import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
@@ -105,6 +107,8 @@ def run_router(url: str, realm: str):
         "resource": RPC("localhost.resource", rpc.resource),
         "power_state": RPC("localhost.power_state", rpc.power_state)
     }
+
+    logging.basicConfig(level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
     labby_runner = ApplicationRunner(url=url, realm=realm, extra=None)
     labby_coro = labby_runner.run(LabbyClient, start_loop=False)
     frontend_runner = ApplicationRunner(
@@ -121,8 +125,7 @@ def run_router(url: str, realm: str):
         loop.run_until_complete(frontend_coro)
         loop.run_forever()
     except ConnectionRefusedError as err:
-        from sys import stderr
-        asyncio.log.logger.info(err.strerror, file=stderr)
+        asyncio.log.logger.error(err.strerror)
     except KeyboardInterrupt:
         pass
     finally:
