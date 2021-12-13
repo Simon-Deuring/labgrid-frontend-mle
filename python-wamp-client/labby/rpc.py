@@ -27,17 +27,17 @@ class RPC():
         return f"{self.endpoint}\
             ({', '.join([f'{x.name}:{x.annotation}'for x in params.values()])}) -> {ret_type}"
 
-    def bind(self, *args, **kwargs):
+    def bind(self, *args, **kwargs) -> Callable:
         """
         Bind RPC to specific context, e.g LabbyClient Session, or pass immutables into func
         """
         return lambda *a, **kw: self.func(*args, *a, **kwargs, **kw)
 
-    def bind_frontend(self, context: Callable, *args, **kwargs):
+    def bind_frontend(self, context: Callable, *args, **kwargs) -> Callable:
         """
         Bind RPC to specific context,to be called by the frontend
         """
-        return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
+        return lambda *a: self.func(context(), *args, *a, **kwargs)
 
 
 async def places(context, place: Optional[str] = None) -> List[Dict]:
@@ -124,3 +124,34 @@ async def power_state(context,
         if "avail" in res.keys():
             return {"place": place, "power_state": bool(res["avail"])}
     return {"place": place, "power_state": False}
+
+
+async def resource_overview(context,
+                            place: Optional[str],
+                            # TODO (Kevin) REPRESENT TARGET IN API
+                            target: Union[str, int, None],
+                            ) -> Dict:
+    """
+    rpc: returns list of all resources on target
+    """
+    context.log.info(f"Fetching resources overview for {target}.")
+    targets = await context.call("org.labgrid.coordinator.get_resources")
+
+
+async def resource_by_name(context,
+                           name: str = None,  # filter by name
+                           # TODO (Kevin) REPRESENT TARGET IN API
+                           ) -> Dict:
+    """
+    rpc: returns list of all resources of given name on target
+    """
+
+    targets = await context.call("org.labgrid.coordinator.get_resources")
+    ret = []
+    for target, resources in targets.items():
+        for place, res in resources.items():
+            for k,v in res.items():
+                if name is None or name == k:
+                    ret.append({'name' : k, 'target':target, 'place' : place, **v})
+
+    return ret

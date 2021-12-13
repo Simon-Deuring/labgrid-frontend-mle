@@ -47,6 +47,31 @@
       ]
 }
 ```
+## Resource
+
+- Request
+
+List all reources:
+
+`resource_by_name`
+
+Filter by name:
+
+`resource_by_name(name)`
+
+- Response
+
+```json
+[
+   {
+      "name" : "resource name",
+      "target" : "resource target",
+      "place" : "place of resource",
+      ...
+   },...
+]
+
+```
 
 ## Power states
 
