@@ -26,9 +26,24 @@ export class ResourceService {
   }
 
   public async getResources(): Promise<Resource[]> {
-    const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-    
-    return resources;
+    // If the session is already set the places can immediately be read.
+    // Otherwise we wait 1 second.
+    if (this.session) {
+      const result = await this.session.call('localhost.resource_by_name');
+      console.warn(result);
+      return result;
+    } else {
+      await new Promise((resolve, reject) => {
+        // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+        setTimeout(resolve, 1000);
+      });
+      const result = await this.session.call('localhost.resource_by_name');
+      console.warn(result);
+      return result;
+    }
+
+    // If the python-wamp-client is not available the following line can be used to load test data
+    // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
   }
 
   public async getResourceByName(resourceName: string): Promise<Resource> {

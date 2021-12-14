@@ -11,7 +11,7 @@ import { Resource } from 'src/models/resource';
 })
 export class ResourceComponent implements OnInit {
 
-  resource: Resource = new Resource('', '', '', false, '', {});
+  resource: Resource = new Resource('', '', '', '', false, '', {});
 
   resourceAttributes: Array<{ name: string, value: string }> = [];
   displayedColumns: Array<string> = ['attr-name', 'attr-value'];
@@ -35,7 +35,7 @@ export class ResourceComponent implements OnInit {
       this.resourceAttributes.push({ name: 'Type: ', value: this.resource.cls });
     }
     if (this.resource.acquired) {
-      this.resourceAttributes.push({ name: 'Place name: ', value: this.resource.acquired });
+      this.resourceAttributes.push({ name: 'Place name: ', value: this.resource.place });
     }
     if (this.resource.params.host) {
       this.resourceAttributes.push({ name: 'Host name: ', value: this.resource.params.host });
