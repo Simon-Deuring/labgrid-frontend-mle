@@ -42,7 +42,7 @@ html, body {
 }
 
 .sidenav-content {
-  width: 320px;
+  width: 280px;
 }
 
 ::ng-deep .success-snackbar {
