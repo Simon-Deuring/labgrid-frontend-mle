@@ -57,6 +57,15 @@ class Component(ApplicationSession):
         res = await self.call('localhost.resource_by_name')
         print(f"Received resources: {res}")
 
+        place = choice(list(res.keys()))
+        print(f"Polling resource overview by place {place}")
+        res = await self.call('localhost.resource_overview', place)
+        print(f"Received resources: {res}")
+
+        print("Polling all resources by name")
+        res = await self.call('localhost.resource_overview')
+        print(f"Received resources: {res}")
+
         self.leave()
 
 
