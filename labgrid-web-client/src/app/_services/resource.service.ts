@@ -44,6 +44,26 @@ export class ResourceService {
     // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
   }
 
+  public async getResourcesForPlace(placeName: string): Promise<Resource[]> {
+    // If the session is already set the places can immediately be read.
+    // Otherwise we wait 1 second.
+    if (this.session) {
+      const resources = await this.session.call('localhost.resource_overview', [placeName]) as Resource[];
+      return resources;
+    } else {
+      await new Promise((resolve, reject) => {
+        // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+        setTimeout(resolve, 1000);
+      });
+      const resources = await this.session.call('localhost.resource_overview', [placeName]) as Resource[];
+      return resources;
+    }
+
+    // If the python-wamp-client is not available the following line can be used to load test data
+    // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
+    // const matchingResources = resources.filter(element => element.acquired === resourceName);
+  }
+
   public async getResourceByName(resourceName: string): Promise<Resource> {
     // If the session is already set the places can immediately be read.
     // Otherwise we wait 1 second.
@@ -66,14 +86,7 @@ export class ResourceService {
     }
 
     // If the python-wamp-client is not available the following line can be used to load test data
-    //const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-    //const match = resources.find(element => element.name === resourceName);
-  }
-
-  public async getResourcesForPlace(resourceName: string): Promise<Resource[]> {
-    const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-    const matchingResources = resources.filter(element => element.acquired === resourceName);
-    
-    return matchingResources;
+    // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
+    // const match = resources.find(element => element.name === resourceName);
   }
 }
