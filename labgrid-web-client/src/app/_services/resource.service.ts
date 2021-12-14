@@ -29,14 +29,14 @@ export class ResourceService {
     // If the session is already set the places can immediately be read.
     // Otherwise we wait 1 second.
     if (this.session) {
-      const resources = await this.session.call('localhost.resource_by_name');
+      const resources = await this.session.call('localhost.resource_overview') as Resource[];
       return resources;
     } else {
       await new Promise((resolve, reject) => {
         // The 1000 milliseconds is a critical variable. It may be adapted in the future.
         setTimeout(resolve, 1000);
       });
-      const resources = await this.session.call('localhost.resource_by_name');
+      const resources = await this.session.call('localhost.resource_overview') as Resource[];
       return resources;
     }
 
