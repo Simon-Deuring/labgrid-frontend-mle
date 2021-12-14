@@ -127,23 +127,25 @@ async def power_state(context,
 
 
 async def resource_overview(context,
-                            place: Optional[str],
+                            place: Optional[str] = None,
                             # TODO (Kevin) REPRESENT TARGET IN API
-                            target: Union[str, int, None],
+                            target: Union[str, int, None] = None,
                             ) -> Dict:
     """
     rpc: returns list of all resources on target
     """
     context.log.info(f"Fetching resources overview for {target}.")
-    
+
     targets = await context.call("org.labgrid.coordinator.get_resources")
     ret = []
     for target, resources in targets.items():
         for res_place, res in resources.items():
             if place is None or place == res_place:
-                for k,v in res.items():
-                        ret.append({'name' : k, 'target':target, 'place' : res_place, **v})
+                for k, v in res.items():
+                    ret.append({'name': k, 'target': target,
+                               'place': res_place, **v})
     return ret
+
 
 async def resource_by_name(context,
                            name: str = None,  # filter by name
@@ -157,8 +159,9 @@ async def resource_by_name(context,
     ret = []
     for target, resources in targets.items():
         for place, res in resources.items():
-            for k,v in res.items():
+            for k, v in res.items():
                 if name is None or name == k:
-                    ret.append({'name' : k, 'target':target, 'place' : place, **v})
+                    ret.append(
+                        {'name': k, 'target': target, 'place': place, **v})
 
     return ret
