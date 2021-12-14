@@ -47,17 +47,37 @@
       ]
 }
 ```
-## Resource
+## Resource as list with filter
+
+### Resource by Name
 
 - Request
 
-List all reources:
+   `resource_by_name`
 
-`resource_by_name`
+   `resource_by_name(name)`
 
-Filter by name:
+- Response
 
-`resource_by_name(name)`
+```json
+[
+   {
+      "name" : "resource name",
+      "target" : "resource target",
+      "place" : "place of resource",
+      ...
+   },...
+]
+
+```
+
+### Resource Overview
+
+- Request
+
+   `resource_overview`
+
+   `resource_overview(place)`
 
 - Response
 
