@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Resource } from '../../models/resource';
 
@@ -11,7 +10,7 @@ export class ResourceService {
 
   private session: any;
 
-  constructor(private _http: HttpClient) {
+  constructor(/*private _http: HttpClient*/) {
     const connection = new autobahn.Connection({
       url: 'ws://localhost:8083/ws',
       realm: 'frontend'
