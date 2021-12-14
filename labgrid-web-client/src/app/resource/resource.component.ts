@@ -40,6 +40,9 @@ export class ResourceComponent implements OnInit {
     if (this.resource.params.host) {
       this.resourceAttributes.push({ name: 'Host name: ', value: this.resource.params.host });
     }
+    else if (this.resource.target) {
+      this.resourceAttributes.push({ name: 'Host name: ', value: this.resource.target });
+    }
     if (this.resource.params.address) {
       this.resourceAttributes.push({ name: 'Address: ', value: String(this.resource.params.address) });
     }
@@ -66,6 +69,12 @@ export class ResourceComponent implements OnInit {
     }
     if (this.resource.params.speed) {
       this.resourceAttributes.push({ name: 'Speed: ', value: String(this.resource.params.speed) });
+    }
+    if (this.resource.params.path) {
+      this.resourceAttributes.push({ name: 'Path: ', value: this.resource.params.path });
+    }
+    if (this.resource.params.control_path) {
+      this.resourceAttributes.push({ name: 'Control path: ', value: this.resource.params.control_path });
     }
     if (this.resource.avail != undefined && this.resource.avail != null) {
       this.resourceAttributes.push({ name: 'Available: ', value: String(this.resource.avail) });
