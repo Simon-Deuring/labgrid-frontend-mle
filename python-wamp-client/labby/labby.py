@@ -90,6 +90,8 @@ class RouterInterface(ApplicationSession):
             self.register("places")
             self.register("resource", target='cup')
             self.register("power_state", target='cup')
+            self.register("resource_overview", target='cup')
+            self.register("resource_by_name")
         except wexception.Error as err:
             self.log.error(f"Could not register procedure: {err}.\n{err.with_traceback()}")
 
@@ -105,7 +107,9 @@ def run_router(url: str, realm: str):
     globals()['LOADED_RPC_FUNCTIONS'] = {
         "places":   RPC("localhost.places", rpc.places),
         "resource": RPC("localhost.resource", rpc.resource),
-        "power_state": RPC("localhost.power_state", rpc.power_state)
+        "power_state": RPC("localhost.power_state", rpc.power_state),
+        "resource_overview": RPC("localhost.resource_overview", rpc.resource_overview),
+        "resource_by_name": RPC("localhost.resource_by_name", rpc.resource_by_name),
     }
 
     logging.basicConfig(level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")

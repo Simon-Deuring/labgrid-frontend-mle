@@ -1,6 +1,7 @@
 export class Resource {
     public name: string;
-    public matches: string;
+    public place: string;
+    public target: string;
     public acquired: string;
     public avail: boolean;
     public cls: string;
@@ -29,9 +30,10 @@ export class Resource {
         vendor_id?: number;
     };
 
-    constructor(name: string, matches: string, acquired: string, avail: boolean, cls: string, params: any){
+    constructor(name: string, place: string, target: string, acquired: string, avail: boolean, cls: string, params: any){
         this.name = name;
-        this.matches = matches;
+        this.place = place;
+        this.target = target;
         this.acquired = acquired;
         this.avail = avail;
         this.cls = cls;

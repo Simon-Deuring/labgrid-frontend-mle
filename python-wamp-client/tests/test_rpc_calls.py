@@ -46,7 +46,28 @@ class Component(ApplicationSession):
         print("Polling ALL resource")
         res = await self.call(u'localhost.resource')
         print(f"Received resources: {res}")
+
+        temp = list(choice(list(res.values())).keys())
+        name = choice(list(temp))
+        print(f"Polling resource by name {name}")
+        res = await self.call('localhost.resource_by_name', name)
+        print(f"Received resources: {res}")
+
+        print("Polling all resources by name")
+        res = await self.call('localhost.resource_by_name')
+        print(f"Received resources: {res}")
+
+        place = choice(list(res.keys()))
+        print(f"Polling resource overview by place {place}")
+        res = await self.call('localhost.resource_overview', place)
+        print(f"Received resources: {res}")
+
+        print("Polling all resources by name")
+        res = await self.call('localhost.resource_overview')
+        print(f"Received resources: {res}")
+
         self.leave()
+
 
     def onDisconnect(self):
         asyncio.get_event_loop().stop()
