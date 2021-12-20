@@ -23,9 +23,10 @@
     width: 50% !important;
 }
 
-.action-bar {
+.action-bar > *{
     margin-top: 16px;
     margin-bottom: 16px;
+    margin-right: 16px;
 }
 
 #invalidIcon{

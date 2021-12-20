@@ -90,4 +90,30 @@ export class PlaceService {
     }
   }
 
+  public async releasePlace(placeName: string): Promise<boolean> {
+    let body = await this.getPlace(placeName) as Place;
+
+    if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
+      console.log('Something went wrong while releasing the place.');
+      return false;
+    } else {
+      console.log('Place released successfully.');
+      // TODO: Connect to server 
+      return true;
+    }
+  }
+
+  public async reservePlace(placeName: string): Promise<boolean> {
+    let body = await this.getPlace(placeName) as Place;
+
+    if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
+      console.log('Something went wrong while reserve the place.');
+      return false;
+    } else {
+      console.log('Place is reserved.');
+      // TODO: Connect to server 
+      return true;
+    }
+  }
+
 }
