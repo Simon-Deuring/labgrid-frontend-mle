@@ -24,6 +24,7 @@ export class PlaceComponent implements OnInit {
   displayedColumns: Array<string> = ['state-name', 'state-value'];
   allocationStateInvalid = false;
   isAcquired = false;
+  isAcquiredByUser = false;
 
   constructor(private _ps: PlaceService, private _rs: ResourceService, private _snackBar: MatSnackBar, private route: ActivatedRoute, private router: Router) {
     route.params.subscribe(val => {
@@ -88,6 +89,7 @@ export class PlaceComponent implements OnInit {
         break;
     }*/
 
+    // TODO: Check if place was aquired by current user, if so set is isAquiredByUser to true for enabling the release button
     if (!this.place.acquired) {
       this.placeStates.push({ name: 'Acquired: ', value: 'no' });
       this.isAcquired = false;
@@ -102,6 +104,28 @@ export class PlaceComponent implements OnInit {
 
     if (ret) {
       this._snackBar.open('Place was acquired succesfully!', 'OK',
+        {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+    }
+  }
+
+  public async releasePlace() {
+    const ret = await this._ps.releasePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+    if (ret) {
+      this._snackBar.open('Place was released succesfully!', 'OK',
+        {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+    }
+  }
+
+  public async reservePlace() {
+    const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+    if (ret) {
+      this._snackBar.open('Place was reserved succesfully!', 'OK',
         {
           duration: 3000,
           panelClass: ['success-snackbar']
