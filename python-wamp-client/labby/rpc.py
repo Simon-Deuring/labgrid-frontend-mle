@@ -2,38 +2,34 @@
 Generic RPC functions for labby
 """
 
-from typing import List, Dict, Union, Optional, Callable
+from typing import List, Dict, Tuple, Union, Optional, Callable
 
 import labby.labby_error as le
+from attr import attr, attrib, attrs
 
 
+@attrs()
+class RPC_desc():
+    name : str = attrib()
+    endpoint : str = attrib()
+    info : Optional[str] = attrib(default=None)
+    attributes : Optional[List[Tuple[str, str]]] = attrib(default=None)
+
+@attrs()
 class RPC():
     """
     Wrapper for remote procedure call functions
     """
 
-    def __init__(self, endpoint: str, func: Callable):
-        assert not endpoint is None
-        assert not func is None
-        self.endpoint = endpoint
-        self.func = func
-
-    def __repr__(self):
-        from inspect import signature
-
-        sig = signature(self.func)
-        ret_type = sig.return_annotation
-        params = sig.parameters
-        return f"{self.endpoint}\
-            ({', '.join([f'{x.name}:{x.annotation}'for x in params.values()])}) -> {ret_type}"
+    endpoint: str  = attrib()
+    func: Callable = attrib()
 
     def bind(self, context: Callable, *args, **kwargs):
         """
         Bind RPC to specific context,to be called by the frontend
         """
 
-        return lambda *a, **kw: self.func(*args, *a, context=context(), **kwargs, **kw)
-
+        return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
 
 async def places(context, place: Optional[str] = None) -> Union[List[Dict], Dict]:
     """
@@ -165,3 +161,8 @@ async def release(context, target, place: str, resource : str) -> Dict:
 
     ret = await context.call(f"org.labgrid.exporter.{target}.release",  resource, place)
     return ret # TODO (Kevin) figure out the failure modes
+
+async def info(context, func_key : Optional[str]) -> Dict:
+    if not func_key in globals()["FUNCTION_INFO"]:
+        return le.not_found(f"Function {func_key} not found in registry.")
+    # if not func_key in 
