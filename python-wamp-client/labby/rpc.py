@@ -9,11 +9,29 @@ from attr import attr, attrib, attrs
 
 
 @attrs()
-class RPC_desc():
-    name : str = attrib()
-    endpoint : str = attrib()
-    info : Optional[str] = attrib(default=None)
-    attributes : Optional[List[Tuple[str, str]]] = attrib(default=None)
+class RPCDesc():
+    name: str = attrib()
+    endpoint: str = attrib()
+    remote_endpoint: str = attrib(default=None)
+    info: Optional[str] = attrib(default=None)
+    parameter: Optional[List[Tuple[str, str]]] = attrib(default=None)
+
+
+FUNCTION_INFO = {
+    "places": RPCDesc(name="places",
+                      endpoint="localhost.places",
+                      remote_endpoint="org.labgrid.coordinator.get_places",
+                      info="""Takes optional string parameter to filter Places by.
+Returns Dictionary of places with registered Resources.""",
+                      parameter=[("places", "Place filter string")]),
+    "resource": RPCDesc(name="resource",
+                        endpoint="localhost.resource",
+                        remote_endpoint="org.labgrid.coordinator.get_resources",),
+    "power_state": RPCDesc(name="power_state",
+                           endpoint="localhost.power_state",
+                           )
+}
+
 
 @attrs()
 class RPC():
@@ -21,7 +39,7 @@ class RPC():
     Wrapper for remote procedure call functions
     """
 
-    endpoint: str  = attrib()
+    endpoint: str = attrib()
     func: Callable = attrib()
 
     def bind(self, context: Callable, *args, **kwargs):
@@ -30,6 +48,7 @@ class RPC():
         """
 
         return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
+
 
 async def places(context, place: Optional[str] = None) -> Union[List[Dict], Dict]:
     """
@@ -44,7 +63,8 @@ async def places(context, place: Optional[str] = None) -> Union[List[Dict], Dict
         # FIXME (Kevin) don't serialize in rpc functions
         if "error" in power.keys():
             # raise RuntimeError(power)
-            return {"place": place, "power_state": False} # TODO (Kevin) handle error correctly
+            # TODO (Kevin) handle error correctly
+            return {"place": place, "power_state": False}
         return power
 
     if place is None:
@@ -135,7 +155,7 @@ async def power_state(context,
     return {"place": place, "power_state": False}
 
 
-async def acquire(context, target, place: str, resource : str, cls) -> Dict:
+async def acquire(context, target, place: str, resource: str, cls) -> Dict:
     """
     rpc for acquiring places
     """
@@ -145,10 +165,10 @@ async def acquire(context, target, place: str, resource : str, cls) -> Dict:
         return le.invalid_parameter("Missing required parameter: place.").to_json()
 
     ret = await context.call(f"org.labgrid.exporter.{target}.acquire", resource, place, place)
-    return ret # TODO (Kevin) figure out the failure modes
+    return ret  # TODO (Kevin) figure out the failure modes
 
 
-async def release(context, target, place: str, resource : str) -> Dict:
+async def release(context, target, place: str, resource: str) -> Dict:
     """
     rpc for releasing 'acquired' places
     """
@@ -160,9 +180,12 @@ async def release(context, target, place: str, resource : str) -> Dict:
         return le.invalid_parameter("Missing required parameter: resource.").to_json()
 
     ret = await context.call(f"org.labgrid.exporter.{target}.release",  resource, place)
-    return ret # TODO (Kevin) figure out the failure modes
+    return ret  # TODO (Kevin) figure out the failure modes
 
-async def info(context, func_key : Optional[str]) -> Dict:
+
+async def info(context=None, func_key: Optional[str] = None) -> Union[Dict, List[Dict]]:
+    if func_key is None:
+        return [desc.__dict__ for desc in globals()["FUNCTION_INFO"].values()]
     if not func_key in globals()["FUNCTION_INFO"]:
-        return le.not_found(f"Function {func_key} not found in registry.")
-    # if not func_key in 
+        return le.not_found(f"Function {func_key} not found in registry.").to_json()
+    return globals()["FUNCTION_INFO"][func_key].__dict__

@@ -21,6 +21,10 @@ class Component(ApplicationSession):
         self.join(self.config.realm)
 
     async def onJoin(self, details):
+        info = await self.call("localhost.info", "places")
+        print(info)
+        info = await self.call("localhost.info")
+        print(info)
         res = await self.call(u"wamp.registration.list")
         print(res)
         procs = []
@@ -46,17 +50,17 @@ class Component(ApplicationSession):
         res = await self.call(u'localhost.resource', place)
         print(f"Received resources: {res}")
 
-        resource = choice(list(res.values()))['cls']
-        print(f"Acquiring place {place}")
-        res = await self.call(u"localhost.acquire", resource, place, place)
-        print(f"Received: {res}")
-        print(f"Releasing place {place}")
-        res = await self.call(u"localhost.release", resource, place)
-        print(f"Received: {res}")
+        # resource = choice(list(res.values()))['cls']
+        # print(f"Acquiring place {place}")
+        # res = await self.call(u"localhost.acquire", resource, place, place)
+        # print(f"Received: {res}")
+        # print(f"Releasing place {place}")
+        # res = await self.call(u"localhost.release", resource, place)
+        # print(f"Received: {res}")
 
-        #print("Polling ALL resource")
-        #res = await self.call(u'localhost.resource')
-        #print(f"Received resources: {res}")
+        print("Polling ALL resource")
+        res = await self.call(u'localhost.resource')
+        print(f"Received resources: {res}")
         self.leave()
 
     def onDisconnect(self):

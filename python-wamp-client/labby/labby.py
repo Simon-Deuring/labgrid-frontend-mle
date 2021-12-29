@@ -33,7 +33,8 @@ def register_rpc(func_key: str, endpoint: str, func: Callable) -> None:
     assert not func_key is None
     assert not endpoint is None
     assert not func is None
-    globals()["LOADED_RPC_FUNCTIONS"][func_key] = RPC(endpoint=endpoint, func=func)
+    globals()["LOADED_RPC_FUNCTIONS"][func_key] = RPC(
+        endpoint=endpoint, func=func)
 
 
 def load_rpc(func_key: str) -> Optional[RPC]:
@@ -102,6 +103,7 @@ class RouterInterface(ApplicationSession):
             self.register("power_state", 'cup')
             self.register("acquire",     'cup')
             self.register("release",     'cup')
+            self.register("info")
         except wexception.Error as err:
             self.log.error(
                 f"Could not register procedure: {err}.\n{err.with_traceback()}")
@@ -126,6 +128,7 @@ def run_router(url: str, realm: str):
                  endpoint="localhost.acquire", func=rpc.acquire)
     register_rpc(func_key="release",
                  endpoint="localhost.release", func=rpc.acquire)
+    register_rpc(func_key="info", endpoint="localhost.info", func=rpc.info)
 
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
@@ -140,7 +143,7 @@ def run_router(url: str, realm: str):
     sleep(4)
     loop = asyncio.get_event_loop()
     try:
-        asyncio.log.logger.info("Connecting to %s on realm '%s'",url, realm)
+        asyncio.log.logger.info("Connecting to %s on realm '%s'", url, realm)
         loop.run_until_complete(labby_coro)
         loop.run_until_complete(frontend_coro)
         loop.run_forever()
