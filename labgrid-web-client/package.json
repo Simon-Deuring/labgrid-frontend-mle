@@ -3,8 +3,8 @@
     "version": "0.0.0",
     "scripts": {
         "ng": "ng",
-        "start": "ng lint && ng serve",
-        "lint": "ng lint",
+        "start": "ng serve",
+        "lint": "ng lint --fix",
         "build": "ng build",
         "watch": "ng build --watch --configuration development",
         "test": "ng test"
@@ -42,6 +42,7 @@
         "@typescript-eslint/eslint-plugin": "4.28.2",
         "@typescript-eslint/parser": "4.28.2",
         "eslint": "^7.26.0",
+        "eslint-plugin-prettier": "^4.0.0",
         "jasmine-core": "~3.8.0",
         "karma": "~6.3.0",
         "karma-chrome-launcher": "~3.1.0",

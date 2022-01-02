@@ -29,7 +29,8 @@
                         "style": "camelCase"
                     }
                 ],
-                "@angular-eslint/no-empty-lifecycle-method": ["off"]
+                "@angular-eslint/no-empty-lifecycle-method": ["off"],
+                "prettier/prettier": ["error"]
             }
         },
         {
@@ -37,5 +38,9 @@
             "extends": ["plugin:@angular-eslint/template/recommended"],
             "rules": {}
         }
-    ]
+    ],
+    "plugins": ["prettier"],
+    "rules": {
+        "prettier/prettier": ["error"]
+    }
 }
