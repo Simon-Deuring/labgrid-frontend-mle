@@ -4,6 +4,7 @@
 labgrid-web-client/dist
 labgrid-web-client/tmp
 labgrid-web-client/out-tsc
+labgrid-web-client/.angular/cache
 # Only exists if Bazel was run
 labgrid-web-client/bazel-out
 
