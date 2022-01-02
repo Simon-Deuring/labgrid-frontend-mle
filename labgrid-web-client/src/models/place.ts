@@ -1,5 +1,5 @@
-import { Resource } from "./resource";
-import { AllocationState } from "../app/_enums/allocation-state";
+import { Resource } from './resource';
+import { AllocationState } from '../app/_enums/allocation-state';
 
 export class Place {
     public acquired: string;
@@ -8,9 +8,9 @@ export class Place {
     public matches: object[];
     public name: string;
     public reservation: AllocationState;
-    
 
-    constructor(acquired: string, acquired_resources: object[], isRunning: boolean, matches: object[], name: string, reservation: AllocationState){
+    // prettier-ignore
+    constructor(acquired: string, acquired_resources: object[], isRunning: boolean, matches: object[], name: string, reservation: AllocationState) {
         this.acquired = acquired;
         this.acquired_resources = acquired_resources;
         this.isRunning = isRunning;

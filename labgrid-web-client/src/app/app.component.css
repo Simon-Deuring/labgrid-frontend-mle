@@ -1,21 +1,23 @@
 :host {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-size: 14px;
-  color: #333;
-  box-sizing: border-box;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+    font-size: 14px;
+    color: #333;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
+html,
+body {
+    height: 100%;
+    margin: 0;
 }
 
 #app {
-  display: flex;
-  flex-flow: column;
-  height: 100%;
+    display: flex;
+    flex-flow: column;
+    height: 100%;
 }
 
 #home {
@@ -23,35 +25,35 @@ html, body {
 }
 
 .mat-toolbar {
-  position: relative;
-  z-index: 2;
-  min-height: 64px;
-  max-height: 64px;
+    position: relative;
+    z-index: 2;
+    min-height: 64px;
+    max-height: 64px;
 }
 
 .spacer {
-  flex: 1 1 auto;
+    flex: 1 1 auto;
 }
 
 .page-container {
-  width: 100%;
-  flex: 1 1 auto;
+    width: 100%;
+    flex: 1 1 auto;
 }
 
 .main-content {
-  justify-content: left;
-  padding: 20px;
+    justify-content: left;
+    padding: 20px;
 }
 
 .sidenav-content {
-  width: 280px;
+    width: 280px;
 }
 
 ::ng-deep .success-snackbar {
-  background: #98DFAF;
-  color: #01200b;
+    background: #98dfaf;
+    color: #01200b;
 }
 
 ::ng-deep .success-snackbar .mat-simple-snackbar-action {
-  color: #01200b;
+    color: #01200b;
 }

@@ -10,63 +10,67 @@ import { MatTable } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-place',
-  templateUrl: './place.component.html',
-  styleUrls: ['./place.component.css']
+    selector: 'app-place',
+    templateUrl: './place.component.html',
+    styleUrls: ['./place.component.css'],
 })
 export class PlaceComponent implements OnInit {
+    @ViewChild('placeStateTable') table!: MatTable<any>;
 
-  @ViewChild('placeStateTable') table!: MatTable<any>;
+    place: Place = new Place('', [], false, [], '', AllocationState.Invalid);
+    resources: Resource[] = [];
+    placeStates: Array<{ name: string; value: string }> = [];
+    displayedColumns: Array<string> = ['state-name', 'state-value'];
+    allocationStateInvalid = false;
+    isAcquired = false;
+    isAcquiredByUser = false;
 
-  place: Place = new Place('', [], false, [], '', AllocationState.Invalid);
-  resources: Resource[] = [];
-  placeStates: Array<{ name: string, value: string }> = [];
-  displayedColumns: Array<string> = ['state-name', 'state-value'];
-  allocationStateInvalid = false;
-  isAcquired = false;
-  isAcquiredByUser = false;
-
-  constructor(private _ps: PlaceService, private _rs: ResourceService, private _snackBar: MatSnackBar, private route: ActivatedRoute, private router: Router) {
-    route.params.subscribe(val => {
-      const currentRoute = route.snapshot.url[route.snapshot.url.length - 1].path;
-      this._ps.getPlace(currentRoute).then(data => {
-        this.place = data;
-        this.getResources();
-        this.readPlaceState();
-        this.table.renderRows();
-      });
-    })
-  }
-
-  ngOnInit(): void { }
-
-  private getResources(): void {
-    this._rs.getResourcesForPlace(this.place.name).then(resources => {
-      this.resources = resources;
-    });
-  }
-
-  public navigateToResource(resourceName: string) {
-    this.router.navigate(['resource/', resourceName]);
-  }
-
-  private readPlaceState(): void {
-
-    this.placeStates = [];
-    this.allocationStateInvalid = false;
-
-    if (this.place.matches) {
-      // TODO: Get real host name for places.
-      this.placeStates.push({ name: 'Host name: ', value: 'cup' });
+    constructor(
+        private _ps: PlaceService,
+        private _rs: ResourceService,
+        private _snackBar: MatSnackBar,
+        private route: ActivatedRoute,
+        private router: Router
+    ) {
+        route.params.subscribe((val) => {
+            const currentRoute = route.snapshot.url[route.snapshot.url.length - 1].path;
+            this._ps.getPlace(currentRoute).then((data) => {
+                this.place = data;
+                this.getResources();
+                this.readPlaceState();
+                this.table.renderRows();
+            });
+        });
     }
 
-    if (this.place.isRunning) {
-      this.placeStates.push({ name: 'Is running: ', value: 'yes' });
-    } else {
-      this.placeStates.push({ name: 'Is running: ', value: 'no' });
+    ngOnInit(): void {}
+
+    private getResources(): void {
+        this._rs.getResourcesForPlace(this.place.name).then((resources) => {
+            this.resources = resources;
+        });
     }
 
-    /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
+    public navigateToResource(resourceName: string) {
+        this.router.navigate(['resource/', resourceName]);
+    }
+
+    private readPlaceState(): void {
+        this.placeStates = [];
+        this.allocationStateInvalid = false;
+
+        if (this.place.matches) {
+            // TODO: Get real host name for places.
+            this.placeStates.push({ name: 'Host name: ', value: 'cup' });
+        }
+
+        if (this.place.isRunning) {
+            this.placeStates.push({ name: 'Is running: ', value: 'yes' });
+        } else {
+            this.placeStates.push({ name: 'Is running: ', value: 'no' });
+        }
+
+        /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
     switch (allocationEnum) {
       case AllocationState.Allocated:
         this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
@@ -89,48 +93,44 @@ export class PlaceComponent implements OnInit {
         break;
     }*/
 
-    // TODO: Check if place was aquired by current user, if so set is isAquiredByUser to true for enabling the release button
-    if (!this.place.acquired) {
-      this.placeStates.push({ name: 'Acquired: ', value: 'no' });
-      this.isAcquired = false;
-    } else {
-      this.placeStates.push({ name: 'Acquired: ', value: this.place.acquired });
-      this.isAcquired = true;
+        // TODO: Check if place was aquired by current user, if so set is isAquiredByUser to true for enabling the release button
+        if (!this.place.acquired) {
+            this.placeStates.push({ name: 'Acquired: ', value: 'no' });
+            this.isAcquired = false;
+        } else {
+            this.placeStates.push({ name: 'Acquired: ', value: this.place.acquired });
+            this.isAcquired = true;
+        }
     }
-  }
 
-  public async acquirePlace() {
-    const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+    public async acquirePlace() {
+        const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
 
-    if (ret) {
-      this._snackBar.open('Place was acquired succesfully!', 'OK',
-        {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+        if (ret) {
+            this._snackBar.open('Place was acquired succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+        }
     }
-  }
 
-  public async releasePlace() {
-    const ret = await this._ps.releasePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
-    if (ret) {
-      this._snackBar.open('Place was released succesfully!', 'OK',
-        {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+    public async releasePlace() {
+        const ret = await this._ps.releasePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+        if (ret) {
+            this._snackBar.open('Place was released succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+        }
     }
-  }
 
-  public async reservePlace() {
-    const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
-    if (ret) {
-      this._snackBar.open('Place was reserved succesfully!', 'OK',
-        {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+    public async reservePlace() {
+        const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+        if (ret) {
+            this._snackBar.open('Place was reserved succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+        }
     }
-  }
-
 }

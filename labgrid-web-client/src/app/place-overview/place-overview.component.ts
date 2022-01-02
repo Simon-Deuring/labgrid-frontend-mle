@@ -7,50 +7,47 @@ import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
 
 @Component({
-  selector: 'app-place-overview',
-  templateUrl: './place-overview.component.html',
-  styleUrls: ['./place-overview.component.css']
+    selector: 'app-place-overview',
+    templateUrl: './place-overview.component.html',
+    styleUrls: ['./place-overview.component.css'],
 })
 export class PlaceOverviewComponent implements OnInit {
-  
-  places: Place[] = [];
-  dataSource: MatTableDataSource<any> = new MatTableDataSource();
-  displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isRunning'];
-  
-  @ViewChild('paginator') paginator!: MatPaginator;
+    places: Place[] = [];
+    dataSource: MatTableDataSource<any> = new MatTableDataSource();
+    displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isRunning'];
 
-  constructor(private _ps: PlaceService, private _resourceService: ResourceService, private router: Router) {
-    this.dataSource= new MatTableDataSource(this.places)
-  }
-  
-  ngOnInit(): void {
-    this._ps.getPlaces()
-      .then(data => {
-        this.places = data;
+    @ViewChild('paginator') paginator!: MatPaginator;
+
+    constructor(private _ps: PlaceService, private _resourceService: ResourceService, private router: Router) {
         this.dataSource = new MatTableDataSource(this.places);
-        this.dataSource.paginator = this.paginator;
-      });
-  }
-
-  getRunningIcon (isRunning: boolean): string {
-    if (isRunning) {
-      return 'check_circle';
-    } else {
-      return 'cancel';
     }
-  }
-  
-  applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
-  }
 
-  navigateToPlace(placeName: string){
-    this.router.navigate(['place/', placeName]);
-  }
+    ngOnInit(): void {
+        this._ps.getPlaces().then((data) => {
+            this.places = data;
+            this.dataSource = new MatTableDataSource(this.places);
+            this.dataSource.paginator = this.paginator;
+        });
+    }
 
-  navigateToResource(resourceName: string){
-    this.router.navigate(['resource/', resourceName]);
-  }
+    getRunningIcon(isRunning: boolean): string {
+        if (isRunning) {
+            return 'check_circle';
+        } else {
+            return 'cancel';
+        }
+    }
 
+    applyFilter(event: Event) {
+        const filterValue = (event.target as HTMLInputElement).value;
+        this.dataSource.filter = filterValue.trim().toLowerCase();
+    }
+
+    navigateToPlace(placeName: string) {
+        this.router.navigate(['place/', placeName]);
+    }
+
+    navigateToResource(resourceName: string) {
+        this.router.navigate(['resource/', resourceName]);
+    }
 }

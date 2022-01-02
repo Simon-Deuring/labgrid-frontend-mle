@@ -1,10 +1,10 @@
 .place-overview {
-    width:100%;
+    width: 100%;
     margin-top: 20px;
 }
 
 .resource-bar {
-    width:100%;
+    width: 100%;
     margin-bottom: 20px;
 }
 
@@ -23,13 +23,13 @@
     width: 50% !important;
 }
 
-.action-bar > *{
+.action-bar > * {
     margin-top: 16px;
     margin-bottom: 16px;
     margin-right: 16px;
 }
 
-#invalidIcon{
+#invalidIcon {
     font-size: 15px;
-    color: #FF595E;
+    color: #ff595e;
 }

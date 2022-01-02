@@ -1,13 +1,8 @@
 <div class="sidebar-container">
-
     <h1 class="sidebar-header">Places</h1>
-    <div class="sidebar-item" (click)="navigateToOverview()"> Place Overview</div>
+    <div class="sidebar-item" (click)="navigateToOverview()">Place Overview</div>
     <div class="sidebar-item" *ngFor="let place of places" (click)="navigateToPlace(place.name)">
-        <mat-icon [ngClass]="{
-                'available' : !place.acquired,
-                'occupied' : place.acquired
-            }"
-        >circle</mat-icon>
+        <mat-icon [ngClass]="{ available: !place.acquired, occupied: place.acquired }">circle</mat-icon>
         <div>{{ place.name }}</div>
     </div>
 
@@ -15,5 +10,4 @@
     <div class="sidebar-item" (click)="navigateToResources()">
         <div>Resource Overview</div>
     </div>
-
 </div>

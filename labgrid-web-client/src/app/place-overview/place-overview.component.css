@@ -5,11 +5,11 @@
 }
 
 .running {
-    color: #98DFAF;
+    color: #98dfaf;
 }
 
 .notRunning {
-    color: #FF595E;
+    color: #ff595e;
 }
 
 .mat-paginator {
@@ -32,12 +32,12 @@
     width: 70%;
 }
 
-#search-input{
+#search-input {
     padding-left: 5px;
     display: flex;
     justify-content: flex-end;
 }
 
-.clickable{
+.clickable {
     cursor: pointer;
 }

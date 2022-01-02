@@ -4,7 +4,7 @@
 }
 
 .sidebar-item {
-    display:flex;
+    display: flex;
     padding: 10px;
     padding-left: 20px;
     cursor: pointer;
@@ -29,7 +29,7 @@
 }
 
 .available {
-    color: #98DFAF;
+    color: #98dfaf;
 }
 
 .reserved {
@@ -37,7 +37,7 @@
 }
 
 .occupied {
-    color: #FF595E;
+    color: #ff595e;
 }
 
 .selected {

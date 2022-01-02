@@ -30,7 +30,8 @@ export class Resource {
         vendor_id?: number;
     };
 
-    constructor(name: string, place: string, target: string, acquired: string, avail: boolean, cls: string, params: any){
+    // prettier-ignore
+    constructor(name: string, place: string, target: string, acquired: string, avail: boolean, cls: string, params: any) {
         this.name = name;
         this.place = place;
         this.target = target;
