@@ -26,4 +26,6 @@ jobs:
           with:
               node-version: ${{ matrix.node-version }}
               cache: 'npm'
-        - run: npm run lint
+        - name: Start Llinter
+          working-directory: ./labgrid-web-client
+          run: npm run lint
