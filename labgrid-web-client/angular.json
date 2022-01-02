@@ -100,9 +100,21 @@
             ],
             "scripts": []
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
   },
-  "defaultProject": "labgrid-web-client"
+  "defaultProject": "labgrid-web-client",
+  "cli": {
+    "defaultCollection": "@angular-eslint/schematics"
+  }
 }
