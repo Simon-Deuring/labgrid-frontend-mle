@@ -2,7 +2,6 @@
     "name": "labgrid-web-client",
     "version": "0.0.0",
     "scripts": {
-        "ng": "ng",
         "start": "ng serve",
         "lint": "ng lint --fix",
         "build": "ng build",
