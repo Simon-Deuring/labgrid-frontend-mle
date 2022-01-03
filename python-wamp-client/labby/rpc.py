@@ -24,10 +24,12 @@ class RPC():
     endpoint: str  = attrib()
     func: Callable = attrib()
 
+ 
     def bind(self, context: Callable, *args, **kwargs):
         """
         Bind RPC to specific context,to be called by the frontend
         """
+
 
         return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
 
@@ -166,3 +168,4 @@ async def info(context, func_key : Optional[str]) -> Dict:
     if not func_key in globals()["FUNCTION_INFO"]:
         return le.not_found(f"Function {func_key} not found in registry.")
     # if not func_key in 
+

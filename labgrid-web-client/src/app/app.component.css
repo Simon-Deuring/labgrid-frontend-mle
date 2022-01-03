@@ -25,6 +25,8 @@ html, body {
 .mat-toolbar {
   position: relative;
   z-index: 2;
+  min-height: 64px;
+  max-height: 64px;
 }
 
 .spacer {
@@ -42,7 +44,7 @@ html, body {
 }
 
 .sidenav-content {
-  width: 320px;
+  width: 280px;
 }
 
 ::ng-deep .success-snackbar {

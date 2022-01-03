@@ -115,6 +115,7 @@ def run_router(url: str, realm: str):
     """
     Connect to labgrid coordinator and start local crossbar router
     """
+
     globals()["LOADED_RPC_FUNCTIONS"] = {}
     register_rpc(func_key="places",
                  endpoint="localhost.places", func=rpc.places)
@@ -129,6 +130,7 @@ def run_router(url: str, realm: str):
 
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
+
     labby_runner = ApplicationRunner(url=url, realm=realm, extra=None)
     labby_coro = labby_runner.run(LabbyClient, start_loop=False)
     frontend_runner = ApplicationRunner(

@@ -1,4 +1,3 @@
-//import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Place } from '../../models/place';
@@ -11,7 +10,6 @@ import * as autobahn from 'autobahn-browser';
 })
 export class PlaceService {
 
-  private connection: any;
   private session: any;
   
   constructor(/*private _http: HttpClient*/) {
@@ -24,7 +22,6 @@ export class PlaceService {
     connection.onopen = async function (session: any, details: any) {
       service.session = session;
     }
-    this.connection = connection;
 
     connection.open();
   }
@@ -85,6 +82,32 @@ export class PlaceService {
       return false;
     } else {
       console.log('Place not yet acquired. Try to acquire.');
+      // TODO: Connect to server 
+      return true;
+    }
+  }
+
+  public async releasePlace(placeName: string): Promise<boolean> {
+    let body = await this.getPlace(placeName) as Place;
+
+    if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
+      console.log('Something went wrong while releasing the place.');
+      return false;
+    } else {
+      console.log('Place released successfully.');
+      // TODO: Connect to server 
+      return true;
+    }
+  }
+
+  public async reservePlace(placeName: string): Promise<boolean> {
+    let body = await this.getPlace(placeName) as Place;
+
+    if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
+      console.log('Something went wrong while reserve the place.');
+      return false;
+    } else {
+      console.log('Place is reserved.');
       // TODO: Connect to server 
       return true;
     }

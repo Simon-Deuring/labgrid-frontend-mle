@@ -54,10 +54,12 @@ class Component(ApplicationSession):
         res = await self.call(u"localhost.release", resource, place)
         print(f"Received: {res}")
 
-        #print("Polling ALL resource")
-        #res = await self.call(u'localhost.resource')
-        #print(f"Received resources: {res}")
+        print("Polling ALL resource")
+        res = await self.call(u'localhost.resource')
+        print(f"Received resources: {res}")
+
         self.leave()
+
 
     def onDisconnect(self):
         asyncio.get_event_loop().stop()
