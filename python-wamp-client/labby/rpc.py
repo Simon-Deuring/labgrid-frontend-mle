@@ -2,74 +2,85 @@
 Generic RPC functions for labby
 """
 
-from typing import List, Dict, Union, Optional, Callable
+from typing import List, Dict, Tuple, Union, Optional, Callable
 
 import labby.labby_error as le
+from attr import attr, attrib, attrs
 
 
+@attrs()
+class RPC_desc():
+    name : str = attrib()
+    endpoint : str = attrib()
+    info : Optional[str] = attrib(default=None)
+    attributes : Optional[List[Tuple[str, str]]] = attrib(default=None)
+
+@attrs()
 class RPC():
     """
     Wrapper for remote procedure call functions
     """
 
-    def __init__(self, endpoint: str, func: Callable):
-        assert not endpoint is None
-        assert not func is None
-        self.endpoint = endpoint
-        self.func = func
+    endpoint: str  = attrib()
+    func: Callable = attrib()
 
-    def __repr__(self):
-        from inspect import signature
-
-        sig = signature(self.func)
-        ret_type = sig.return_annotation
-        params = sig.parameters
-        return f"{self.endpoint}\
-            ({', '.join([f'{x.name}:{x.annotation}'for x in params.values()])}) -> {ret_type}"
-
-    def bind(self, *args, **kwargs) -> Callable:
-        """
-        Bind RPC to specific context, e.g LabbyClient Session, or pass immutables into func
-        """
-        return lambda *a, **kw: self.func(*args, *a, **kwargs, **kw)
-
-    def bind_frontend(self, context: Callable, *args, **kwargs) -> Callable:
+ 
+    def bind(self, context: Callable, *args, **kwargs):
         """
         Bind RPC to specific context,to be called by the frontend
         """
-        return lambda *a: self.func(context(), *args, *a, **kwargs)
 
 
-async def places(context, place: Optional[str] = None) -> List[Dict]:
+        return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
+
+async def places(context, place: Optional[str] = None) -> Union[List[Dict], Dict]:
     """
     returns registered places as dict of lists
     """
     context.log.info("Fetching places.")
     targets = await context.call("org.labgrid.coordinator.get_places")
     # first level is target
+
+    async def get_item_power(name) -> Dict:
+        power = await power_state(context=context, place=name, target='cup')
+        # FIXME (Kevin) don't serialize in rpc functions
+        if "error" in power.keys():
+            # raise RuntimeError(power)
+            return {"place": place, "power_state": False} # TODO (Kevin) handle error correctly
+        return power
+
     if place is None:
-        return [{
-            'name': name,
-            'isRunning': True,
-            **target,
-            # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
-        } for name, target in targets.items()]
-    else:
-        if not place in targets.keys():
-            return le.not_found(f"Place {place} not found.")
-        else:
+        try:
             return [{
-                'name': place,
-                'isRunning': True,
-                **targets[place],
-                # TODO (Kevin) field isRunning is not contained in places, consider issuing a second rpc call
-            }]
+                'name': name,
+                'isRunning': await get_item_power(name),
+                **target,
+            } for name, target in targets.items()]
+        except RuntimeError as error:
+            if len(error.args) > 0 and isinstance(error.args[0], Dict) and 'error' in error.args[0].keys():
+                return error.args[0]
+            raise error
+    else:
+        try:
+            if not place in targets.keys():
+                return le.not_found(f"Place {place} not found.").to_json()
+            else:
+                ret = [{
+                    'name': place,
+                    'isRunning': await get_item_power(place),
+                    **targets[place],
+                }]
+                return ret
+        except RuntimeError as error:
+            if len(error.args) > 0 and isinstance(error.args[0], Dict) and 'error' in error.args[0].keys():
+                return error.args[0]
+            raise error
 
 
 async def resource(context,
-                   place: Optional[str] = None,
                    # TODO (Kevin) REPRESENT TARGET IN API
                    target: Union[str, int, None] = None,
+                   place: Optional[str] = None,
                    ) -> Dict:
     """
     rpc: returns resources registered for given place
@@ -103,8 +114,8 @@ async def resource(context,
 
 
 async def power_state(context,
+                      target: Union[str, int],
                       place: str,
-                      target: Union[str, int]
                       ) -> Dict:
     """
     rpc: return power state for a given place
@@ -114,10 +125,10 @@ async def power_state(context,
     if target is None:
         return le.invalid_parameter("Missing required parameter: target.").to_json()
     resources = await resource(context, place, target)
-    # a little hacky
     # FIXME (Kevin) don't serialize in rpc functions
     if "error" in resources.keys():
         return resources
+
     # TODO(Kevin) at the moment there is no way to do this any other way
     # hacky way to check power state, just see if any resource in place is available
     for res in resources.values():
@@ -126,42 +137,35 @@ async def power_state(context,
     return {"place": place, "power_state": False}
 
 
-async def resource_overview(context,
-                            place: Optional[str] = None,
-                            # TODO (Kevin) REPRESENT TARGET IN API
-                            target: Union[str, int, None] = None,
-                            ) -> Dict:
+async def acquire(context, target, place: str, resource : str, cls) -> Dict:
     """
-    rpc: returns list of all resources on target
+    rpc for acquiring places
     """
-    context.log.info(f"Fetching resources overview for {target}.")
+    if target is None:
+        return le.invalid_parameter("Missing required parameter: target.").to_json()
+    if place is None:
+        return le.invalid_parameter("Missing required parameter: place.").to_json()
 
-    targets = await context.call("org.labgrid.coordinator.get_resources")
-    ret = []
-    for target, resources in targets.items():
-        for res_place, res in resources.items():
-            if place is None or place == res_place:
-                for k, v in res.items():
-                    ret.append({'name': k, 'target': target,
-                               'place': res_place, **v})
-    return ret
+    ret = await context.call(f"org.labgrid.exporter.{target}.acquire", resource, place, place)
+    return ret # TODO (Kevin) figure out the failure modes
 
 
-async def resource_by_name(context,
-                           name: str = None,  # filter by name
-                           # TODO (Kevin) REPRESENT TARGET IN API
-                           ) -> Dict:
+async def release(context, target, place: str, resource : str) -> Dict:
     """
-    rpc: returns list of all resources of given name on target
+    rpc for releasing 'acquired' places
     """
+    if target is None:
+        return le.invalid_parameter("Missing required parameter: target.").to_json()
+    if place is None:
+        return le.invalid_parameter("Missing required parameter: place.").to_json()
+    if resource is None:
+        return le.invalid_parameter("Missing required parameter: resource.").to_json()
 
-    targets = await context.call("org.labgrid.coordinator.get_resources")
-    ret = []
-    for target, resources in targets.items():
-        for place, res in resources.items():
-            for k, v in res.items():
-                if name is None or name == k:
-                    ret.append(
-                        {'name': k, 'target': target, 'place': place, **v})
+    ret = await context.call(f"org.labgrid.exporter.{target}.release",  resource, place)
+    return ret # TODO (Kevin) figure out the failure modes
 
-    return ret
+async def info(context, func_key : Optional[str]) -> Dict:
+    if not func_key in globals()["FUNCTION_INFO"]:
+        return le.not_found(f"Function {func_key} not found in registry.")
+    # if not func_key in 
+
