@@ -8,15 +8,15 @@ import { ResourceOverviewComponent } from './resource-overview/resource-overview
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
 
 const routes: Routes = [
-  { path: '', component: PlaceOverviewComponent },
-  { path: 'place/:placename', component: PlaceComponent},
-  { path: 'resourceOverview', component: ResourceOverviewComponent},
-  { path: 'resource/:resourceName', component: ResourceComponent},
-  { path: '**', component: ErrorComponent }
+    { path: '', component: PlaceOverviewComponent },
+    { path: 'place/:placename', component: PlaceComponent },
+    { path: 'resourceOverview', component: ResourceOverviewComponent },
+    { path: 'resource/:resourceName', component: ResourceComponent },
+    { path: '**', component: ErrorComponent },
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+    imports: [RouterModule.forRoot(routes)],
+    exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

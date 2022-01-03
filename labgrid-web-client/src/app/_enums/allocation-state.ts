@@ -3,5 +3,5 @@ export enum AllocationState {
     Allocated,
     Acquired,
     Expired,
-    Invalid
+    Invalid,
 }

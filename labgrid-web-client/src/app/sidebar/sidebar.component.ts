@@ -3,33 +3,30 @@ import { Router } from '@angular/router';
 import { PlaceService } from '../_services/place.service';
 
 @Component({
-  selector: 'app-sidebar',
-  templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.css']
+    selector: 'app-sidebar',
+    templateUrl: './sidebar.component.html',
+    styleUrls: ['./sidebar.component.css'],
 })
 export class SidebarComponent implements OnInit {
+    public places: any = [];
 
-  public places: any = [];
+    constructor(private _ps: PlaceService, private router: Router) {}
 
-  constructor(private _ps: PlaceService, private router: Router) { }
+    ngOnInit(): void {
+        this._ps.getPlaces().then((data) => {
+            this.places = data;
+        });
+    }
 
-  ngOnInit(): void {
-    this._ps.getPlaces()
-      .then(data => {
-        this.places = data;
-      });
-  }
+    navigateToPlace(placeName: string) {
+        this.router.navigate(['place/', placeName]);
+    }
 
-  navigateToPlace(placeName: string) {
-    this.router.navigate(['place/', placeName]);
-  }
+    navigateToResources() {
+        this.router.navigate(['resourceOverview']);
+    }
 
-  navigateToResources() {
-    this.router.navigate(['resourceOverview']);
-  }
-
-  navigateToOverview() {
-    this.router.navigate(['/']);
-  }
-
+    navigateToOverview() {
+        this.router.navigate(['/']);
+    }
 }

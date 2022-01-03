@@ -2,16 +2,16 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  title = 'labgrid-web-client';
+    title = 'labgrid-web-client';
 
-  constructor(private router: Router) {}
+    constructor(private router: Router) {}
 
-  navigateToPlaceOverview(){
-    this.router.navigate(['/']);
-  }
+    navigateToPlaceOverview() {
+        this.router.navigate(['/']);
+    }
 }
