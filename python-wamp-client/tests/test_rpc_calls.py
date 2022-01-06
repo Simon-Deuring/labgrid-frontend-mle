@@ -1,13 +1,13 @@
 """
 Test all available remote procedure calls
 """
-# TODO(Kevin) convert into unit test, requires launcher/launchoptions for router and must start RPC provider
-
 import asyncio
-from os import environ
-from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
+import unittest
 from random import choice
+import subprocess
+import os
 
+from autobahn.asyncio.wamp import ApplicationRunner, ApplicationSession
 
 class Component(ApplicationSession):
     """
@@ -16,22 +16,22 @@ class Component(ApplicationSession):
     """
 
     def onConnect(self):
-        self.log.info(
-            f"Connected to Coordinator, joining realm '{self.config.realm}'")
+        self.log.info(f"Connected to Coordinator, joining realm '{self.config.realm}'")
         self.join(self.config.realm)
 
     async def onJoin(self, details):
-        info = await self.call("localhost.info", "places")
-        print(info)
-        info = await self.call("localhost.info")
-        print(info)
-        res = await self.call(u"wamp.registration.list")
-        print(res)
-        procs = []
-        for proc in res['exact']:
-            p = await self.call(u"wamp.registration.get", proc)
-            print(p)
-            procs.append(p)
+
+        # info = await self.call("localhost.info", "places")
+        # print(info)
+        # info = await self.call("localhost.info")
+        # print(info)
+        # res = await self.call(u"wamp.registration.list")
+        # print(res)
+        # procs = []
+        # for proc in res['exact']:
+        #     p = await self.call(u"wamp.registration.get", proc)
+        #     print(p)
+        #     procs.append(p)
 
         print("Polling places from router")
         places = await self.call(u"localhost.places")
@@ -50,25 +50,45 @@ class Component(ApplicationSession):
         res = await self.call(u'localhost.resource', place)
         print(f"Received resources: {res}")
 
-        # resource = choice(list(res.values()))['cls']
-        # print(f"Acquiring place {place}")
-        # res = await self.call(u"localhost.acquire", resource, place, place)
-        # print(f"Received: {res}")
-        # print(f"Releasing place {place}")
-        # res = await self.call(u"localhost.release", resource, place)
-        # print(f"Received: {res}")
+        place = choice(places)
+        group = place['matches'][0]['group']
+        resource = choice(list(res.items()))
+
+        print(f"Acquiring place {place}")
+        res = await self.call(u"localhost.acquire", place['name'], resource[0] , group)
+        print(f"Received: {res}")
+
+        print(f"Releasing place {place}")
+        res = await self.call(u"localhost.release", place['name'], resource[0] , group)
+        print(f"Received: {res}")
 
         print("Polling ALL resource")
         res = await self.call(u'localhost.resource')
         print(f"Received resources: {res}")
+
         self.leave()
 
     def onDisconnect(self):
         asyncio.get_event_loop().stop()
 
+class TestRpcCalls(unittest.TestCase):
+
+    def setUp(self) -> None:
+        os.chdir("../")
+        self.process = subprocess.Popen(["python", "run.py"])
+
+    def test_rpc_calls(self) -> None:
+        url = "ws://localhost:8083/ws"
+        realm = "frontend"
+        runner = ApplicationRunner(url, realm)
+        try:
+            runner.run(Component)
+        except Exception as error:
+            raise error
+
+    def tearDown(self) -> None:
+        self.process.terminate()
+        self.process.wait()
 
 if __name__ == '__main__':
-    url = "ws://localhost:8083/ws"
-    realm = "frontend"
-    runner = ApplicationRunner(url, realm)
-    runner.run(Component)
+    unittest.main()

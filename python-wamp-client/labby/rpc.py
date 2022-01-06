@@ -2,10 +2,15 @@
 Generic RPC functions for labby
 """
 
-from typing import List, Dict, Tuple, Union, Optional, Callable
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
+from attr import attrib, attrs
+
+import labby
 import labby.labby_error as le
-from attr import attr, attrib, attrs
+
+from .labby_types import (GroupName, PlaceName, ResourceName, Session,
+                          TargetName)
 
 
 @attrs()
@@ -50,7 +55,7 @@ class RPC():
         return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
 
 
-async def places(context, place: Optional[str] = None) -> Union[List[Dict], Dict]:
+async def places(context: Session, place: Optional[PlaceName] = None) -> Union[List[Dict], Dict]:
     """
     returns registered places as dict of lists
     """
@@ -69,11 +74,14 @@ async def places(context, place: Optional[str] = None) -> Union[List[Dict], Dict
 
     if place is None:
         try:
-            return [{
+            place_res = [{
                 'name': name,
-                'isRunning': await get_item_power(name),
+                'power_state': (await get_item_power(name))["power_state"],
                 **target,
             } for name, target in targets.items()]
+            for res in place_res:
+                context.places[res["name"]] = res
+            return place_res
         except RuntimeError as error:
             if len(error.args) > 0 and isinstance(error.args[0], Dict) and 'error' in error.args[0].keys():
                 return error.args[0]
@@ -83,22 +91,23 @@ async def places(context, place: Optional[str] = None) -> Union[List[Dict], Dict
             if not place in targets.keys():
                 return le.not_found(f"Place {place} not found.").to_json()
             else:
-                ret = [{
+                place_res = [{
                     'name': place,
-                    'isRunning': await get_item_power(place),
+                    'power_state': (await get_item_power(place))["power_state"],
                     **targets[place],
                 }]
-                return ret
+                context.places[place] = place_res
+                return place_res
         except RuntimeError as error:
             if len(error.args) > 0 and isinstance(error.args[0], Dict) and 'error' in error.args[0].keys():
                 return error.args[0]
             raise error
 
 
-async def resource(context,
+async def resource(context: Session,
                    # TODO (Kevin) REPRESENT TARGET IN API
-                   target: Union[str, int, None] = None,
-                   place: Optional[str] = None,
+                   target: Optional[TargetName] = None,
+                   place: Optional[PlaceName] = None,
                    ) -> Dict:
     """
     rpc: returns resources registered for given place
@@ -112,6 +121,7 @@ async def resource(context,
         else:
             if not place in targets[target].keys():
                 return le.not_found(f"Place {place} not found on Target").to_json()
+            context.resources = targets[target][place]
             return targets[target][place]
 
     if isinstance(target, str):
@@ -121,28 +131,24 @@ async def resource(context,
             return le.not_found(err_str).to_json()
         return resource_for_place()
 
-    elif isinstance(target, int):
-        if target >= len(targets):
-            err_str = f"Target {target} not found on Coordinator"
-            context.log.warn(err_str)
-            return le.not_found(err_str).to_json()
-        return resource_for_place()
-
+    context.resources = {"resources": targets}
     return {"resources": targets}
 
 
-async def power_state(context,
-                      target: Union[str, int],
-                      place: str,
+async def power_state(context: Session,
+                      target: TargetName,
+                      place: PlaceName,
                       ) -> Dict:
     """
     rpc: return power state for a given place
     """
+    # TODO (Kevin) Cache resource updates and get powerstates from there
     if place is None:
         return le.invalid_parameter("Missing required parameter: place.").to_json()
     if target is None:
         return le.invalid_parameter("Missing required parameter: target.").to_json()
-    resources = await resource(context, place, target)
+    if isinstance(target, str):
+        resources = await resource(context, place, target)
     # FIXME (Kevin) don't serialize in rpc functions
     if "error" in resources.keys():
         return resources
@@ -155,7 +161,7 @@ async def power_state(context,
     return {"place": place, "power_state": False}
 
 
-async def acquire(context, target, place: str, resource: str, cls) -> Dict:
+async def acquire(context: Session, target: TargetName, place: PlaceName, resource_key: ResourceName, group: GroupName) -> Dict:
     """
     rpc for acquiring places
     """
@@ -163,12 +169,17 @@ async def acquire(context, target, place: str, resource: str, cls) -> Dict:
         return le.invalid_parameter("Missing required parameter: target.").to_json()
     if place is None:
         return le.invalid_parameter("Missing required parameter: place.").to_json()
+    if resource_key is None:
+        return le.invalid_parameter("Missing required parameter: resource.").to_json()
 
-    ret = await context.call(f"org.labgrid.exporter.{target}.acquire", resource, place, place)
+    if place in labby.get_acquired_places():
+        return le.failed(f"Already acquired place {place}.").to_json()
+
+    ret = await context.call(f"org.labgrid.exporter.{target}.acquire", place)#, group, resource_key, place)
     return ret  # TODO (Kevin) figure out the failure modes
 
 
-async def release(context, target, place: str, resource: str) -> Dict:
+async def release(context: Session, target, place: PlaceName, resource_key: ResourceName, group: GroupName) -> Dict:
     """
     rpc for releasing 'acquired' places
     """
@@ -176,14 +187,17 @@ async def release(context, target, place: str, resource: str) -> Dict:
         return le.invalid_parameter("Missing required parameter: target.").to_json()
     if place is None:
         return le.invalid_parameter("Missing required parameter: place.").to_json()
-    if resource is None:
+    if resource_key is None:
         return le.invalid_parameter("Missing required parameter: resource.").to_json()
 
-    ret = await context.call(f"org.labgrid.exporter.{target}.release",  resource, place)
+    if not place in labby.get_acquired_places():
+        return le.failed(f"Place {place} is not acquired").to_json()
+
+    ret = await context.call(f"org.labgrid.exporter.{target}.release", place)#, group, resource_key, place)
     return ret  # TODO (Kevin) figure out the failure modes
 
 
-async def info(context=None, func_key: Optional[str] = None) -> Union[Dict, List[Dict]]:
+async def info(_context=None, func_key: Optional[str] = None) -> Union[Dict, List[Dict]]:
     if func_key is None:
         return [desc.__dict__ for desc in globals()["FUNCTION_INFO"].values()]
     if not func_key in globals()["FUNCTION_INFO"]:

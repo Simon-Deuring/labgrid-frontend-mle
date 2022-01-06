@@ -1,7 +1,7 @@
 """
 A wamp client which registers a rpc function
 """
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 from time import sleep
 
 import logging
@@ -10,16 +10,16 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from . import rpc
+import labby.rpc as rpc
 from .rpc import RPC
 from .router import Router
+from .labby_types import PlaceKey
 
+LOADED_RPC_FUNCTIONS: Dict[str, RPC] = {}
+ACQUIRED_PLACES: List[PlaceKey] = []
+CALLBACK_REF: Optional[ApplicationSession] = None
 
-LOADED_RPC_FUNCTIONS: Dict[str, RPC]
-CALLBACK_REF = None
-
-
-def context_callback():
+def get_context_callback():
     """
     If context takes longer to create, prevent Context to be None in Crossbar router context
     """
@@ -37,13 +37,17 @@ def register_rpc(func_key: str, endpoint: str, func: Callable) -> None:
         endpoint=endpoint, func=func)
 
 
-def load_rpc(func_key: str) -> Optional[RPC]:
+def load_rpc(func_key: str):
     """
     Short hand to retrieve loaded RPCs
     """
     assert not func_key is None
     assert func_key in globals()["LOADED_RPC_FUNCTIONS"]
     return globals()["LOADED_RPC_FUNCTIONS"][func_key]
+
+
+def get_acquired_places() -> List[PlaceKey]:
+    return globals()["ACQUIRED_PLACES"]
 
 
 class LabbyClient(ApplicationSession):
@@ -53,6 +57,8 @@ class LabbyClient(ApplicationSession):
 
     def __init__(self, config: None):
         globals()["CALLBACK_REF"] = self
+        self.resources = {}
+        self.places = {}
         super().__init__(config=config)
 
     def onConnect(self):
@@ -72,10 +78,21 @@ class LabbyClient(ApplicationSession):
 
     def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
+        self.subscribe(self.onPlaceChanged, u"org.labgrid.coordinator.place_changed")
+        self.subscribe(self.onResourceChanged, u"org.labgrid.coordinator.resource_changed")
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
+
+    def onPlaceChanged(self, place_name, place, *args):
+        self.log.info(f"Changed place {place_name}.")
+        print(place)
+        self.places[place_name] = place
+
+    def onResourceChanged(self, *args):
+        self.log.info("Changed resource.")
+        pass
 
 
 class RouterInterface(ApplicationSession):
@@ -89,9 +106,9 @@ class RouterInterface(ApplicationSession):
         """
         Register functions from RPC store from key, overrides ApplicationSession::register
         """
-        callback = load_rpc(func_key)
+        callback: RPC = load_rpc(func_key)
         endpoint = callback.endpoint
-        func = callback.bind(context_callback, *args, **kwargs)
+        func = callback.bind(get_context_callback, *args, **kwargs)
         self.log.info(f"Registered function for endpoint {endpoint}.")
         super().register(func, endpoint)
 
@@ -106,7 +123,7 @@ class RouterInterface(ApplicationSession):
             self.register("info")
         except wexception.Error as err:
             self.log.error(
-                f"Could not register procedure: {err}.\n{err.with_traceback()}")
+                f"Could not register procedure: {err}.\n{err.with_traceback(None)}")
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
@@ -118,6 +135,8 @@ def run_router(url: str, realm: str):
     Connect to labgrid coordinator and start local crossbar router
     """
     globals()["LOADED_RPC_FUNCTIONS"] = {}
+    globals()["ACQUIRED_PLACES"] = {}
+
     register_rpc(func_key="places",
                  endpoint="localhost.places", func=rpc.places)
     register_rpc(func_key="resource",
