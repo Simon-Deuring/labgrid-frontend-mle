@@ -68,6 +68,7 @@ class Component(ApplicationSession):
 
         self.leave()
 
+
     def onDisconnect(self):
         asyncio.get_event_loop().stop()
 

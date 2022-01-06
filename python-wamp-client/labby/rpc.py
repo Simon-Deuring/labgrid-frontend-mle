@@ -47,10 +47,12 @@ class RPC():
     endpoint: str = attrib()
     func: Callable = attrib()
 
+ 
     def bind(self, context: Callable, *args, **kwargs):
         """
         Bind RPC to specific context,to be called by the frontend
         """
+
 
         return lambda *a, **kw: self.func(context(), *args, *a, **kwargs, **kw)
 

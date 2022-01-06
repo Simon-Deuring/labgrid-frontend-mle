@@ -15,17 +15,18 @@
 
 .place-table {
     width: 800px;
+    max-width: 100%;
     margin-top: 16px;
-    column-width: 50% !important;
 }
 
 .place-table td {
     width: 50% !important;
 }
 
-.action-bar {
+.action-bar > *{
     margin-top: 16px;
     margin-bottom: 16px;
+    margin-right: 16px;
 }
 
 #invalidIcon{
