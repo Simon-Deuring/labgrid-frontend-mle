@@ -189,7 +189,7 @@ async def places(context: Session,
         exporter = place_data["exporter"]
         place_res.append(
             {'name': place_name,
-                'power_state': power_states[exporter][place_name], **place_data}
+                'power_state': power_states[exporter][place_name]['power_state'], **place_data}
         )
     return place_res
 
@@ -218,11 +218,11 @@ async def resource(context: Session,
             return resource_data[target]
         else:
             if not place in resource_data[target].keys():
-                return not_found(f"Place {place} not found on Target").to_json()
+                return not_found(f"Place {place} not found on Target.").to_json()
             return resource_data[target][place]
 
     if not target in resource_data:
-        err_str = f"Target {target} not found on Coordinator"
+        err_str = f"Target {target} not found on Coordinator."
         context.log.warn(err_str)
         return not_found(err_str).to_json()
     return resource_for_place()
@@ -240,22 +240,18 @@ async def power_state(context: Session,
         return invalid_parameter("Missing required parameter: place.").to_json()
     if target is None:
         return invalid_parameter("Missing required parameter: target.").to_json()
-    if target is None:
-        return invalid_parameter("Missing required parameter: target.").to_json()
-    resource_data = await fetch_resource(context=context, place=place, resource_key=None)
+    power_data = await fetch_power_state(context=context, place=place)
 
-    if isinstance(resource_data, LabbyError):
-        return resource_data.to_json()
+    if isinstance(power_data, LabbyError):
+        return power_data.to_json()
 
-    if not target in resource_data.keys():
-        return failed(f"Target {target} not found on Coordinator.").to_json()
-    resource_data = resource_data[target]
-    # TODO(Kevin) at the moment there is no way to do this any other way
-    # hacky way to check power state, just see if any resource in place is available
-    for res in resource_data.values():
-        if "avail" in res.keys():
-            return {"place": place, "power_state": bool(res["avail"])}
-    return {"place": place, "power_state": False}
+    if not target in power_data.keys():
+        return not_found(f"Target {target} not found on Coordinator.").to_json()
+
+    if not place in power_data[target].keys():
+        return not_found(f"Place {target} not found on Target {target}.").to_json()
+
+    return power_data[target][place]
 
 
 async def resource_overview(context,

@@ -39,8 +39,9 @@ class Component(ApplicationSession):
         print(f"Received places: {places}")
 
         print("Polling power state for place")
-        power_state = await self.call(u"localhost.power_state", choice(places)["name"])
-        print(f"Received places: {power_state}")
+        place = choice(places)["name"]
+        power_state = await self.call(u"localhost.power_state", place)
+        print(f"Received power state for place {place}: {power_state}")
 
         print("Polling specific place")
         res = await self.call(u"localhost.places", choice(places)["name"])
