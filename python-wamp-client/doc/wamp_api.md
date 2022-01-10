@@ -53,8 +53,6 @@
 
 - Request
 
-   `resource_by_name`
-
    `resource_by_name(name)`
 
 - Response
@@ -74,8 +72,6 @@
 ### Resource Overview
 
 - Request
-
-   `resource_overview`
 
    `resource_overview(place)`
 

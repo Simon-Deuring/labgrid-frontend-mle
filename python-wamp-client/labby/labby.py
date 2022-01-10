@@ -10,14 +10,14 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-import labby.rpc as rpc
-from .rpc import RPC
+from .rpc import RPC, places, resource, power_state, acquire, release, info, resource_by_name, resource_overview
 from .router import Router
-from .labby_types import PlaceKey
+from .labby_types import PlaceKey, Session
 
 LOADED_RPC_FUNCTIONS: Dict[str, RPC] = {}
 ACQUIRED_PLACES: List[PlaceKey] = []
 CALLBACK_REF: Optional[ApplicationSession] = None
+
 
 def get_context_callback():
     """
@@ -50,15 +50,13 @@ def get_acquired_places() -> List[PlaceKey]:
     return globals()["ACQUIRED_PLACES"]
 
 
-class LabbyClient(ApplicationSession):
+class LabbyClient(Session):
     """
     Specializes Application Session to handle Communication specifically with the labgrid-frontend and the labgrid coordinator
     """
 
-    def __init__(self, config: None):
+    def __init__(self, config=None):
         globals()["CALLBACK_REF"] = self
-        self.resources = {}
-        self.places = {}
         super().__init__(config=config)
 
     def onConnect(self):
@@ -78,8 +76,10 @@ class LabbyClient(ApplicationSession):
 
     def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
-        self.subscribe(self.onPlaceChanged, u"org.labgrid.coordinator.place_changed")
-        self.subscribe(self.onResourceChanged, u"org.labgrid.coordinator.resource_changed")
+        self.subscribe(self.onPlaceChanged,
+                       u"org.labgrid.coordinator.place_changed")
+        self.subscribe(self.onResourceChanged,
+                       u"org.labgrid.coordinator.resource_changed")
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
@@ -87,7 +87,8 @@ class LabbyClient(ApplicationSession):
 
     def onPlaceChanged(self, place_name, place, *args):
         self.log.info(f"Changed place {place_name}.")
-        print(place)
+        if self.places is None:
+            self.places = {}
         self.places[place_name] = place
 
     def onResourceChanged(self, *args):
@@ -96,6 +97,9 @@ class LabbyClient(ApplicationSession):
 
 
 class RouterInterface(ApplicationSession):
+    """
+    Wamp router, for communicaion with frontend
+    """
 
     def onConnect(self):
         self.log.info(
@@ -120,6 +124,8 @@ class RouterInterface(ApplicationSession):
             self.register("power_state", 'cup')
             self.register("acquire",     'cup')
             self.register("release",     'cup')
+            self.register("resource_overview", 'cup')
+            self.register("resource_by_name")
             self.register("info")
         except wexception.Error as err:
             self.log.error(
@@ -139,16 +145,20 @@ def run_router(url: str, realm: str):
     globals()["ACQUIRED_PLACES"] = {}
 
     register_rpc(func_key="places",
-                 endpoint="localhost.places", func=rpc.places)
+                 endpoint="localhost.places", func=places)
     register_rpc(func_key="resource",
-                 endpoint="localhost.resource", func=rpc.resource)
+                 endpoint="localhost.resource", func=resource)
     register_rpc(func_key="power_state",
-                 endpoint="localhost.power_state", func=rpc.power_state)
+                 endpoint="localhost.power_state", func=power_state)
     register_rpc(func_key="acquire",
-                 endpoint="localhost.acquire", func=rpc.acquire)
+                 endpoint="localhost.acquire", func=acquire)
     register_rpc(func_key="release",
-                 endpoint="localhost.release", func=rpc.acquire)
-    register_rpc(func_key="info", endpoint="localhost.info", func=rpc.info)
+                 endpoint="localhost.release", func=release)
+    register_rpc(func_key="info", endpoint="localhost.info", func=info)
+    register_rpc(func_key="resource_overview",
+                 endpoint="localhost.resource_overview", func=resource_overview)
+    register_rpc(func_key="resource_by_name",
+                 endpoint="localhost.resource_by_name", func=resource_by_name)
 
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
@@ -163,7 +173,10 @@ def run_router(url: str, realm: str):
     router = Router("labby/router/.crossbar")
     sleep(4)
     loop = asyncio.get_event_loop()
+    assert not labby_coro is None
+    assert not frontend_coro is None
     try:
+
         asyncio.log.logger.info("Connecting to %s on realm '%s'", url, realm)
         loop.run_until_complete(labby_coro)
         loop.run_until_complete(frontend_coro)

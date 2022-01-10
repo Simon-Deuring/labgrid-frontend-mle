@@ -2,6 +2,7 @@
 Test all available remote procedure calls
 """
 import asyncio
+from time import sleep
 import unittest
 from random import choice
 import subprocess
@@ -50,20 +51,31 @@ class Component(ApplicationSession):
         res = await self.call(u'localhost.resource', place)
         print(f"Received resources: {res}")
 
-        place = choice(places)
-        group = place['matches'][0]['group']
-        resource = choice(list(res.items()))
+        # place = choice(places)
+        # group = place['matches'][0]['group']
+        # resource = choice(list(res.items()))
 
-        print(f"Acquiring place {place}")
-        res = await self.call(u"localhost.acquire", place['name'], resource[0] , group)
-        print(f"Received: {res}")
+        # print(f"Acquiring place {place}")
+        # res = await self.call(u"localhost.acquire", place['name'], resource[0] , group)
+        # print(f"Received: {res}")
 
-        print(f"Releasing place {place}")
-        res = await self.call(u"localhost.release", place['name'], resource[0] , group)
-        print(f"Received: {res}")
+        # print(f"Releasing place {place}")
+        # res = await self.call(u"localhost.release", place['name'], resource[0] , group)
+        # print(f"Received: {res}")
 
         print("Polling ALL resource")
         res = await self.call(u'localhost.resource')
+        print(f"Received resources: {res}")
+
+        temp = list(choice(list(res.values())).keys())
+        name = choice(list(temp))
+        print(f"Polling resource by name {name}")
+        res = await self.call('localhost.resource_by_name', name)
+        print(f"Received resources: {res}")
+
+        place = choice(list(res))['place']
+        print(f"Polling resource overview by place {place}")
+        res = await self.call('localhost.resource_overview', place)
         print(f"Received resources: {res}")
 
         self.leave()
@@ -74,9 +86,15 @@ class Component(ApplicationSession):
 
 class TestRpcCalls(unittest.TestCase):
 
-    def setUp(self) -> None:
-        os.chdir("../")
-        self.process = subprocess.Popen(["python", "run.py"])
+    # def setUp(self) -> None:
+        # os.chdir("../")
+        # try:
+        #     os.system("python run.py")
+        #     self.process = None#subprocess.Popen(["python", "run.py"])
+        #     sleep(6)
+        #     pass
+        # except Exception as exc:
+        #     raise exc
 
     def test_rpc_calls(self) -> None:
         url = "ws://localhost:8083/ws"
@@ -87,9 +105,11 @@ class TestRpcCalls(unittest.TestCase):
         except Exception as error:
             raise error
 
-    def tearDown(self) -> None:
-        self.process.terminate()
-        self.process.wait()
+    # def tearDown(self) -> None:
+    #     self.process.terminate()
+    #     self.process.wait()
+    #     pass
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
+    TestRpcCalls.test_rpc_calls(None)
