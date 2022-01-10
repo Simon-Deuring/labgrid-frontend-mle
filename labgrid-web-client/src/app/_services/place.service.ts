@@ -5,13 +5,15 @@ import { AllocationState } from '../_enums/allocation-state';
 
 import * as autobahn from 'autobahn-browser';
 
+import { HttpClient } from '@angular/common/http';
+
 @Injectable({
     providedIn: 'root',
 })
 export class PlaceService {
     private session: any;
 
-    constructor(/*private _http: HttpClient*/) {
+    constructor(private _http: HttpClient) {
         const connection = new autobahn.Connection({
             url: 'ws://localhost:8083/ws',
             realm: 'frontend',
@@ -26,6 +28,10 @@ export class PlaceService {
     }
 
     public async getPlaces(): Promise<Place[]> {
+        // If the python-wamp-client is not available the following lines can be used to load test data
+        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[]
+        // return mockPlaces 
+
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
         if (this.session) {
@@ -40,11 +46,17 @@ export class PlaceService {
             return places;
         }
 
-        // If the python-wamp-client is not available the following line can be used to load test data
-        // const places = await this._http.get('../assets/places.json').toPromise() as Place[];
     }
 
     public async getPlace(placeName: string): Promise<Place> {
+        // If the python-wamp-client is not available the following lines can be used to load test data
+        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[]
+        // let mockPlace = mockPlaces.find(element => element.name === placeName)
+        // if (!mockPlace){
+        //     throw new Error('No such place')
+        // }
+        // return mockPlace
+
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
         if (this.session) {
@@ -69,8 +81,6 @@ export class PlaceService {
             return place;
         }
 
-        // If the python-wamp-client is not available the following line can be used to load test data
-        // const place = await this.session.call('localhost.places');
     }
 
     public async acquirePlace(placeName: string): Promise<boolean> {
