@@ -28,6 +28,7 @@ import { ResourceService } from './_services/resource.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
     declarations: [
@@ -43,6 +44,7 @@ import { PlaceOverviewComponent } from './place-overview/place-overview.componen
         BrowserModule,
         AppRoutingModule,
         BrowserAnimationsModule,
+        HttpClientModule,
         MatIconModule,
         MatSidenavModule,
         MatToolbarModule,

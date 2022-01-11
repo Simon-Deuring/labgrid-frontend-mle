@@ -47,7 +47,8 @@ export class PlaceOverviewComponent implements OnInit {
         this.router.navigate(['place/', placeName]);
     }
 
-    navigateToResource(resourceName: string) {
-        this.router.navigate(['resource/', resourceName]);
+    navigateToResource(resourceName: string, event: Event) {
+        const correspondingPlace = (event.currentTarget as HTMLInputElement).parentNode?.parentNode?.firstChild?.textContent;
+        this.router.navigate(['resource/', resourceName, {placeName: correspondingPlace}]);
     }
 }

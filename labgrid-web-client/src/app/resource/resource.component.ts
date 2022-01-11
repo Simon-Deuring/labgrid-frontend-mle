@@ -20,7 +20,16 @@ export class ResourceComponent implements OnInit {
     constructor(private _rs: ResourceService, private route: ActivatedRoute) {
         route.params.subscribe(() => {
             const resourceName = route.snapshot.url[route.snapshot.url.length - 1].path;
-            this._rs.getResourceByName(resourceName).then((data) => {
+            // const placeName = this.route.snapshot.paramMap.get('placeName');
+            // if (!placeName) {
+            //     throw new Error('No place name provided')
+            // }
+            // this._rs.getResourceByName(resourceName, placeName).then((data) => {
+            //     this.resource = data;
+            //     this.readResourceAttributes();
+            // });
+
+            this._rs.getResourceByName(resourceName, 'placeholdername').then((data) => {
                 this.resource = data;
                 this.readResourceAttributes();
             });
