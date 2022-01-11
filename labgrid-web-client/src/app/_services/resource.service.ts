@@ -48,7 +48,7 @@ export class ResourceService {
         // If the python-wamp-client is not available the following lines can be used to load test data
         // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
         // const matchingResources = resources.filter(element => element.acquired === placeName);
-        // return matchingResources
+        // return matchingResources;
 
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
@@ -72,10 +72,10 @@ export class ResourceService {
         // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
         // const match = resources.find(element => element.name === resourceName && element.acquired === placeName.trim());
         // if (!match){
-        //     throw new Error('No such match')
+        //     throw new Error('No such match');
         // }
-        // match.place = match.acquired
-        // return match
+        // match.place = match.acquired;
+        // return match;
 
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.

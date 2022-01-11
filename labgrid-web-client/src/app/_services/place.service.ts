@@ -29,8 +29,8 @@ export class PlaceService {
 
     public async getPlaces(): Promise<Place[]> {
         // If the python-wamp-client is not available the following lines can be used to load test data
-        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[]
-        // return mockPlaces 
+        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[];
+        // return mockPlaces; 
 
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
@@ -50,12 +50,12 @@ export class PlaceService {
 
     public async getPlace(placeName: string): Promise<Place> {
         // If the python-wamp-client is not available the following lines can be used to load test data
-        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[]
-        // let mockPlace = mockPlaces.find(element => element.name === placeName)
+        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[];
+        // let mockPlace = mockPlaces.find(element => element.name === placeName);
         // if (!mockPlace){
-        //     throw new Error('No such place')
+        //     throw new Error('No such place');
         // }
-        // return mockPlace
+        // return mockPlace;
 
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
