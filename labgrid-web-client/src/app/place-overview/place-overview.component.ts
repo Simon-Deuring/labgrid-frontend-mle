@@ -18,7 +18,7 @@ export class PlaceOverviewComponent implements OnInit {
 
     @ViewChild('paginator') paginator!: MatPaginator;
 
-    constructor(private _ps: PlaceService, private _resourceService: ResourceService, private router: Router) {
+    constructor(private _ps: PlaceService, private router: Router) {
         this.dataSource = new MatTableDataSource(this.places);
     }
 

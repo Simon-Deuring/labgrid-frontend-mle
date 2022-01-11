@@ -17,7 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class PlaceComponent implements OnInit {
     @ViewChild('placeStateTable') table!: MatTable<any>;
 
-    place: Place = new Place('', [], false, [], '', AllocationState.Invalid);
+    place: Place = new Place('', [], '', false, [], '', AllocationState.Invalid);
     resources: Resource[] = [];
     placeStates: Array<{ name: string; value: string }> = [];
     displayedColumns: Array<string> = ['state-name', 'state-value'];
@@ -59,9 +59,9 @@ export class PlaceComponent implements OnInit {
         this.placeStates = [];
         this.allocationStateInvalid = false;
 
-        if (this.place.matches) {
+        if (this.place.exporter) {
             // TODO: Get real host name for places.
-            this.placeStates.push({ name: 'Host name: ', value: 'cup' });
+            this.placeStates.push({ name: 'Host name: ', value: this.place.exporter });
         }
 
         if (this.place.power_state) {
