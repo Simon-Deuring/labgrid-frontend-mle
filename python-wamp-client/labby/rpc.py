@@ -255,8 +255,8 @@ async def power_state(context: Session,
 
 
 async def resource_overview(context,
-                            target: TargetName,
-                            place: PlaceName,
+                            target: Optional[TargetName] = None,
+                            place: Optional[PlaceName] = None,
                             ) -> Union[List[Resource], SerLabbyError]:
     """
     rpc: returns list of all resources on target
