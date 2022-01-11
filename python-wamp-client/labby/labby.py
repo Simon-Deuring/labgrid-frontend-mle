@@ -124,7 +124,7 @@ class RouterInterface(ApplicationSession):
             self.register("power_state", 'cup')
             self.register("acquire",     'cup')
             self.register("release",     'cup')
-            self.register("resource_overview", 'cup')
+            self.register("resource_overview")
             self.register("resource_by_name")
             self.register("info")
         except wexception.Error as err:
