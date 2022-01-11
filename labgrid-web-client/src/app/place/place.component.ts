@@ -64,7 +64,7 @@ export class PlaceComponent implements OnInit {
             this.placeStates.push({ name: 'Host name: ', value: 'cup' });
         }
 
-        if (this.place.isRunning) {
+        if (this.place.power_state) {
             this.placeStates.push({ name: 'Is running: ', value: 'yes' });
         } else {
             this.placeStates.push({ name: 'Is running: ', value: 'no' });
