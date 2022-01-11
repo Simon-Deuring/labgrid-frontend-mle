@@ -102,9 +102,9 @@ async def fetch_places(context: Session,
     return ret
 
 
-async def fetch_resource(context: Session,
-                         place: Optional[PlaceName],
-                         resource_key: Optional[ResourceName]) -> Union[Dict, LabbyError]:
+async def fetch_resources(context: Session,
+                          place: Optional[PlaceName],
+                          resource_key: Optional[ResourceName]) -> Union[Dict, LabbyError]:
     """
     Fetch resources from coordinator, update if missing and handle possible errors
     """
@@ -133,7 +133,7 @@ async def fetch_power_state(context: Session, place: Optional[PlaceName]) -> Uni
     Use fetch resource to determine power state, this may update context.resource
     """
 
-    data = await fetch_resource(context=context, place=place, resource_key=None)
+    data = await fetch_resources(context=context, place=place, resource_key=None)
     if isinstance(data, LabbyError):
         return data
 
@@ -203,12 +203,7 @@ async def resource(context: Session,
     rpc: returns resources registered for given place
     """
     context.log.info(f"Fetching resources for {target}.{place}.")
-    # if context.resources is None:
-    #     targets = await context.call("org.labgrid.coordinator.get_resources")
-    #     context.resources = targets
-    # else:
-    #     targets = context.resources
-    resource_data = await fetch_resource(context=context, place=place, resource_key=None)
+    resource_data = await fetch_resources(context=context, place=place, resource_key=None)
 
     if isinstance(resource_data, LabbyError):
         return resource_data.to_json()
@@ -254,16 +249,15 @@ async def power_state(context: Session,
     return power_data[target][place]
 
 
-async def resource_overview(context,
-                            target: Optional[TargetName] = None,
-                            place: Optional[PlaceName] = None,
+async def resource_overview(context: Session,
+                            place: Optional[PlaceName],
                             ) -> Union[List[Resource], SerLabbyError]:
     """
     rpc: returns list of all resources on target
     """
-    context.log.info(f"Fetching resources overview for {target}.")
+    context.log.info(f"Fetching resources overview for {place}.")
 
-    targets = await fetch_resource(context=context, place=place, resource_key=None)
+    targets = await fetch_resources(context=context, place=place, resource_key=None)
     if isinstance(targets, LabbyError):
         return targets.to_json()
 
@@ -277,7 +271,7 @@ async def resource_overview(context,
     return ret
 
 
-async def resource_by_name(context,
+async def resource_by_name(context: Session,
                            name: ResourceName,  # filter by name
                            ) -> Union[List[Resource], SerLabbyError]:
     """
@@ -287,7 +281,7 @@ async def resource_by_name(context,
     if name is None:
         return invalid_parameter("Missing required parameter: name.").to_json()
 
-    resource_data = await fetch_resource(context, place=None, resource_key=None)
+    resource_data = await fetch_resources(context, place=None, resource_key=None)
     if isinstance(resource_data, LabbyError):
         return resource_data.to_json()
 
@@ -302,7 +296,9 @@ async def resource_by_name(context,
     return ret
 
 
-async def acquire(context: Session, target: TargetName, place: PlaceName) -> Dict:
+async def acquire(context: Session,
+                  target: TargetName,
+                  place: PlaceName) -> Union[Dict, SerLabbyError]:
     """
     rpc for acquiring places
     """
@@ -335,7 +331,7 @@ async def release(context: Session, target, place: PlaceName) -> Dict:
     return ret  # TODO (Kevin) figure out the failure modes
 
 
-async def info(_context=None, func_key: Optional[str] = None) -> Union[Dict, List[Dict]]:
+async def info(_context=None, func_key: Optional[str] = None) -> Union[List[Dict], SerLabbyError]:
     """
     RPC call for general info for RPC function usage
     """
