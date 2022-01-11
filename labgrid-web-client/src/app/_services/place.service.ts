@@ -30,7 +30,7 @@ export class PlaceService {
     public async getPlaces(): Promise<Place[]> {
         // If the python-wamp-client is not available the following lines can be used to load test data
         // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[];
-        // return mockPlaces; 
+        // return mockPlaces;
 
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
@@ -45,7 +45,6 @@ export class PlaceService {
             const places = await this.session.call('localhost.places');
             return places;
         }
-
     }
 
     public async getPlace(placeName: string): Promise<Place> {
@@ -80,7 +79,6 @@ export class PlaceService {
             }
             return place;
         }
-
     }
 
     public async acquirePlace(placeName: string): Promise<boolean> {

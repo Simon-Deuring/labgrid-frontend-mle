@@ -52,7 +52,7 @@ export class PlaceComponent implements OnInit {
     }
 
     public navigateToResource(resourceName: string) {
-        this.router.navigate(['resource/', resourceName, {placeName: this.place.name}]);
+        this.router.navigate(['resource/', resourceName, { placeName: this.place.name }]);
     }
 
     private readPlaceState(): void {
