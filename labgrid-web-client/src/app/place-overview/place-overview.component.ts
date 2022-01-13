@@ -18,7 +18,7 @@ export class PlaceOverviewComponent implements OnInit {
 
     @ViewChild('paginator') paginator!: MatPaginator;
 
-    constructor(private _ps: PlaceService, private _resourceService: ResourceService, private router: Router) {
+    constructor(private _ps: PlaceService, private router: Router) {
         this.dataSource = new MatTableDataSource(this.places);
     }
 
@@ -48,7 +48,8 @@ export class PlaceOverviewComponent implements OnInit {
     }
 
     navigateToResource(resourceName: string, event: Event) {
-        const correspondingPlace = (event.currentTarget as HTMLInputElement).parentNode?.parentNode?.firstChild?.textContent;
-        this.router.navigate(['resource/', resourceName, {placeName: correspondingPlace}]);
+        const correspondingPlace = (event.currentTarget as HTMLInputElement).parentNode?.parentNode?.firstChild
+            ?.textContent;
+        this.router.navigate(['resource/', resourceName, { placeName: correspondingPlace }]);
     }
 }

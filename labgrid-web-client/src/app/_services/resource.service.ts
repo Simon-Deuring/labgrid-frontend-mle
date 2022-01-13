@@ -41,7 +41,6 @@ export class ResourceService {
             const resources = (await this.session.call('localhost.resource_overview')) as Resource[];
             return resources;
         }
-
     }
 
     public async getResourcesForPlace(placeName: string): Promise<Resource[]> {
@@ -63,11 +62,9 @@ export class ResourceService {
             const resources = (await this.session.call('localhost.resource_overview', [placeName])) as Resource[];
             return resources;
         }
-
     }
 
     public async getResourceByName(resourceName: string, placeName: string): Promise<Resource> {
-
         // If the python-wamp-client is not available the following lines can be used to load test data
         // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
         // const match = resources.find(element => element.name === resourceName && element.acquired === placeName.trim());
@@ -96,6 +93,5 @@ export class ResourceService {
             }
             return result[0];
         }
-
     }
 }

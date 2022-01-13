@@ -42,7 +42,7 @@ export class ResourceComponent implements OnInit {
         if (this.resource.cls) {
             this.resourceAttributes.push({ name: 'Type: ', value: this.resource.cls });
         }
-        if (this.resource.acquired) {
+        if (this.resource.place) {
             this.resourceAttributes.push({ name: 'Place name: ', value: this.resource.place });
         }
         if (this.resource.params.host) {
@@ -82,6 +82,9 @@ export class ResourceComponent implements OnInit {
         }
         if (this.resource.params.control_path) {
             this.resourceAttributes.push({ name: 'Control path: ', value: this.resource.params.control_path });
+        }
+        if (this.resource.acquired) {
+            this.resourceAttributes.push({ name: 'Acquired by: ', value: this.resource.acquired });
         }
         if (this.resource.avail != undefined && this.resource.avail != null) {
             this.resourceAttributes.push({ name: 'Available: ', value: String(this.resource.avail) });
