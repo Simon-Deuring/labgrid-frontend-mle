@@ -38,6 +38,11 @@ class Component(ApplicationSession):
         places = await self.call(u"localhost.places")
         print(f"Received places: {places}")
 
+        place_name = choice(places)['name']
+        print(f"Polling place {place_name}")
+        place_ = await self.call(u"localhost.places", place_name)
+        print(f"Received places: {place_}")
+
         print("Polling power state for place")
         place = choice(places)["name"]
         power_state = await self.call(u"localhost.power_state", place)

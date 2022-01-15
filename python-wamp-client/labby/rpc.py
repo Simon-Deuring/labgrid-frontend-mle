@@ -95,9 +95,9 @@ async def fetch_places(context: Session,
     # TODO(Kevin) overwrites equal placenames for multiple exporters
     ret = {}
     for exporter, place_data in data.items():
-        place_data.update({})
-        tmp = {key: {**data, "exporter": exporter}
-               for key, data in place_data.items()}
+        # place_data.update({})
+        tmp = {key: {"acquired_resources": list(_data.items()), "exporter": exporter}
+               for key, _data in place_data.items()}
         ret.update(tmp)
     return ret
 
