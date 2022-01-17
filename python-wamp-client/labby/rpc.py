@@ -96,7 +96,7 @@ async def fetch_places(context: Session,
     ret = {}
     for exporter, place_data in data.items():
         # place_data.update({})
-        tmp = {key: {"acquired_resources": list(_data.items()), "exporter": exporter}
+        tmp = {key: {"acquired_resources": _data, "exporter": exporter}
                for key, _data in place_data.items()}
         ret.update(tmp)
     return ret
@@ -187,9 +187,13 @@ async def places(context: Session,
         if not place is None and place_name != place:
             continue
         exporter = place_data["exporter"]
+        assert not exporter is None  # Make sure exporter is set!
         place_res.append(
             {'name': place_name,
-                'power_state': power_states[exporter][place_name]['power_state'], **place_data}
+                'power_state': power_states[exporter][place_name]['power_state'],
+                "exporter": exporter,
+                "acquired_resources": list(place_data["acquired_resources"].keys())
+             }
         )
     return place_res
 
