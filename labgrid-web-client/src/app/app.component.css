@@ -57,3 +57,12 @@ body {
 ::ng-deep .success-snackbar .mat-simple-snackbar-action {
     color: #01200b;
 }
+
+::ng-deep .error-snackbar {
+    background: #f44336;
+    color: #ffffff;
+}
+
+::ng-deep .error-snackbar .mat-simple-snackbar-action {
+    color: #ffffff;
+}
