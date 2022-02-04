@@ -1,5 +1,11 @@
 <div class="resource-bar" *ngIf="resources.length > 0; else elseBlock">
-    <button mat-raised-button *ngFor="let res of resources" (click)="navigateToResource(res.name)">
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        *ngFor="let res of resources"
+        (click)="navigateToResource(res.name)"
+    >
         {{ res.name }}
     </button>
 </div>
@@ -30,9 +36,33 @@
 </table>
 
 <div class="action-bar">
-    <button mat-raised-button (click)="acquirePlace()" [disabled]="isAcquired">Acquire</button>
-    <button mat-raised-button (click)="releasePlace()" [disabled]="isAcquiredByUser">Release</button>
-    <button mat-raised-button (click)="reservePlace()" [disabled]="isAcquired">Reserve</button>
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        (click)="acquirePlace()"
+        [disabled]="isAcquired"
+    >
+        Acquire
+    </button>
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        (click)="releasePlace()"
+        [disabled]="isAcquiredByUser"
+    >
+        Release
+    </button>
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        (click)="reservePlace()"
+        [disabled]="isAcquired"
+    >
+        Reserve
+    </button>
 </div>
 
 <div class="action-bar">
