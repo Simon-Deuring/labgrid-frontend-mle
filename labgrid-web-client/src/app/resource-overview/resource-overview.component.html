@@ -4,7 +4,13 @@
 
 <h2 style="margin-top: 16px">Serial Ports:</h2>
 <div class="resource-bar" *ngIf="serialPorts.length > 0; else noSerials">
-    <button mat-stroked-button color="primary" *ngFor="let sp of serialPorts" (click)="navigateToResource(sp.name)">
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        *ngFor="let sp of serialPorts"
+        (click)="navigateToResource(sp.name)"
+    >
         {{ sp.name }}
     </button>
 </div>
@@ -14,7 +20,13 @@
 
 <h2 style="margin-top: 16px">Power Ports:</h2>
 <div class="resource-bar" *ngIf="powerPorts.length > 0; else noPDUs">
-    <button mat-stroked-button color="primary" *ngFor="let pdu of powerPorts" (click)="navigateToResource(pdu.name)">
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        *ngFor="let pdu of powerPorts"
+        (click)="navigateToResource(pdu.name)"
+    >
         {{ pdu.name }}
     </button>
 </div>
@@ -27,6 +39,7 @@
     <button
         mat-stroked-button
         color="primary"
+        class="mat-elevation-z2"
         *ngFor="let video of videoStreams"
         (click)="navigateToResource(video.name)"
     >
@@ -42,6 +55,7 @@
     <button
         mat-stroked-button
         color="primary"
+        class="mat-elevation-z2"
         *ngFor="let network of networkInterfaces"
         (click)="navigateToResource(network.name)"
     >
@@ -57,6 +71,7 @@
     <button
         mat-stroked-button
         color="primary"
+        class="mat-elevation-z2"
         *ngFor="let jtag of JTAGResources"
         (click)="navigateToResource(jtag.name)"
     >
@@ -72,6 +87,7 @@
     <button
         mat-stroked-button
         color="primary"
+        class="mat-elevation-z2"
         *ngFor="let other of otherResources"
         (click)="navigateToResource(other.name)"
     >

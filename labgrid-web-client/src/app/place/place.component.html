@@ -1,5 +1,11 @@
 <div class="resource-bar" *ngIf="resources.length > 0; else elseBlock">
-    <button mat-stroked-button color="primary" *ngFor="let res of resources" (click)="navigateToResource(res.name)">
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        *ngFor="let res of resources"
+        (click)="navigateToResource(res.name)"
+    >
         {{ res.name }}
     </button>
 </div>
@@ -10,7 +16,7 @@
 
 <h1 class="place-overview">{{ place.name }}</h1>
 
-<table #placeStateTable mat-table [dataSource]="placeStates" class="mat-elevation-z4 place-table">
+<table #placeStateTable mat-table [dataSource]="placeStates" class="mat-elevation-z2 place-table">
     <!-- Attribute name -->
     <ng-container matColumnDef="state-name">
         <td mat-cell *matCellDef="let element">{{ element.name }}</td>
@@ -30,7 +36,35 @@
 </table>
 
 <div class="action-bar">
-    <button mat-stroked-button color="primary" (click)="acquirePlace()" [disabled]="isAcquired">Acquire</button>
-    <button mat-stroked-button color="primary" (click)="releasePlace()" [disabled]="isAcquiredByUser">Release</button>
-    <button mat-stroked-button color="primary" (click)="reservePlace()" [disabled]="isAcquired">Reserve</button>
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        (click)="acquirePlace()"
+        [disabled]="isAcquired"
+    >
+        Acquire
+    </button>
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        (click)="releasePlace()"
+        [disabled]="isAcquiredByUser"
+    >
+        Release
+    </button>
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        (click)="reservePlace()"
+        [disabled]="isAcquired"
+    >
+        Reserve
+    </button>
+</div>
+
+<div class="action-bar">
+    <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="resetPlace()">Reset Place</button>
 </div>
