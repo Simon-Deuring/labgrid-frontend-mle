@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { LoginGuard } from './auth/login.guard';
 
 import { ErrorComponent } from './error/error.component';
 import { LoginComponent } from './login/login.component';
@@ -9,12 +10,12 @@ import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 
 const routes: Routes = [
-    { path: '', component: PlaceOverviewComponent },
-    { path: 'place/:placename', component: PlaceComponent },
-    { path: 'resourceOverview', component: ResourceOverviewComponent },
-    { path: 'resource/:resourceName', component: ResourceComponent },
-    { path: 'login', component: LoginComponent },
-    { path: '**', component: ErrorComponent },
+    { path: '', component: PlaceOverviewComponent, canActivate: [LoginGuard] },
+    { path: 'place/:placename', component: PlaceComponent, canActivate: [LoginGuard] },
+    { path: 'resourceOverview', component: ResourceOverviewComponent, canActivate: [LoginGuard] },
+    { path: 'resource/:resourceName', component: ResourceComponent, canActivate: [LoginGuard] },
+    { path: 'login', component: LoginComponent, canActivate: [LoginGuard] },
+    { path: '**', component: ErrorComponent, canActivate: [LoginGuard] },
 ];
 
 @NgModule({
