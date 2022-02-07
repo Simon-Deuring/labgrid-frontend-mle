@@ -21,7 +21,6 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 
 import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
-import { AuthModule } from './auth/auth.module';
 
 import { PlaceService } from './_services/place.service';
 import { PlaceComponent } from './place/place.component';
@@ -30,6 +29,7 @@ import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
 import { HttpClientModule } from '@angular/common/http';
+import { LoginComponent } from './login/login.component';
 
 @NgModule({
     declarations: [
@@ -40,10 +40,10 @@ import { HttpClientModule } from '@angular/common/http';
         ResourceComponent,
         ResourceOverviewComponent,
         PlaceOverviewComponent,
+        LoginComponent,
     ],
     imports: [
         AppRoutingModule,
-        AuthModule,
         BrowserModule,
         BrowserAnimationsModule,
         HttpClientModule,
