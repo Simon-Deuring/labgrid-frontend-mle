@@ -10,27 +10,37 @@ import { LoginService } from '../auth/login.service';
 export class LoginComponent implements OnInit {
     ngOnInit(): void {}
 
-    message: string;
-
+    // Used to hide or display the password input
     hide: boolean = true;
 
-    constructor(public ls: LoginService, private router: Router) {
-        this.message = this.getMessage();
-    }
+    username: string = '';
 
-    getMessage() {
-        return 'Logged ' + (this.ls.isLoggedIn ? 'in' : 'out');
-    }
+    password: string = '';
+
+    // If the user enters wrong credentials a warning is displayed
+    wrongCredentials: boolean = false;
+
+    // Counts how often the user has inserted a wrong password
+    wrongTries: number = 0;
+
+    constructor(public ls: LoginService, private router: Router) {}
 
     login() {
-        this.message = 'Trying to log in ...';
-
-        this.ls.login();
-        this.message = this.getMessage();
+        if (this.wrongTries < 3 && this.ls.login(this.username, this.password)) {
+            // Redirect the user
+            const redirectUrl = this.ls.redirectUrl;
+            if (redirectUrl == null) {
+                this.router.navigate(['/']);
+            } else {
+                this.router.navigate([redirectUrl]);
+            }
+        } else {
+            this.wrongTries++;
+            this.wrongCredentials = true;
+        }
     }
 
     logout() {
         this.ls.logout();
-        this.message = this.getMessage();
     }
 }

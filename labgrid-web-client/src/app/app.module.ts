@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 
 // Import of Angular Material components
@@ -47,6 +48,7 @@ import { ResourceService } from './_services/resource.service';
         AppRoutingModule,
         BrowserModule,
         BrowserAnimationsModule,
+        FormsModule,
         HttpClientModule,
         MatIconModule,
         MatSidenavModule,

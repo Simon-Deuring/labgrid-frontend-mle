@@ -3,12 +3,12 @@
     <div>
         <mat-form-field appearance="fill" style="width: 280px">
             <mat-label>Username</mat-label>
-            <input matInput />
+            <input matInput [(ngModel)]="username" />
         </mat-form-field>
         <br />
         <mat-form-field appearance="fill" style="width: 280px">
             <mat-label>Password</mat-label>
-            <input matInput [type]="hide ? 'password' : 'text'" />
+            <input matInput [type]="hide ? 'password' : 'text'" [(ngModel)]="password" />
             <button
                 mat-icon-button
                 matSuffix
@@ -20,7 +20,11 @@
             </button>
         </mat-form-field>
     </div>
-    <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="login()">Login</button>
+    <p *ngIf="wrongCredentials && wrongTries < 3" class="wrong-credentials">Wrong username or password!</p>
+    <p *ngIf="wrongTries >= 3" class="wrong-credentials">Too many wrong attempts!</p>
+    <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="login()" [disabled]="wrongTries >= 3">
+        Login
+    </button>
 </div>
 <ng-template #loggedIn>
     <h1>Logout</h1>
