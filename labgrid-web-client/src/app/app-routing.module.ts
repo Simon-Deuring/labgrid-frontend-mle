@@ -14,7 +14,7 @@ const routes: Routes = [
     { path: 'place/:placename', component: PlaceComponent, canActivate: [LoginGuard] },
     { path: 'resourceOverview', component: ResourceOverviewComponent, canActivate: [LoginGuard] },
     { path: 'resource/:resourceName', component: ResourceComponent, canActivate: [LoginGuard] },
-    { path: 'login', component: LoginComponent, canActivate: [LoginGuard] },
+    { path: 'login', component: LoginComponent },
     { path: '**', component: ErrorComponent, canActivate: [LoginGuard] },
 ];
 
