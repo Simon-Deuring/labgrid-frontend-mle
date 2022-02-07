@@ -12,6 +12,8 @@ export class LoginComponent implements OnInit {
 
     message: string;
 
+    hide: boolean = true;
+
     constructor(public ls: LoginService, private router: Router) {
         this.message = this.getMessage();
     }
