@@ -21,6 +21,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 
 import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
+import { AuthModule } from './auth/auth.module';
 
 import { PlaceService } from './_services/place.service';
 import { PlaceComponent } from './place/place.component';
@@ -41,8 +42,9 @@ import { HttpClientModule } from '@angular/common/http';
         PlaceOverviewComponent,
     ],
     imports: [
-        BrowserModule,
         AppRoutingModule,
+        AuthModule,
+        BrowserModule,
         BrowserAnimationsModule,
         HttpClientModule,
         MatIconModule,
