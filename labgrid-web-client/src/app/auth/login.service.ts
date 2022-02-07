@@ -5,6 +5,7 @@ import { Injectable } from '@angular/core';
 })
 export class LoginService {
     isLoggedIn = false;
+    username = '';
 
     constructor() {}
 
@@ -14,6 +15,8 @@ export class LoginService {
     login(): boolean {
         // TODO: Send login request to the backend
         this.isLoggedIn = true;
+        this.username = 'Dummy';
+
         return true;
     }
 

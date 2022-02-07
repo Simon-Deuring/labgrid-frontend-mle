@@ -1,11 +1,16 @@
 <div *ngIf="!ls.isLoggedIn; else loggedIn">
     <h1>Login</h1>
     <p>
+        <mat-form-field appearance="fill">
+            <mat-label>Input</mat-label>
+            <input matInput />
+        </mat-form-field>
         <button type="button" (click)="login()">Login</button>
     </p>
 </div>
 <ng-template #loggedIn>
     <h1>Logout</h1>
+    <p>You are logged in as {{ ls.username }}</p>
     <p>
         <button type="button" (click)="logout()">Logout</button>
     </p>
