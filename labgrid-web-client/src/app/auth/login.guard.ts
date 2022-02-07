@@ -8,7 +8,7 @@ import { LoginService } from './login.service';
     providedIn: 'root',
 })
 export class LoginGuard implements CanActivate {
-    constructor(private loginService: LoginService, private router: Router) {}
+    constructor(private _ls: LoginService, private router: Router) {}
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): true | UrlTree {
         const url: string = state.url;
@@ -16,12 +16,12 @@ export class LoginGuard implements CanActivate {
     }
 
     checkLogin(url: string): true | UrlTree {
-        if (this.loginService.isLoggedIn) {
+        if (this._ls.isLoggedIn) {
             return true;
         }
 
         // Store the attempted URL for redirecting
-        this.loginService.redirectUrl = url;
+        this._ls.redirectUrl = url;
 
         // Cancel the current navigation and redirect to the login page
         return this.router.parseUrl('/login');

@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
 
 // Import of Angular Material components
 import { MatIconModule } from '@angular/material/icon';
@@ -22,14 +23,14 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 
-import { PlaceService } from './_services/place.service';
+import { LoginComponent } from './login/login.component';
+import { LoginService } from './auth/login.service';
 import { PlaceComponent } from './place/place.component';
-import { ResourceService } from './_services/resource.service';
+import { PlaceOverviewComponent } from './place-overview/place-overview.component';
+import { PlaceService } from './_services/place.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
-import { PlaceOverviewComponent } from './place-overview/place-overview.component';
-import { HttpClientModule } from '@angular/common/http';
-import { LoginComponent } from './login/login.component';
+import { ResourceService } from './_services/resource.service';
 
 @NgModule({
     declarations: [
@@ -60,7 +61,7 @@ import { LoginComponent } from './login/login.component';
         MatSnackBarModule,
         RouterModule.forRoot([{ path: 'place', component: PlaceComponent }]),
     ],
-    providers: [PlaceService, ResourceService],
+    providers: [LoginService, PlaceService, ResourceService],
     bootstrap: [AppComponent],
 })
 export class AppModule {}
