@@ -60,7 +60,6 @@ export class PlaceComponent implements OnInit {
         this.allocationStateInvalid = false;
 
         if (this.place.exporter) {
-            // TODO: Get real host name for places.
             this.placeStates.push({ name: 'Host name: ', value: this.place.exporter });
         }
 
