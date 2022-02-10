@@ -297,39 +297,32 @@ async def resource_by_name(context: Session,
 
 
 async def acquire(context: Session,
-                  #   target: TargetName,
                   place: PlaceName) -> Union[Dict, SerLabbyError]:
     """
     rpc for acquiring places
     """
-    # if target is None:
-    #     return invalid_parameter("Missing required parameter: target.").to_json()
     if place is None:
         return invalid_parameter("Missing required parameter: place.").to_json()
     if place in context.acquired_places:
         return failed(f"Already acquired place {place}.").to_json()
 
     # , group, resource_key, place)
-    ret = await context.call(f"org.labgrid.coordinator.acquire_place", place)
+    ret = await context.call("org.labgrid.coordinator.acquire_place", place)
     return ret  # TODO (Kevin) figure out the failure modes
 
 
 async def release(context: Session,
-                  # target,
                   place: PlaceName) -> Dict:
     """
     rpc for releasing 'acquired' places
     """
-    # if target is None:
-    #     return invalid_parameter("Missing required parameter: target.").to_json()
     if place is None:
         return invalid_parameter("Missing required parameter: place.").to_json()
 
-    if not place in context.acquired_places:
+    if place not in context.acquired_places:
         return failed(f"Place {place} is not acquired").to_json()
 
-    # , group, resource_key, place)
-    ret = await context.call(f"org.labgrid.coordinator.release_place", place)
+    ret = await context.call('org.labgrid.coordinator.release_place', place)
     return ret  # TODO (Kevin) figure out the failure modes
 
 
@@ -339,13 +332,13 @@ async def info(_context=None, func_key: Optional[str] = None) -> Union[List[Dict
     """
     if func_key is None:
         return [desc.__dict__ for desc in globals()["FUNCTION_INFO"].values()]
-    if not func_key in globals()["FUNCTION_INFO"]:
+    if func_key not in globals()["FUNCTION_INFO"]:
         return not_found(f"Function {func_key} not found in registry.").to_json()
     return globals()["FUNCTION_INFO"][func_key].__dict__
 
 
 async def reservations(context: Session) -> Dict:
-    reservation_data = context.call("org.labgrid.coordinator.get_reservations")
+    reservation_data = await context.call("org.labgrid.coordinator.get_reservations")
     # TODO (Kevin) handle errors
     return reservation_data
 
