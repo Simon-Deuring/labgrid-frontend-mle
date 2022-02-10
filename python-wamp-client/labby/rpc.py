@@ -9,8 +9,7 @@ from attr import attrib, attrs
 import labby
 from .labby_error import LabbyError, failed, invalid_parameter, not_found
 from .labby_types import Place, PlaceName, PowerState, Resource, ResourceName, SerLabbyError, TargetName, Session
-
-# Session = labby.LabbyClient
+from .labby_util import prepare_place
 
 
 @attrs()
@@ -189,11 +188,8 @@ async def places(context: Session,
         exporter = place_data["exporter"]
         assert not exporter is None  # Make sure exporter is set!
         place_res.append(
-            {'name': place_name,
-                'power_state': power_states[exporter][place_name]['power_state'],
-                "exporter": exporter,
-                "acquired_resources": list(place_data["acquired_resources"].keys())
-             }
+            prepare_place(place_data, place_name, exporter,
+                          power_states[exporter][place_name]['power_state'])
         )
     return place_res
 
@@ -301,37 +297,39 @@ async def resource_by_name(context: Session,
 
 
 async def acquire(context: Session,
-                  target: TargetName,
+                  #   target: TargetName,
                   place: PlaceName) -> Union[Dict, SerLabbyError]:
     """
     rpc for acquiring places
     """
-    if target is None:
-        return invalid_parameter("Missing required parameter: target.").to_json()
+    # if target is None:
+    #     return invalid_parameter("Missing required parameter: target.").to_json()
     if place is None:
         return invalid_parameter("Missing required parameter: place.").to_json()
-    if place in labby.get_acquired_places():
+    if place in context.acquired_places:
         return failed(f"Already acquired place {place}.").to_json()
 
     # , group, resource_key, place)
-    ret = await context.call(f"org.labgrid.exporter.{target}.acquire", place)
+    ret = await context.call(f"org.labgrid.coordinator.acquire_place", place)
     return ret  # TODO (Kevin) figure out the failure modes
 
 
-async def release(context: Session, target, place: PlaceName) -> Dict:
+async def release(context: Session,
+                  # target,
+                  place: PlaceName) -> Dict:
     """
     rpc for releasing 'acquired' places
     """
-    if target is None:
-        return invalid_parameter("Missing required parameter: target.").to_json()
+    # if target is None:
+    #     return invalid_parameter("Missing required parameter: target.").to_json()
     if place is None:
         return invalid_parameter("Missing required parameter: place.").to_json()
 
-    if not place in labby.get_acquired_places():
+    if not place in context.acquired_places:
         return failed(f"Place {place} is not acquired").to_json()
 
     # , group, resource_key, place)
-    ret = await context.call(f"org.labgrid.exporter.{target}.release", place)
+    ret = await context.call(f"org.labgrid.coordinator.release_place", place)
     return ret  # TODO (Kevin) figure out the failure modes
 
 
@@ -344,3 +342,25 @@ async def info(_context=None, func_key: Optional[str] = None) -> Union[List[Dict
     if not func_key in globals()["FUNCTION_INFO"]:
         return not_found(f"Function {func_key} not found in registry.").to_json()
     return globals()["FUNCTION_INFO"][func_key].__dict__
+
+
+async def reservations(context: Session) -> Dict:
+    reservation_data = context.call("org.labgrid.coordinator.get_reservations")
+    # TODO (Kevin) handle errors
+    return reservation_data
+
+
+async def reset(context: Session, place: PlaceName) -> bool:
+    """
+    Send a reset request to a place matching a given place name
+    Note 
+    """
+    return False
+
+
+async def console(context: Session, *args):
+    pass
+
+
+async def video(context: Session, *args):
+    pass

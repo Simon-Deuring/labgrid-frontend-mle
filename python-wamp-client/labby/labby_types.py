@@ -2,7 +2,7 @@
 Types used throughout labby
 """
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 
 TargetName = str
@@ -23,4 +23,5 @@ class Session(ApplicationSession):
     def __init__(self, *args, **kwargs) -> None:
         self.resources: Optional[Dict] = None
         self.places: Optional[Dict] = None
+        self.acquired_places: List = []
         super().__init__(*args, **kwargs)

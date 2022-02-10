@@ -10,9 +10,9 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import RPC, places, resource, power_state, acquire, release, info, resource_by_name, resource_overview
+from .rpc import RPC, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
 from .router import Router
-from .labby_types import PlaceKey, Session
+from .labby_types import GroupName, PlaceKey, PlaceName, ResourceName, Session
 
 LOADED_RPC_FUNCTIONS: Dict[str, RPC] = {}
 ACQUIRED_PLACES: List[PlaceKey] = []
@@ -122,8 +122,8 @@ class RouterInterface(ApplicationSession):
             self.register("places")
             self.register("resource",    'cup')
             self.register("power_state", 'cup')
-            self.register("acquire",     'cup')
-            self.register("release",     'cup')
+            self.register("acquire")
+            self.register("release")
             self.register("resource_overview")
             self.register("resource_by_name")
             self.register("info")
@@ -159,7 +159,7 @@ def run_router(url: str, realm: str):
                  endpoint="localhost.resource_overview", func=resource_overview)
     register_rpc(func_key="resource_by_name",
                  endpoint="localhost.resource_by_name", func=resource_by_name)
-
+                 endpoint="localhost.reservations", func=reservations)
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
