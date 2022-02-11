@@ -3,13 +3,13 @@ Easy labby launch script
 """
 
 
-from os import getenv
+import argparse
+import json
+from os import getenv, path
+
 from labby import run_router
 
 if __name__ == '__main__':
-    import json
-    from os import path
-    import argparse
 
     CONFIG_PATH = "./.labby_config.json"
     config = {
