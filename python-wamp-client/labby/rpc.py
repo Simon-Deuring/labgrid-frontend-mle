@@ -6,7 +6,6 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from attr import attrib, attrs
 
-import labby
 from .labby_error import LabbyError, failed, invalid_parameter, not_found
 from .labby_types import Place, PlaceName, PowerState, Resource, ResourceName, SerLabbyError, TargetName, Session
 from .labby_util import prepare_place
@@ -41,9 +40,9 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     """
     QoL function to fetch data drom Coordinator and store in attribute member in Session
     """
-    assert not Session is None
-    assert not attribute is None
-    assert not endpoint is None
+    assert Session is not None
+    assert attribute is not None
+    assert endpoint is not None
 
     data: Optional[Dict] = context.__getattribute__(attribute)
     if context.__getattribute__(attribute) is None:
@@ -61,17 +60,17 @@ async def fetch_partial(context: Session,
     QoL function to fetch data drom Coordinator, stores in attribute member in Session
     and returns particular key if present
     """
-    assert not Session is None
-    assert not attribute is None
-    assert not endpoint is None
-    assert not key is None
+    assert Session is not None
+    assert attribute is not None
+    assert endpoint is not None
+    assert key is not None
 
     data: Optional[Dict] = context.__getattribute__(attribute)
     if context.__getattribute__(attribute) is None:
         data: Optional[Dict] = await context.call(endpoint, *args)
         context.__setattr__(attribute, data)
 
-    if not data is None and key in data.keys():
+    if data is not None and key in data.keys():
         return data[key]
     else:
         return None
@@ -82,7 +81,7 @@ async def fetch_places(context: Session,
     """
     Fetch resources from coordinator, update if missing and handle possible errors
     """
-    assert not context is None
+    assert context is not None
     data: Optional[Dict] = await fetch(context=context,
                                        attribute="places",
                                        endpoint="org.labgrid.coordinator.get_resources")
@@ -107,7 +106,7 @@ async def fetch_resources(context: Session,
     """
     Fetch resources from coordinator, update if missing and handle possible errors
     """
-    assert not context is None
+    assert context is not None
     data: Optional[Dict] = await fetch(context=context,
                                        attribute="resources",
                                        endpoint="org.labgrid.coordinator.get_resources")
@@ -116,11 +115,12 @@ async def fetch_resources(context: Session,
             return not_found("Could not find any resources.")
         return not_found(f"No resources found for place {place}.")
 
-    if not resource_key is None:
-        ret = {}
-        for place_name, place_res in data.items():
-            ret.update(
-                {place_name: {k: v for k, v in place_res if k == resource_key}})  # ugly
+    if resource_key is not None:
+        ret = {
+            place_name: {k: v for k, v in place_res if k == resource_key}
+            for place_name, place_res in data.items()
+        }
+
         if not ret:
             return not_found(f"Could not find any resources with key {resource_key}.")
         return ret
@@ -140,11 +140,11 @@ async def fetch_power_state(context: Session, place: Optional[PlaceName]) -> Uni
     for exporter, _places in data.items():
         tmp = {}
         for place_name, place_data in _places.items():
-            power = False
-            for _, resource_data in place_data.items():
-                if "avail" in resource_data.keys():
-                    power = True
-                    break
+            power = any(
+                "avail" in resource_data.keys()
+                for _, resource_data in place_data.items()
+            )
+
             tmp[place_name] = {"power_state": power}
         power_states[exporter] = tmp
     return power_states
@@ -183,10 +183,10 @@ async def places(context: Session,
 
     place_res = []
     for place_name, place_data in data.items():
-        if not place is None and place_name != place:
+        if place is not None and place_name != place:
             continue
         exporter = place_data["exporter"]
-        assert not exporter is None  # Make sure exporter is set!
+        assert exporter is not None
         place_res.append(
             prepare_place(place_data, place_name, exporter,
                           power_states[exporter][place_name]['power_state'])
@@ -240,10 +240,10 @@ async def power_state(context: Session,
     if isinstance(power_data, LabbyError):
         return power_data.to_json()
 
-    if not target in power_data.keys():
+    if target not in power_data.keys():
         return not_found(f"Target {target} not found on Coordinator.").to_json()
 
-    if not place in power_data[target].keys():
+    if place not in power_data[target].keys():
         return not_found(f"Place {target} not found on Target {target}.").to_json()
 
     return power_data[target][place]
@@ -265,9 +265,8 @@ async def resource_overview(context: Session,
     for target, resources in targets.items():
         for res_place, res in resources.items():
             if place is None or place == res_place:
-                for key, values in res.items():
-                    ret.append({'name': key, 'target': target,
-                               'place': res_place, **values})
+                ret.extend({'name': key, 'target': target,
+                               'place': res_place, **values} for key, values in res.items())
     return ret
 
 
@@ -288,10 +287,11 @@ async def resource_by_name(context: Session,
     ret = []
     for target, resources in resource_data.items():
         for place, res in resources.items():
-            for key, values in res.items():
-                if name == key:
-                    ret.append(
-                        {'name': key, 'target': target, 'place': place, **values})
+            ret.extend(
+                {'name': key, 'target': target, 'place': place, **values}
+                for key, values in res.items()
+                if name == key
+            )
 
     return ret
 
@@ -307,6 +307,7 @@ async def acquire(context: Session,
         return failed(f"Already acquired place {place}.").to_json()
 
     # , group, resource_key, place)
+    context.log.info("Acquiring place {}.", place)
     ret = await context.call("org.labgrid.coordinator.acquire_place", place)
     return ret  # TODO (Kevin) figure out the failure modes
 
@@ -321,7 +322,7 @@ async def release(context: Session,
 
     if place not in context.acquired_places:
         return failed(f"Place {place} is not acquired").to_json()
-
+    context.log.info("Releasing place {}.", place)
     ret = await context.call('org.labgrid.coordinator.release_place', place)
     return ret  # TODO (Kevin) figure out the failure modes
 
@@ -357,3 +358,7 @@ async def console(context: Session, *args):
 
 async def video(context: Session, *args):
     pass
+
+
+async def forward(context: Session, *args):
+    return context.call(*args)
