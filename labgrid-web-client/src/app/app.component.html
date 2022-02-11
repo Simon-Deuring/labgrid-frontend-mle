@@ -1,13 +1,13 @@
 <div id="app">
     <!-- Toolbar -->
     <mat-toolbar color="primary" class="mat-elevation-z4" style="padding: 0px 10px">
-        <button mat-icon-button (click)="drawer.toggle()" aria-label="Menu icon">
+        <button mat-icon-button (click)="drawer.toggle()" aria-label="Menu icon" [disabled]="!isLoggedIn()">
             <mat-icon>menu</mat-icon>
         </button>
         <span class="spacer"></span>
         <span (click)="navigateToPlaceOverview()" id="home">Labgrid Web Client</span>
         <span class="spacer"></span>
-        <button mat-icon-button aria-label="Gear icon">
+        <button mat-icon-button aria-label="Gear icon" disabled>
             <mat-icon>settings</mat-icon>
         </button>
     </mat-toolbar>

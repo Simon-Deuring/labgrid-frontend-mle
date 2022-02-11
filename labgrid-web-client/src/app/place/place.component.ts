@@ -60,7 +60,6 @@ export class PlaceComponent implements OnInit {
         this.allocationStateInvalid = false;
 
         if (this.place.exporter) {
-            // TODO: Get real host name for places.
             this.placeStates.push({ name: 'Host name: ', value: this.place.exporter });
         }
 
@@ -107,7 +106,7 @@ export class PlaceComponent implements OnInit {
         const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
 
         if (ret) {
-            this._snackBar.open('Place was acquired succesfully!', 'OK', {
+            this._snackBar.open('Place has been acquired succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });
@@ -117,7 +116,7 @@ export class PlaceComponent implements OnInit {
     public async releasePlace() {
         const ret = await this._ps.releasePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
         if (ret) {
-            this._snackBar.open('Place was released succesfully!', 'OK', {
+            this._snackBar.open('Place has been released succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });
@@ -127,7 +126,24 @@ export class PlaceComponent implements OnInit {
     public async reservePlace() {
         const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
         if (ret) {
-            this._snackBar.open('Place was reserved succesfully!', 'OK', {
+            this._snackBar.open('Place has been reserved succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+        }
+    }
+
+    public async resetPlace() {
+        // TODO: Call Reset RPC
+        const response = false;
+
+        if (response === false) {
+            this._snackBar.open('During the reset an error has occured!', 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
+            });
+        } else {
+            this._snackBar.open('Place has been reset succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });
