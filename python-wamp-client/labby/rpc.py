@@ -307,7 +307,7 @@ async def acquire(context: Session,
         return failed(f"Already acquired place {place}.").to_json()
 
     # , group, resource_key, place)
-    context.log.info("Acquiring place {}.", place)
+    context.log.info(f"Acquiring place {place}.")
     ret = await context.call("org.labgrid.coordinator.acquire_place", place)
     return ret  # TODO (Kevin) figure out the failure modes
 
@@ -322,7 +322,7 @@ async def release(context: Session,
 
     if place not in context.acquired_places:
         return failed(f"Place {place} is not acquired").to_json()
-    context.log.info("Releasing place {}.", place)
+    context.log.info(f"Releasing place {place}.")
     ret = await context.call('org.labgrid.coordinator.release_place', place)
     return ret  # TODO (Kevin) figure out the failure modes
 

@@ -62,7 +62,8 @@ class LabbyClient(Session):
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
-        self.join(self.config.realm, ['ticket'], "public")
+        # TODO load from config or get from frontend
+        self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
 
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
