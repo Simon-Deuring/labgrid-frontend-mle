@@ -10,7 +10,7 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import RPC, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
+from .rpc import RPC, forward, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
 from .router import Router
 from .labby_types import GroupName, PlaceKey, PlaceName, ResourceName, Session
 
@@ -30,9 +30,9 @@ def register_rpc(func_key: str, endpoint: str, func: Callable) -> None:
     """
     Short hand to inline RPC function registration
     """
-    assert not func_key is None
-    assert not endpoint is None
-    assert not func is None
+    assert func_key is not None
+    assert endpoint is not None
+    assert func is not None
     globals()["LOADED_RPC_FUNCTIONS"][func_key] = RPC(
         endpoint=endpoint, func=func)
 
@@ -41,7 +41,7 @@ def load_rpc(func_key: str):
     """
     Short hand to retrieve loaded RPCs
     """
-    assert not func_key is None
+    assert func_key is not None
     assert func_key in globals()["LOADED_RPC_FUNCTIONS"]
     return globals()["LOADED_RPC_FUNCTIONS"][func_key]
 
@@ -62,7 +62,8 @@ class LabbyClient(Session):
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
-        self.join(self.config.realm, ['ticket'], "public")
+        # TODO load from config or get from frontend
+        self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
 
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
@@ -74,32 +75,73 @@ class LabbyClient(Session):
             raise NotImplementedError(
                 "Only Ticket authentication enabled, atm")
 
-    def onJoin(self, details):
+    async def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
-        self.subscribe(self.onPlaceChanged,
+        self.subscribe(self.on_place_changed,
                        u"org.labgrid.coordinator.place_changed")
-        self.subscribe(self.onResourceChanged,
+        self.subscribe(self.on_resource_changed,
                        u"org.labgrid.coordinator.resource_changed")
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
 
-    def onPlaceChanged(self, place_name, place, *args):
-        self.log.info(f"Changed place {place_name}.")
+    async def on_resource_changed(self,
+                                  exporter: str,
+                                  group_name: GroupName,
+                                  resource_name: ResourceName,
+                                  resource_data: Dict):
+        # group = self.resources.setdefault(exporter,{}).setdefault(group_name, {})
+        group = self.resources if self.resources is not None else {}
+        # Do not replace the ResourceEntry object, as other components may keep
+        # a reference to it and want to see changes.
+        if resource_name not in group:
+            old = None
+            group[resource_name] = resource_data
+        else:
+            old = group[resource_name].data
+            group[resource_name].data = resource_data
+
+        if resource_data and not old:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} created: {resource_data}")
+        elif resource_data:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} changed:")
+        else:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} deleted")
+
+    async def on_place_changed(self, name: PlaceName, place_data: Dict):
+        if self.places is not None and not place_data:
+            del self.places[name]
+            self.log.info("Place {} deleted", name)
+
         if self.places is None:
             self.places = {}
-        self.places[place_name] = place
 
-    def onResourceChanged(self, *args):
-        self.log.info("Changed resource.")
-        pass
+        if name not in self.places:
+            self.places[name] = place_data
+            # self.log.info("Place {} created: {}", name, place)
+            self.log.info(f"Place {name} created: {place_data}")
+        else:
+            place = self.places[name]
+            # old = flat_dict(place.asdict())
+            place.update(place_data)
+            # new = flat_dict(place.asdict())
+            self.log.info(f"Place {name} changed:")
+            # for k, v_old, v_new in diff_dict(old, new):
+            #     print(f"  {k}: {v_old} -> {v_new}")
 
 
 class RouterInterface(ApplicationSession):
     """
     Wamp router, for communicaion with frontend
     """
+    def __init__(self, config=None):
+        if config and 'exporter' in config.extra:
+            self.exporter = config.extra['exporter']
+        super().__init__(config)
 
     def onConnect(self):
         self.log.info(
@@ -120,8 +162,8 @@ class RouterInterface(ApplicationSession):
         self.log.info("Joined Frontend Session.")
         try:
             self.register("places")
-            self.register("resource",    'cup')
-            self.register("power_state", 'cup')
+            self.register("resource",    self.exporter)
+            self.register("power_state", self.exporter)
             self.register("acquire")
             self.register("release")
             self.register("resource_overview")
@@ -136,7 +178,7 @@ class RouterInterface(ApplicationSession):
         self.disconnect()
 
 
-def run_router(url: str, realm: str):
+def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend_realm: str, exporter: str):
     """
     Connect to labgrid coordinator and start local crossbar router
     """
@@ -163,21 +205,22 @@ def run_router(url: str, realm: str):
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
-    labby_runner = ApplicationRunner(url=url, realm=realm, extra=None)
+    labby_runner = ApplicationRunner(
+        url=backend_url, realm=backend_realm, extra=None)
     labby_coro = labby_runner.run(LabbyClient, start_loop=False)
     frontend_runner = ApplicationRunner(
-        url='ws://localhost:8083/ws', realm='frontend', extra=None)
+        url=frontend_url, realm=frontend_realm, extra={"exporter":exporter})
     frontend_coro = frontend_runner.run(RouterInterface, start_loop=False)
 
-    asyncio.log.logger.info("Starting Frontend Router")
+    asyncio.log.logger.info("Starting Frontend Router on url %s and realm %s", frontend_url, frontend_realm)
     router = Router("labby/router/.crossbar")
-    sleep(4)
+    sleep(5)
     loop = asyncio.get_event_loop()
-    assert not labby_coro is None
-    assert not frontend_coro is None
+    assert labby_coro is not None
+    assert frontend_coro is not None
     try:
 
-        asyncio.log.logger.info("Connecting to %s on realm '%s'", url, realm)
+        asyncio.log.logger.info("Connecting to %s on realm '%s'", backend_url, backend_realm)
         loop.run_until_complete(labby_coro)
         loop.run_until_complete(frontend_coro)
         loop.run_forever()
