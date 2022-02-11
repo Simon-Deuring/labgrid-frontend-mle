@@ -362,3 +362,16 @@ async def video(context: Session, *args):
 
 async def forward(context: Session, *args):
     return context.call(*args)
+
+
+async def create_place(context: Session, place : PlaceName) -> bool:
+    return False
+
+async def delete_place(context: Session, place : PlaceName) -> bool:
+    return False
+
+async def create_resource(context: Session, place : PlaceName, resource: Resource) -> bool:
+    return False
+
+async def delete_resource(context: Session, place : PlaceName, resource: ResourceName) -> bool:
+    return False
