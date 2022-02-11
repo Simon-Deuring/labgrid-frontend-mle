@@ -10,6 +10,8 @@ from .labby_error import LabbyError, failed, invalid_parameter, not_found
 from .labby_types import Place, PlaceName, PowerState, Resource, ResourceName, SerLabbyError, TargetName, Session
 from .labby_util import prepare_place
 
+from autobahn.wamp.exception import ApplicationError
+
 
 @attrs()
 class RPCDesc():
@@ -266,7 +268,7 @@ async def resource_overview(context: Session,
         for res_place, res in resources.items():
             if place is None or place == res_place:
                 ret.extend({'name': key, 'target': target,
-                               'place': res_place, **values} for key, values in res.items())
+                            'place': res_place, **values} for key, values in res.items())
     return ret
 
 
@@ -308,8 +310,13 @@ async def acquire(context: Session,
 
     # , group, resource_key, place)
     context.log.info(f"Acquiring place {place}.")
-    ret = await context.call("org.labgrid.coordinator.acquire_place", place)
-    return ret  # TODO (Kevin) figure out the failure modes
+    try:
+        acquire_successful = await context.call("org.labgrid.coordinator.acquire_place", place)
+    except ApplicationError as err:
+        return failed(f"Got exception while trying to call org.labgrid.coordinator.acquire_place. {err}").to_json()
+    if acquire_successful:
+        context.acquired_places.append(place)
+    return acquire_successful
 
 
 async def release(context: Session,
@@ -323,8 +330,13 @@ async def release(context: Session,
     if place not in context.acquired_places:
         return failed(f"Place {place} is not acquired").to_json()
     context.log.info(f"Releasing place {place}.")
-    ret = await context.call('org.labgrid.coordinator.release_place', place)
-    return ret  # TODO (Kevin) figure out the failure modes
+    try:
+        release_successful = await context.call('org.labgrid.coordinator.release_place', place)
+    except ApplicationError as err:
+        return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}").to_json()
+    if release_successful:
+        context.acquired_places.remove(place)
+    return release_successful
 
 
 async def info(_context=None, func_key: Optional[str] = None) -> Union[List[Dict], SerLabbyError]:
@@ -364,14 +376,17 @@ async def forward(context: Session, *args):
     return context.call(*args)
 
 
-async def create_place(context: Session, place : PlaceName) -> bool:
+async def create_place(context: Session, place: PlaceName) -> bool:
     return False
 
-async def delete_place(context: Session, place : PlaceName) -> bool:
+
+async def delete_place(context: Session, place: PlaceName) -> bool:
     return False
 
-async def create_resource(context: Session, place : PlaceName, resource: Resource) -> bool:
+
+async def create_resource(context: Session, place: PlaceName, resource: Resource) -> bool:
     return False
 
-async def delete_resource(context: Session, place : PlaceName, resource: ResourceName) -> bool:
+
+async def delete_resource(context: Session, place: PlaceName, resource: ResourceName) -> bool:
     return False
