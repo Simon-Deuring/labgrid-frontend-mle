@@ -49,9 +49,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.backend_url is not None:
-        config["backend_url"] = args.url
+        config["backend_url"] = args.backend_url
     if args.backend_realm is not None:
-        config["backend_realm"] = args.realm
+        config["backend_realm"] = args.backend_realm
     if args.exporter is not None:
         config["exporter"] = args.exporter
 

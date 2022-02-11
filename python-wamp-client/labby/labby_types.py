@@ -10,10 +10,12 @@ PlaceName = str
 ResourceName = str
 GroupName = str
 PlaceKey = Tuple[TargetName, PlaceName]
-SerLabbyError = Dict # Serializable labby arrer (LabbyError converted to json string)
+# Serializable labby arrer (LabbyError converted to json string)
+SerLabbyError = Dict
 Resource = Dict
 Place = Dict
 PowerState = Dict
+
 
 class Session(ApplicationSession):
     """
@@ -24,4 +26,5 @@ class Session(ApplicationSession):
         self.resources: Optional[Dict] = None
         self.places: Optional[Dict] = None
         self.acquired_places: List = []
+        self.power_states: Optional[List] = None
         super().__init__(*args, **kwargs)
