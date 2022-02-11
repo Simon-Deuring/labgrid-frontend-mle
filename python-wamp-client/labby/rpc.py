@@ -12,6 +12,8 @@ from .labby_error import LabbyError, failed, invalid_parameter, not_found
 from .labby_types import Place, PlaceName, PowerState, Resource, ResourceName, SerLabbyError, TargetName, Session
 from .labby_util import prepare_place
 
+from autobahn.wamp.exception import ApplicationError
+
 
 @attrs()
 class RPCDesc():
@@ -349,9 +351,14 @@ async def acquire(context: Session,
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
     if place in context.acquired_places:
-        return failed(f"Already acquired place {place}.")
-    context.log.info("Acquiring place {}.", place)
-    acquire_successful = await context.call("org.labgrid.coordinator.acquire_place", place)
+        return failed(f"Already acquired place {place}.").to_json()
+
+    # , group, resource_key, place)
+    context.log.info(f"Acquiring place {place}.")
+    try:
+        acquire_successful = await context.call("org.labgrid.coordinator.acquire_place", place)
+    except ApplicationError as err:
+        return failed(f"Got exception while trying to call org.labgrid.coordinator.acquire_place. {err}").to_json()
     if acquire_successful:
         context.acquired_places.append(place)
     return acquire_successful
@@ -366,9 +373,12 @@ async def release(context: Session,
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
     if place not in context.acquired_places:
-        return failed(f"Place {place} is not acquired")
-    context.log.info("Releasing place {}.", place)
-    release_successful = await context.call('org.labgrid.coordinator.release_place', place)
+        return failed(f"Place {place} is not acquired").to_json()
+    context.log.info(f"Releasing place {place}.")
+    try:
+        release_successful = await context.call('org.labgrid.coordinator.release_place', place)
+    except ApplicationError as err:
+        return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}").to_json()
     if release_successful:
         context.acquired_places.remove(place)
     return release_successful
@@ -387,6 +397,9 @@ async def info(_context=None, func_key: Optional[str] = None) -> Union[List[Dict
 
 
 async def reservations(context: Session) -> Dict:
+    """
+    RPC call to list current reservations on the Coordinator
+    """
     reservation_data = await context.call("org.labgrid.coordinator.get_reservations")
     # TODO (Kevin) handle errors
     return reservation_data
