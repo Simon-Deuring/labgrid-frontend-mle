@@ -127,6 +127,7 @@ class RouterInterface(ApplicationSession):
             self.register("resource_overview")
             self.register("resource_by_name")
             self.register("info")
+            self.register("forward")
         except wexception.Error as err:
             self.log.error(
                 f"Could not register procedure: {err}.\n{err.with_traceback(None)}")
@@ -159,7 +160,10 @@ def run_router(url: str, realm: str):
                  endpoint="localhost.resource_overview", func=resource_overview)
     register_rpc(func_key="resource_by_name",
                  endpoint="localhost.resource_by_name", func=resource_by_name)
+    register_rpc(func_key="reservations",
                  endpoint="localhost.reservations", func=reservations)
+    register_rpc(func_key="forward",
+                 endpoint="localhost.forward", func=forward)
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
