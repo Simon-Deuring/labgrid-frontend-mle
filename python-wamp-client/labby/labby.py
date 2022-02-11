@@ -68,14 +68,13 @@ class LabbyClient(Session):
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
         if challenge.method == 'ticket':
-            return ""
-        else:
-            self.log.error(
-                "Only Ticket authentication enabled, atm. Aborting...")
-            raise NotImplementedError(
-                "Only Ticket authentication enabled, atm")
+            return "" # don't provide a password
+        self.log.error(
+            "Only Ticket authentication enabled, atm. Aborting...")
+        raise NotImplementedError(
+            "Only Ticket authentication enabled, atm")
 
-    async def onJoin(self, details):
+    def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
         self.subscribe(self.on_place_changed,
                        u"org.labgrid.coordinator.place_changed")
@@ -138,6 +137,7 @@ class RouterInterface(ApplicationSession):
     """
     Wamp router, for communicaion with frontend
     """
+
     def __init__(self, config=None):
         if config and 'exporter' in config.extra:
             self.exporter = config.extra['exporter']
@@ -201,7 +201,8 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
                  endpoint="localhost.resource_overview", func=resource_overview)
     register_rpc(func_key="resource_by_name",
                  endpoint="localhost.resource_by_name", func=resource_by_name)
-                 endpoint="localhost.reservations", func=reservations)
+    register_rpc(func_key="reservations",
+                 endpoint = "localhost.reservations", func = reservations)
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
