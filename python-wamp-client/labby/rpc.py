@@ -2,8 +2,6 @@
 Generic RPC functions for labby
 """
 
-import asyncio
-from linecache import cache
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 from attr import attrib, attrs
@@ -152,7 +150,8 @@ async def fetch_places(context: Session,
     # TODO(Kevin) overwrites equal placenames for multiple exporters
     ret = {}
     for exporter, place_data in data.items():
-        tmp = {key: {"acquired_resources": _data, "exporter": exporter}
+        # place_data.update({})
+        tmp = {key: {"acquired_resources": list(_data), "exporter": exporter}
                for key, _data in place_data.items()}
         ret.update(tmp)
     return ret
@@ -414,7 +413,9 @@ async def reset(context: Session, place: PlaceName) -> bool:
 
 
 async def console(context: Session, *args):
+    
     pass
+
 
 
 async def video(context: Session, *args):
