@@ -96,7 +96,7 @@ async def fetch_places(context: Session,
     ret = {}
     for exporter, place_data in data.items():
         # place_data.update({})
-        tmp = {key: {"acquired_resources": _data, "exporter": exporter}
+        tmp = {key: {"acquired_resources": list(_data), "exporter": exporter}
                for key, _data in place_data.items()}
         ret.update(tmp)
     return ret
