@@ -10,7 +10,7 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import RPC, places, resource, power_state, acquire, release, info, resource_by_name, resource_overview
+from .rpc import RPC, forward, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
 from .router import Router
 from .labby_types import PlaceKey, Session
 
@@ -62,7 +62,8 @@ class LabbyClient(Session):
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
-        self.join(self.config.realm, ['ticket'], "public")
+        # TODO load from config or get from frontend
+        self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
 
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
@@ -122,11 +123,12 @@ class RouterInterface(ApplicationSession):
             self.register("places")
             self.register("resource",    'cup')
             self.register("power_state", 'cup')
-            self.register("acquire",     'cup')
-            self.register("release",     'cup')
+            self.register("acquire")
+            self.register("release")
             self.register("resource_overview")
             self.register("resource_by_name")
             self.register("info")
+            self.register("forward")
         except wexception.Error as err:
             self.log.error(
                 f"Could not register procedure: {err}.\n{err.with_traceback(None)}")
@@ -159,7 +161,10 @@ def run_router(url: str, realm: str):
                  endpoint="localhost.resource_overview", func=resource_overview)
     register_rpc(func_key="resource_by_name",
                  endpoint="localhost.resource_by_name", func=resource_by_name)
-
+    register_rpc(func_key="reservations",
+                 endpoint="localhost.reservations", func=reservations)
+    register_rpc(func_key="forward",
+                 endpoint="localhost.forward", func=forward)
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
