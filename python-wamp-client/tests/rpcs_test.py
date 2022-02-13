@@ -114,7 +114,12 @@ class TestRpcCalls(unittest.TestCase):
             # os.system("python run.py")
             # self.process = subprocess.Popen(["python", "run.py"])
             self.process = Process(target=run_router, args=(
-                r"ws://localhost:20408/ws", "realm1"))
+                "ws://localhost:20408/ws",
+                "realm1",
+                "ws://localhost:8083/ws",
+                "frontend",
+                "ubuntu2/kevin"
+                ))
             self.process.start()
             sleep(5)
             url = "ws://localhost:8083/ws"

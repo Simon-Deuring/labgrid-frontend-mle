@@ -1,0 +1,18 @@
+exporter:
+  place1:
+    acquired: null
+    acquired_resources:
+      - Resource11
+      - Resource12
+      - Resource13
+      - Resource14
+      - Resource15
+    aliases: []
+    allowed: []
+    changed: 1644713069.4180038
+    comment: ''
+    created: 1644712447.272959
+    matches: []
+    reservation: null
+    tags: {}
+    exporter: exporter

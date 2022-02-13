@@ -6,9 +6,8 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 from attr import attrib, attrs
 
-from .labby_error import LabbyError, failed, invalid_parameter, not_found
-from .labby_types import Place, PlaceName, PowerState, Resource, ResourceName, SerLabbyError, TargetName, Session
-from .labby_util import prepare_place
+from .labby_error import ErrorKind, LabbyError, failed, invalid_parameter, not_found
+from .labby_types import LabbyPlace, PlaceName, PowerState, Resource, ResourceName, TargetName, Session
 
 from autobahn.wamp.exception import ApplicationError
 
@@ -86,6 +85,8 @@ def labby_serialized(func):
         ret = await func(*args, **kwargs)
         if isinstance(ret, LabbyError):
             return ret.to_json()
+        if isinstance(ret, LabbyPlace):
+            return ret.to_json()
         if isinstance(ret, (dict, list)) or type(ret) in _serializable_primitive:
             return ret
         raise NotImplementedError(
@@ -144,7 +145,7 @@ async def fetch_places(context: Session,
                                        endpoint="org.labgrid.coordinator.get_resources")
     if data is None:
         if place is None:
-            return not_found("Could not find any resources.")
+            return not_found("Could not find any places.")
         return not_found(f"Could not find place with name {place}.")
 
     # TODO(Kevin) overwrites equal placenames for multiple exporters
@@ -211,7 +212,7 @@ async def fetch_power_state(context: Session,
 @cached("places__")
 @labby_serialized
 async def places(context: Session,
-                 place: Optional[PlaceName] = None) -> Union[List[Place], LabbyError]:
+                 place: Optional[PlaceName] = None) -> Union[List[LabbyPlace], LabbyError]:
     """
     returns registered places as dict of lists
     """
@@ -224,15 +225,19 @@ async def places(context: Session,
     assert power_states is not None
     if isinstance(power_states, LabbyError):
         return power_states
-    place_res = []
+    place_res : List[LabbyPlace] = []
     for place_name, place_data in data.items():
         if place is not None and place_name != place:
             continue
         exporter = place_data["exporter"]
         assert exporter is not None
         place_res.append(
-            prepare_place(place_data, place_name, exporter,
-                          power_states[exporter][place_name]['power_state'])
+            LabbyPlace(
+                name=place_name,
+                exporter=exporter,
+                power_state=power_states[exporter][place_name]['power_state'],
+                acquired_resources=place_data["acquired_resources"]
+            )
         )
     return place_res
 
@@ -413,7 +418,6 @@ async def reset(context: Session, place: PlaceName) -> bool:
 
 
 async def console(context: Session, *args):
-    
     pass
 
 
@@ -428,14 +432,18 @@ async def forward(context: Session, *args):
     """
     return context.call(*args)
 
-
-async def create_place(context: Session, place: PlaceName) -> Union[bool, SerLabbyError]:
+@labby_serialized
+async def create_place(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
     """
     Create a new place on the coordinator
     """
-    assert place is not None
-    if context.places and place not in context.places.keys():
-        return failed(f"Place {place} already exists on Coordinator").to_json()
+    assert place # not None or empty
+    places = fetch_places(context, place)
+    if isinstance(places, LabbyError):
+        if places.kind == ErrorKind.NOT_FOUND:
+            return failed(f"Place {place} already exists on Coordinator")
+        else:
+            return places
     res = await context.call("org.labgrid.coordinator.add_place", place)
     return res
 

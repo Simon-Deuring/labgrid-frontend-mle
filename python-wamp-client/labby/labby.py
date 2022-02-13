@@ -34,7 +34,6 @@ class LabbyClient(Session):
         # make sure only one active labby client exists
         assert "CALLBACK_REF" not in globals() or globals()["CALLBACK_REF"] is None
         globals()["CALLBACK_REF"] = self
-        super().__init__(config=config)
 
     def onConnect(self):
         self.log.info(

@@ -1,0 +1,77 @@
+exporter:
+  targets:
+    Resource11:
+      acquired: null
+      avail: true
+      cls: Resource11
+      params:
+        NetworkPowerPort:
+          host: apc1
+          index: 1
+          model: apc
+        NetworkSerialPort:
+          host: rl1
+          port: 4001
+        extra:
+          proxy: proxy
+          proxy_required: false
+    Resource12:
+      acquired: null
+      avail: true
+      cls: Resource12
+      params:
+        NetworkPowerPort:
+          host: apc1
+          index: 2
+          model: apc
+        NetworkSerialPort:
+          host: rl1
+          port: 4002
+        extra:
+          proxy: proxy
+          proxy_required: false
+    Resource13:
+      acquired: null
+      avail: true
+      cls: Resource13
+      params:
+        NetworkPowerPort:
+          host: apc1
+          index: 3
+          model: apc
+        NetworkSerialPort:
+          host: rl1
+          port: 4003
+        extra:
+          proxy: proxy
+          proxy_required: false
+    Resource14:
+      acquired: null
+      avail: true
+      cls: Resource14
+      params:
+        NetworkPowerPort:
+          host: apc1
+          index: 4
+          model: apc
+        NetworkSerialPort:
+          host: rl1
+          port: 4004
+        extra:
+          proxy: proxy
+          proxy_required: false
+    Resource15:
+      acquired: null
+      avail: true
+      cls: Resource15
+      params:
+        NetworkPowerPort:
+          host: apc1
+          index: 5
+          model: apc
+        NetworkSerialPort:
+          host: rl1
+          port: 4005
+        extra:
+          proxy: proxy
+          proxy_required: false
