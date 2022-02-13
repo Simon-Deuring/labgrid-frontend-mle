@@ -14,15 +14,12 @@ from .rpc import forward, places, reservations, resource, power_state, acquire, 
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
 
-CALLBACK_REF: Optional[ApplicationSession] = None
-
 
 def get_context_callback():
     """
     If context takes longer to create, prevent Context to be None in Crossbar router context
     """
     return globals()["CALLBACK_REF"]
-
 
 class LabbyClient(Session):
     """
@@ -34,10 +31,10 @@ class LabbyClient(Session):
         # make sure only one active labby client exists
         assert "CALLBACK_REF" not in globals() or globals()["CALLBACK_REF"] is None
         globals()["CALLBACK_REF"] = self
+        super().__init__(config=config)
 
     def onConnect(self):
-        self.log.info(
-            f"Connected to Coordinator, joining realm '{self.config.realm}'")
+        self.log.info(f"Connected to Coordinator, joining realm '{self.config.realm}'")
         # TODO load from config or get from frontend
         self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
 
@@ -69,7 +66,6 @@ class LabbyClient(Session):
         """
         Listen on resource changes on coordinator and update cache on changes
         """
-        # group = self.resources.setdefault(exporter,{}).setdefault(group_name, {})
         group = self.resources if self.resources is not None else {}
         # Do not replace the ResourceEntry object, as other components may keep
         # a reference to it and want to see changes.
@@ -121,7 +117,7 @@ class RouterInterface(ApplicationSession):
     """
 
     def __init__(self, config=None):
-        if config and 'exporter' in config.extra:
+        if config is not None and 'exporter' in config.extra:
             self.exporter = config.extra['exporter']
         super().__init__(config)
 
