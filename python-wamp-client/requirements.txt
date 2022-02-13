@@ -1,4 +1,3 @@
-autobahn[asyncio,serialization,encryption]==21.3.1
-crossbar==21.3.1
-pywin32==227 ; sys_platform == 'win32'
+autobahn[asyncio,serialization,encryption]
+pywin32 ; sys_platform == 'win32'
 setuptools

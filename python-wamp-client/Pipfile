@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# crossbar = ">=21.0.0"
+autobahn = {version = "*", extras = ["asyncio", "encryption", "serialization"]}
+pywin32 = {version="*", markers="sys_platform == 'win32'"}
+PyYaml = "*"
+attrs = "*"
+
+[dev-packages]
+prospector = "*"
+pep8 = "*"
+
+[requires]
+python_version = "3.8"
