@@ -2,7 +2,7 @@
 Generic RPC functions for labby
 """
 
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from attr import attrib, attrs
 
@@ -38,7 +38,7 @@ Returns Dictionary of places with registered Resources.""",
 }
 
 
-async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs) -> Optional[Dict]:
+async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs) -> Any:
     """
     QoL function to fetch data drom Coordinator and store in attribute member in Session
     """
@@ -53,53 +53,24 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     return data
 
 
-async def fetch_partial(context: Session,
-                        attribute: str,
-                        key: str,
-                        endpoint: str,
-                        *args) -> Optional[Dict]:
-    """
-    QoL function to fetch data drom Coordinator, stores in attribute member in Session
-    and returns particular key if present
-    """
-    assert Session is not None
-    assert attribute is not None
-    assert endpoint is not None
-    assert key is not None
-
-    data: Optional[Dict] = context.__getattribute__(attribute)
-    if context.__getattribute__(attribute) is None:
-        data: Optional[Dict] = await context.call(endpoint, *args)
-        context.__setattr__(attribute, data)
-
-    if data is not None and key in data.keys():
-        return data[key]
-    else:
-        return None
-
-
 async def fetch_places(context: Session,
                        place: Optional[PlaceName]) -> Union[Dict, LabbyError]:
     """
-    Fetch resources from coordinator, update if missing and handle possible errors
+    Fetch places from coordinator, update if missing and handle possible errors
     """
     assert context is not None
     data: Optional[Dict] = await fetch(context=context,
                                        attribute="places",
-                                       endpoint="org.labgrid.coordinator.get_resources")
+                                       endpoint="org.labgrid.coordinator.get_places")
+
     if data is None:
         if place is None:
-            return not_found("Could not find any resources.")
+            return not_found("Could not find any places.")
+        return not_found(f"Could not find place with name {place}.")
+    if place is not None and place not in data.keys():
         return not_found(f"Could not find place with name {place}.")
 
-    # TODO(Kevin) overwrites equal placenames for multiple exporters
-    ret = {}
-    for exporter, place_data in data.items():
-        # place_data.update({})
-        tmp = {key: {"acquired_resources": list(_data), "exporter": exporter}
-               for key, _data in place_data.items()}
-        ret.update(tmp)
-    return ret
+    return data
 
 
 async def fetch_resources(context: Session,
@@ -139,16 +110,14 @@ async def fetch_power_state(context: Session, place: Optional[PlaceName]) -> Uni
         return data
 
     power_states = {}
-    for exporter, _places in data.items():
-        tmp = {}
-        for place_name, place_data in _places.items():
-            power = any(
-                "avail" in resource_data.keys()
-                for _, resource_data in place_data.items()
-            )
+    tmp = {}
+    for place_name, resource_data in data.items():
+        power = any(
+            "avail" in resource_data.keys()
+            for _, resource_data in resource_data.items()
+        )
 
-            tmp[place_name] = {"power_state": power}
-        power_states[exporter] = tmp
+        power_states[place_name] = {"power_state": power}
     return power_states
 
 
@@ -187,46 +156,36 @@ async def places(context: Session,
     for place_name, place_data in data.items():
         if place is not None and place_name != place:
             continue
-        exporter = place_data["exporter"]
+        exporter = place_data["matches"][0]["exporter"] # ??? (Kevin) what if there are more than one or no matches
         assert exporter is not None
         place_res.append(
             prepare_place(place_data, place_name, exporter,
-                          power_states[exporter][place_name]['power_state'])
+                          power_states[place_name]['power_state'])
         )
     return place_res
 
 
 async def resource(context: Session,
                    # TODO (Kevin) REPRESENT TARGET IN API
-                   target: TargetName,
                    place: Optional[PlaceName] = None,
                    ) -> Union[Resource, SerLabbyError]:
     """
     rpc: returns resources registered for given place
     """
-    context.log.info(f"Fetching resources for {target}.{place}.")
+    context.log.info(f"Fetching resources for {place}.")
     resource_data = await fetch_resources(context=context, place=place, resource_key=None)
 
     if isinstance(resource_data, LabbyError):
         return resource_data.to_json()
 
-    def resource_for_place():
-        if place is None:
-            return resource_data[target]
-        else:
-            if not place in resource_data[target].keys():
-                return not_found(f"Place {place} not found on Target.").to_json()
-            return resource_data[target][place]
-
-    if not target in resource_data:
-        err_str = f"Target {target} not found on Coordinator."
-        context.log.warn(err_str)
-        return not_found(err_str).to_json()
-    return resource_for_place()
+    if place is None:
+        return resource_data
+    if place not in resource_data.keys():
+        return not_found(f"Place {place} not found.").to_json()
+    return resource_data[place]
 
 
 async def power_state(context: Session,
-                      target: TargetName,
                       place: PlaceName,
                       ) -> Union[Resource, SerLabbyError]:
     """
@@ -235,20 +194,15 @@ async def power_state(context: Session,
     # TODO (Kevin) Cache resource updates and get powerstates from there
     if place is None:
         return invalid_parameter("Missing required parameter: place.").to_json()
-    if target is None:
-        return invalid_parameter("Missing required parameter: target.").to_json()
     power_data = await fetch_power_state(context=context, place=place)
 
     if isinstance(power_data, LabbyError):
         return power_data.to_json()
 
-    if target not in power_data.keys():
-        return not_found(f"Target {target} not found on Coordinator.").to_json()
+    if place not in power_data.keys():
+        return not_found(f"Place {place} not found on Coordinator.").to_json()
 
-    if place not in power_data[target].keys():
-        return not_found(f"Place {target} not found on Target {target}.").to_json()
-
-    return power_data[target][place]
+    return power_data[place]
 
 
 async def resource_overview(context: Session,
