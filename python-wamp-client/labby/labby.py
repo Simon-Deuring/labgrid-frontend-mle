@@ -30,9 +30,9 @@ def register_rpc(func_key: str, endpoint: str, func: Callable) -> None:
     """
     Short hand to inline RPC function registration
     """
-    assert not func_key is None
-    assert not endpoint is None
-    assert not func is None
+    assert func_key is not None
+    assert endpoint is not None
+    assert func is not None
     globals()["LOADED_RPC_FUNCTIONS"][func_key] = RPC(
         endpoint=endpoint, func=func)
 
@@ -41,7 +41,7 @@ def load_rpc(func_key: str):
     """
     Short hand to retrieve loaded RPCs
     """
-    assert not func_key is None
+    assert func_key is not None
     assert func_key in globals()["LOADED_RPC_FUNCTIONS"]
     return globals()["LOADED_RPC_FUNCTIONS"][func_key]
 
@@ -69,18 +69,17 @@ class LabbyClient(Session):
         self.log.info("Authencticating.")
         if challenge.method == 'ticket':
             return ""
-        else:
-            self.log.error(
-                "Only Ticket authentication enabled, atm. Aborting...")
-            raise NotImplementedError(
-                "Only Ticket authentication enabled, atm")
+        self.log.error(
+            "Only Ticket authentication enabled, atm. Aborting...")
+        raise NotImplementedError(
+            "Only Ticket authentication enabled, atm")
 
     def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
         self.subscribe(self.onPlaceChanged,
-                       u"org.labgrid.coordinator.place_changed")
+                       "org.labgrid.coordinator.place_changed")
         self.subscribe(self.onResourceChanged,
-                       u"org.labgrid.coordinator.resource_changed")
+                       "org.labgrid.coordinator.resource_changed")
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
@@ -112,10 +111,9 @@ class RouterInterface(ApplicationSession):
         Register functions from RPC store from key, overrides ApplicationSession::register
         """
         callback: RPC = load_rpc(func_key)
-        endpoint = callback.endpoint
         func = callback.bind(get_context_callback, *args, **kwargs)
-        self.log.info(f"Registered function for endpoint {endpoint}.")
-        super().register(func, endpoint)
+        self.log.info(f"Registered function for endpoint {callback.endpoint}.")
+        super().register(func, callback.endpoint)
 
     def onJoin(self, details):
         self.log.info("Joined Frontend Session.")
@@ -178,10 +176,10 @@ def run_router(url: str, realm: str):
     router = Router("labby/router/.crossbar")
     sleep(4)
     loop = asyncio.get_event_loop()
-    assert not labby_coro is None
-    assert not frontend_coro is None
-    try:
+    assert labby_coro is not None
+    assert frontend_coro is not None
 
+    try:
         asyncio.log.logger.info("Connecting to %s on realm '%s'", url, realm)
         loop.run_until_complete(labby_coro)
         loop.run_until_complete(frontend_coro)

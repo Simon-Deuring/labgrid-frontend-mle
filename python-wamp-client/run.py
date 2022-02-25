@@ -2,6 +2,7 @@
 Easy labby launch script
 """
 
+
 from labby import run_router
 
 if __name__ == '__main__':
@@ -30,9 +31,9 @@ if __name__ == '__main__':
     parser.add_argument('--realm', type=str, required=False)
     args = parser.parse_args()
 
-    if not args.url is None:
+    if args.url is not None:
         config["url"] = args.url
-    if not args.realm is None:
+    if args.realm is not None:
         config["realm"] = args.realm
 
     URL = config["url"]

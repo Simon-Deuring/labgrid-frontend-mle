@@ -42,7 +42,7 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     """
     QoL function to fetch data drom Coordinator and store in attribute member in Session
     """
-    assert Session is not None
+    assert context is not None
     assert attribute is not None
     assert endpoint is not None
 
