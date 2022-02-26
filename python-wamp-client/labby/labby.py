@@ -1,7 +1,7 @@
 """
 A wamp client which registers a rpc function
 """
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict
 from time import sleep
 
 import logging
@@ -10,45 +10,16 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import RPC, forward, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
+from .rpc import forward, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
 from .router import Router
-from .labby_types import PlaceKey, Session
-
-LOADED_RPC_FUNCTIONS: Dict[str, RPC] = {}
-ACQUIRED_PLACES: List[PlaceKey] = []
-CALLBACK_REF: Optional[ApplicationSession] = None
+from .labby_types import GroupName, PlaceName, ResourceName, Session
 
 
 def get_context_callback():
     """
     If context takes longer to create, prevent Context to be None in Crossbar router context
     """
-    return globals()["CALLBACK_REF"]
-
-
-def register_rpc(func_key: str, endpoint: str, func: Callable) -> None:
-    """
-    Short hand to inline RPC function registration
-    """
-    assert func_key is not None
-    assert endpoint is not None
-    assert func is not None
-    globals()["LOADED_RPC_FUNCTIONS"][func_key] = RPC(
-        endpoint=endpoint, func=func)
-
-
-def load_rpc(func_key: str):
-    """
-    Short hand to retrieve loaded RPCs
-    """
-    assert func_key is not None
-    assert func_key in globals()["LOADED_RPC_FUNCTIONS"]
-    return globals()["LOADED_RPC_FUNCTIONS"][func_key]
-
-
-def get_acquired_places() -> List[PlaceKey]:
-    return globals()["ACQUIRED_PLACES"]
-
+    return globals().get("CALLBACK_REF", None)
 
 class LabbyClient(Session):
     """
@@ -56,6 +27,7 @@ class LabbyClient(Session):
     """
 
     def __init__(self, config=None):
+        # make sure only one active labby client exists
         globals()["CALLBACK_REF"] = self
         super().__init__(config=config)
 
@@ -68,7 +40,7 @@ class LabbyClient(Session):
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
         if challenge.method == 'ticket':
-            return ""
+            return ""  # don't provide a password
         self.log.error(
             "Only Ticket authentication enabled, atm. Aborting...")
         raise NotImplementedError(
@@ -76,24 +48,66 @@ class LabbyClient(Session):
 
     def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
-        self.subscribe(self.onPlaceChanged,
+        self.subscribe(self.on_place_changed,
                        "org.labgrid.coordinator.place_changed")
-        self.subscribe(self.onResourceChanged,
+        self.subscribe(self.on_resource_changed,
                        "org.labgrid.coordinator.resource_changed")
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
 
-    def onPlaceChanged(self, place_name, place, *args):
-        self.log.info(f"Changed place {place_name}.")
+    async def on_resource_changed(self,
+                                  exporter: str,
+                                  group_name: GroupName,
+                                  resource_name: ResourceName,
+                                  resource_data: Dict):
+        """
+        Listen on resource changes on coordinator and update cache on changes
+        """
+        group = self.resources if self.resources is not None else {}
+        # Do not replace the ResourceEntry object, as other components may keep
+        # a reference to it and want to see changes.
+        old = None if resource_name not in group else group[resource_name]
+        group[resource_name] = resource_data
+        if resource_data and not old:
+            self.log.info(
+                # f"Resource {exporter}/{group_name}/{resource_name} created: {resource_data}")
+                f"Resource {exporter}/{group_name}/{resource_name} created.")
+        elif resource_data:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} changed:")
+        else:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} deleted")
+        self.power_states = None # Invalidate power state cache
+
+
+    async def on_place_changed(self, name: PlaceName, place_data: Dict):
+        """
+        Listen on place changes on coordinator and update cache on changes
+        """
+        if self.places is not None and not place_data:
+            del self.places[name]
+            self.log.info("Place {} deleted", name)
+
         if self.places is None:
             self.places = {}
-        self.places[place_name] = place
 
-    def onResourceChanged(self, *args):
-        self.log.info("Changed resource.")
-        pass
+        if name not in self.places:
+            self.places[name] = place_data
+            # self.log.info("Place {} created: {}", name, place)
+            self.log.info(f"Place {name} created.")
+        else:
+            place = self.places[name]
+            # old = flat_dict(place.asdict())
+            place.update(place_data)
+            # new = flat_dict(place.asdict())
+            self.log.info(f"Place {name} changed:")
+            # for k, v_old, v_new in diff_dict(old, new):
+            #     print(f"  {k}: {v_old} -> {v_new}")
+        self.power_states = None # Invalidate power state cache
+
 
 
 class RouterInterface(ApplicationSession):
@@ -106,27 +120,31 @@ class RouterInterface(ApplicationSession):
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
         self.join(self.config.realm)
 
-    def register(self, func_key: str, *args, **kwargs):
+    def register(self, func_key: str, procedure: Callable, *args):
         """
         Register functions from RPC store from key, overrides ApplicationSession::register
         """
-        callback: RPC = load_rpc(func_key)
-        func = callback.bind(get_context_callback, *args, **kwargs)
-        self.log.info(f"Registered function for endpoint {callback.endpoint}.")
-        super().register(func, callback.endpoint)
+        endpoint = f"localhost.{func_key}"
+
+        async def bind(*a):
+            return await procedure(get_context_callback(), *args, *a)
+        func = bind
+        self.log.info(f"Registered function for endpoint {endpoint}.")
+        super().register(func, endpoint)
 
     def onJoin(self, details):
         self.log.info("Joined Frontend Session.")
         try:
-            self.register("places")
-            self.register("resource",    'cup')
-            self.register("power_state", 'cup')
-            self.register("acquire")
-            self.register("release")
-            self.register("resource_overview")
-            self.register("resource_by_name")
-            self.register("info")
-            self.register("forward")
+            self.register("places", places)
+            self.register("resource", resource)
+            self.register("power_state", power_state)
+            self.register("acquire", acquire)
+            self.register("release", release)
+            self.register("reservations", reservations)
+            self.register("resource_overview", resource_overview)
+            self.register("resource_by_name", resource_by_name)
+            self.register("info", info)
+            self.register("forward", forward)
         except wexception.Error as err:
             self.log.error(
                 f"Could not register procedure: {err}.\n{err.with_traceback(None)}")
@@ -142,27 +160,6 @@ def run_router(url: str, realm: str):
     """
 
     globals()["LOADED_RPC_FUNCTIONS"] = {}
-    globals()["ACQUIRED_PLACES"] = {}
-
-    register_rpc(func_key="places",
-                 endpoint="localhost.places", func=places)
-    register_rpc(func_key="resource",
-                 endpoint="localhost.resource", func=resource)
-    register_rpc(func_key="power_state",
-                 endpoint="localhost.power_state", func=power_state)
-    register_rpc(func_key="acquire",
-                 endpoint="localhost.acquire", func=acquire)
-    register_rpc(func_key="release",
-                 endpoint="localhost.release", func=release)
-    register_rpc(func_key="info", endpoint="localhost.info", func=info)
-    register_rpc(func_key="resource_overview",
-                 endpoint="localhost.resource_overview", func=resource_overview)
-    register_rpc(func_key="resource_by_name",
-                 endpoint="localhost.resource_by_name", func=resource_by_name)
-    register_rpc(func_key="reservations",
-                 endpoint="localhost.reservations", func=reservations)
-    register_rpc(func_key="forward",
-                 endpoint="localhost.forward", func=forward)
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 

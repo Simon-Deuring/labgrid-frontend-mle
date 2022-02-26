@@ -7,17 +7,17 @@ import sys
 import unittest
 from datetime import datetime
 from random import random
-from typing import Callable, List
+from typing import Callable, List, Union
 from unittest import mock
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import yaml
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 
 from labby.labby import LabbyClient, RouterInterface, run_router
-from labby.labby_error import ErrorKind
-from labby.labby_types import PowerState, SerLabbyError, Session
-from labby import router, rpc
+from labby.labby_error import ErrorKind, LabbyError
+from labby.labby_types import Place, PowerState, SerLabbyError, Session
+from labby import rpc
 
 PLACES = None
 with open("tests/places.yaml", 'r') as file:
@@ -133,7 +133,7 @@ class TestPlaces(unittest.TestCase):
         context = MockSession()
         assert PLACES
         #############
-        ret = await rpc.places(context)
+        ret : Union[List[Place], LabbyError] = await rpc.places(context)
         assert ret is not None
         assert isinstance(
             ret, list), "Returned Value has to be valid, which means of type list."
@@ -237,19 +237,19 @@ class TestLabby(unittest.TestCase):
         place_name, place = list(PLACES.items())[0]
         user = f"test{datetime.now()}"
         place['acquired'] = user
-        client.onPlaceChanged(place_name=place_name, place=place)
+        asyncio.run(client.on_place_changed(name=place_name, place_data=place))
         assert client.places
         assert client.places[place_name]
         assert client.places[place_name]['acquired']
         assert user == client.places[place_name]['acquired']
 
-    def test_on_resource_changed_changed(self) -> None:
+    async def test_on_resource_changed_changed(self) -> None:
         """
         Test onResourceChanged callback function, mock ApplicationSession Super class
         """
         client = LabbyClient()
         assert RESOURCES is not None
-        client.onResourceChanged()
+        asyncio.run(client.on_resource_changed(exporter='mle-lg-ref-1', group_name='NetworkService', resource_name='NetworkService', resource_data={}))
         # TODO create
         # test once onResourceChanged is done
 
@@ -276,7 +276,9 @@ class TestLabby(unittest.TestCase):
 
         client.onConnect()
 
-#TODO check returned values and call args
+# TODO check returned values and call args
+
+
 class TestFrontendRouter(unittest.TestCase):
     """
     mock test labby frontend router
@@ -306,14 +308,12 @@ class TestFrontendRouter(unittest.TestCase):
         client.onJoin(details=None)
         # no exceptions
 
-    @patch('labby.labby.get_context_callback')
-    @patch('labby.labby.load_rpc')
     @patch.object(ApplicationSession, 'register')
-    def test_register(self, register: MagicMock, loader: MagicMock, context: MagicMock):
+    def test_register(self, register: MagicMock):
         client = RouterInterface()
         func_key = "test"
-        client.register(func_key=func_key, arg1='arg1',
-                        kwargs={'kwarg1': 'kwarg1'})
+        procedure = MagicMock()
+        client.register(func_key, procedure, 'arg1')
 
         assert len(register.call_args) == 2
         arg_endpoint: MagicMock = register.call_args[1]
@@ -326,12 +326,13 @@ class TestStartRouter(unittest.TestCase):
         fut = asyncio.Future()
         fut.set_result(MagicMock()(*args, kwargs))
         return fut
-        
+
     @patch('asyncio.get_event_loop')
     @patch('subprocess.run', _run)
     @patch.object(ApplicationRunner, 'run')
     def test_start(self, run, loop):
         run_router("localhost", "realm1")
+
 
 if __name__ == "__main__":
     unittest.main()
