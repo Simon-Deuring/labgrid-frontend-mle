@@ -7,9 +7,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union, Any
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 
-from .labby_error import ErrorKind, LabbyError, failed, invalid_parameter, not_found
-from .labby_types import LabbyPlace, PlaceName, PowerState, Resource, ResourceName, Session
-from .labby_util import prepare_place
+from .labby_util import flatten, prepare_place
 
 
 @attrs()
@@ -160,6 +158,16 @@ async def fetch_resources(context: Session,
     return data
 
 
+def _calc_power_for_place(place_name, resources: Iterable[Dict]):
+    pstate = False
+    for res in resources:
+        if isinstance(res['acquired'], Iterable):
+            pstate |= place_name in res['acquired']
+        else:
+            pstate |= res['acquired'] == place_name
+    return pstate
+
+
 @cached("power_states")
 async def fetch_power_state(context: Session,
                             place: Optional[PlaceName]) -> Union[PowerState, LabbyError]:
@@ -167,24 +175,30 @@ async def fetch_power_state(context: Session,
     Use fetch resource to determine power state, this may update context.resource
     """
 
-    data = await fetch_resources(context=context, place=place, resource_key=None)
-    if isinstance(data, LabbyError):
-        return data
-
+    _resources = await fetch_resources(context=context, place=place, resource_key=None)
+    if isinstance(_resources, LabbyError):
+        return _resources
+    if len(_resources) == 0:
+        return not_found("No Places found.")
+    _resources = flatten(_resources)
+    _places = await fetch_places(context, place)
+    if isinstance(_places, LabbyError):
+        return _places
     power_states = {}
-    tmp = {}
-    for place_name, resource_data in data.items():
-        power = any(
-            "avail" in resource_data.keys()
-            for _, resource_data in resource_data.items()
-        )
-
-        power_states[place_name] = {"power_state": power}
+    for place_name, place_data in _places.items():
+        if 'acquired_resources' in place_data:
+            if len(place_data['acquired_resources']) == 0 or place_name not in _resources:
+                power_states[place_name] = {'power_state': False}
+                continue
+            resources_to_check = ((v for k, v in _resources[place_name].items() if any(
+                (k in a for a in place_data['acquired_resources']))))
+            power_states[place_name] = {
+                'power_state': _calc_power_for_place(place_name, resources_to_check)}
     return power_states
 
 
 @labby_serialized
-async def aces(context: Session,
+async def places(context: Session,
                place: Optional[PlaceName] = None) -> Union[List[LabbyPlace], LabbyError]:
     """
     returns registered places as dict of lists
@@ -235,7 +249,7 @@ async def resource(context: Session,
 @labby_serialized
 async def power_state(context: Session,
                       place: PlaceName,
-                      ) -> Union[Resource, LabbyError]:
+                      ) -> Union[PowerState, LabbyError]:
     """
     rpc: return power state for a given place
     """
