@@ -1,7 +1,7 @@
 """
 A wamp client which registers a rpc function
 """
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 from time import sleep
 
 import logging
@@ -15,11 +15,18 @@ from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
 
 
-def get_context_callback():
+def get_context_callback() -> Optional['LabbyClient']:
     """
     If context takes longer to create, prevent Context to be None in Crossbar router context
     """
     return globals().get("CALLBACK_REF", None)
+
+
+def get_frontend_callback() -> Optional['RouterInterface']:
+    """
+    If context takes longer to create, prevent Context to be None in Crossbar router context
+    """
+    return globals().get("FRONTEND_REF", None)
 
 class LabbyClient(Session):
     """
@@ -115,6 +122,10 @@ class RouterInterface(ApplicationSession):
     Wamp router, for communicaion with frontend
     """
 
+    def __init__(self, config=None):
+        globals()["FRONTEND_REF"] = self
+        super().__init__(config=config)
+
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
@@ -160,6 +171,9 @@ def run_router(url: str, realm: str):
     """
 
     globals()["LOADED_RPC_FUNCTIONS"] = {}
+    loop = asyncio.get_event_loop()
+    # asyncio.set_event_loop(loop)
+
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
@@ -172,7 +186,6 @@ def run_router(url: str, realm: str):
     asyncio.log.logger.info("Starting Frontend Router")
     router = Router("labby/router/.crossbar")
     sleep(4)
-    loop = asyncio.get_event_loop()
     assert labby_coro is not None
     assert frontend_coro is not None
 

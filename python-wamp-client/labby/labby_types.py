@@ -38,7 +38,6 @@ class LabbyType:
         """
         convert to json serializable dict
         """
-        pass
 
 
 @attrs

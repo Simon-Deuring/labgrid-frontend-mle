@@ -1,134 +1,135 @@
-mle-lg-ref-1:
-  NetworkService:
-    acquired: mle-lg-ref-1
-    avail: true
-    cls: NetworkService
-    params:
-      address: 10.89.64.95
-      extra:
-        proxy: exporter.mle
-        proxy_required: false
-      password: admin
-      username: admin
-  PDUDaemonPort:
-    acquired: mle-lg-ref-1
-    avail: true
-    cls: PDUDaemonPort
-    params:
-      host: exporter.mle
-      index: 1
-      pdu: sonoff-5.mle
-  USBSDMuxDevice:
-    acquired: mle-lg-ref-1
-    avail: true
-    cls: NetworkUSBSDMuxDevice
-    params:
-      busnum: 3
-      control_path: /dev/sg2
-      devnum: 21
-      extra:
-        proxy: exporter.mle
-        proxy_required: false
-      host: exporter
-      model_id: 16449
-      path: /dev/sdb
-      vendor_id: 1060
-  USBSerialPort:
-    acquired: mle-lg-ref-1
-    avail: true
-    cls: NetworkSerialPort
-    params:
-      extra:
-        path: /dev/ttyUSB0
-        proxy: exporter.mle
-        proxy_required: false
-      host: exporter
-      port: 56617
-      speed: 115200
-  USBVideo:
-    acquired: mle-lg-ref-1
-    avail: true
-    cls: NetworkUSBVideo
-    params:
-      busnum: 3
-      devnum: 20
-      extra:
-        proxy: exporter.mle
-        proxy_required: false
-      host: exporter
-      model_id: 2093
-      path: /dev/video1
-      vendor_id: 1133
-  XilinxUSBJTAG:
-    acquired: mle-lg-ref-1
-    avail: true
-    cls: NetworkXilinxUSBJTAG
-    params:
-      agent_url: tcp::3122
-      extra:
-        proxy: exporter.mle
-        proxy_required: false
-      extra_args:
-      - -S
-      gdb_port: 4000
-      host: exporter
-      hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
-        && hw_server
-      log_level:
-      - events
-      - protocol
-      serial: 210308A11F1A
-mle-xlx-jtag-1:
-  XilinxUSBJTAG:
-    acquired: null
-    avail: false
-    cls: NetworkXilinxUSBJTAG
-    params:
-      agent_url: tcp::3122
-      extra:
-        proxy: exporter.mle
-        proxy_required: false
-      extra_args:
-      - -S
-      gdb_port: 4000
-      host: exporter
-      hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
-        && hw_server
-      log_level:
-      - events
-      - protocol
-      serial: null
-mle-xlx-jtag-2:
-  XilinxUSBJTAG:
-    acquired: null
-    avail: false
-    cls: NetworkXilinxUSBJTAG
-    params:
-      agent_url: tcp::3123
-      extra:
-        proxy: exporter.mle
-        proxy_required: false
-      extra_args: []
-      gdb_port: 5000
-      host: exporter
-      hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
-        && hw_server
-      log_level: []
-      serial: null
-mle-xlx-jtag-3:
-  XilinxUSBJTAG:
-    acquired: null
-    avail: false
-    cls: NetworkXilinxUSBJTAG
-    params:
-      agent_url: tcp::3124
-      extra:
-        proxy: exporter.mle
-        proxy_required: false
-      extra_args: []
-      gdb_port: 6000
-      host: exporter
-      hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
-        && hw_server
-      log_level: []
-      serial: 00001296718a01
+exporter1:
+  mle-lg-ref-1:
+    NetworkService:
+      acquired: mle-lg-ref-1
+      avail: true
+      cls: NetworkService
+      params:
+        address: 10.89.64.95
+        extra:
+          proxy: exporter.mle
+          proxy_required: false
+        password: admin
+        username: admin
+    PDUDaemonPort:
+      acquired: mle-lg-ref-1
+      avail: true
+      cls: PDUDaemonPort
+      params:
+        host: exporter.mle
+        index: 1
+        pdu: sonoff-5.mle
+    USBSDMuxDevice:
+      acquired: mle-lg-ref-1
+      avail: true
+      cls: NetworkUSBSDMuxDevice
+      params:
+        busnum: 3
+        control_path: /dev/sg2
+        devnum: 21
+        extra:
+          proxy: exporter.mle
+          proxy_required: false
+        host: exporter
+        model_id: 16449
+        path: /dev/sdb
+        vendor_id: 1060
+    USBSerialPort:
+      acquired: mle-lg-ref-1
+      avail: true
+      cls: NetworkSerialPort
+      params:
+        extra:
+          path: /dev/ttyUSB0
+          proxy: exporter.mle
+          proxy_required: false
+        host: exporter
+        port: 56617
+        speed: 115200
+    USBVideo:
+      acquired: mle-lg-ref-1
+      avail: true
+      cls: NetworkUSBVideo
+      params:
+        busnum: 3
+        devnum: 20
+        extra:
+          proxy: exporter.mle
+          proxy_required: false
+        host: exporter
+        model_id: 2093
+        path: /dev/video1
+        vendor_id: 1133
+    XilinxUSBJTAG:
+      acquired: mle-lg-ref-1
+      avail: true
+      cls: NetworkXilinxUSBJTAG
+      params:
+        agent_url: tcp::3122
+        extra:
+          proxy: exporter.mle
+          proxy_required: false
+        extra_args:
+        - -S
+        gdb_port: 4000
+        host: exporter
+        hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
+          && hw_server
+        log_level:
+        - events
+        - protocol
+        serial: 210308A11F1A
+  mle-xlx-jtag-1:
+    XilinxUSBJTAG:
+      acquired: null
+      avail: false
+      cls: NetworkXilinxUSBJTAG
+      params:
+        agent_url: tcp::3122
+        extra:
+          proxy: exporter.mle
+          proxy_required: false
+        extra_args:
+        - -S
+        gdb_port: 4000
+        host: exporter
+        hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
+          && hw_server
+        log_level:
+        - events
+        - protocol
+        serial: null
+  mle-xlx-jtag-2:
+    XilinxUSBJTAG:
+      acquired: null
+      avail: false
+      cls: NetworkXilinxUSBJTAG
+      params:
+        agent_url: tcp::3123
+        extra:
+          proxy: exporter.mle
+          proxy_required: false
+        extra_args: []
+        gdb_port: 5000
+        host: exporter
+        hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
+          && hw_server
+        log_level: []
+        serial: null
+  mle-xlx-jtag-3:
+    XilinxUSBJTAG:
+      acquired: null
+      avail: false
+      cls: NetworkXilinxUSBJTAG
+      params:
+        agent_url: tcp::3124
+        extra:
+          proxy: exporter.mle
+          proxy_required: false
+        extra_args: []
+        gdb_port: 6000
+        host: exporter
+        hw_server_cmd: source /opt/xilinx/mle-hwse/v2020.1/Vivado/2020.1/settings64.sh
+          && hw_server
+        log_level: []
+        serial: 00001296718a01

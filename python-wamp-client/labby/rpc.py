@@ -2,37 +2,40 @@
 Generic RPC functions for labby
 """
 
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union, Any
+import os
+from pathlib import Path
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 
+import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 
+from .labby_error import (ErrorKind, LabbyError, failed, invalid_parameter,
+                          not_found)
+from .labby_types import (LabbyPlace, PlaceName, PowerState, Resource,
+                          ResourceName, Session)
 from .labby_util import flatten, prepare_place
 
 
 @attrs()
 class RPCDesc():
-    name: str = attrib()
-    endpoint: str = attrib()
+    name: str = attrib(default=None)
+    endpoint: str = attrib(default=None)
     remote_endpoint: str = attrib(default=None)
     info: Optional[str] = attrib(default=None)
-    parameter: Optional[List[Tuple[str, str]]] = attrib(default=None)
+    parameter: Optional[List[Dict[str, str]]] = attrib(default=None)
+    return_type: Optional[str] = attrib(default=None)
 
 
-FUNCTION_INFO = {
-    "places": RPCDesc(name="places",
-                      endpoint="localhost.places",
-                      remote_endpoint="org.labgrid.coordinator.get_places",
-                      info="""Takes optional string parameter to filter Places by.
-Returns Dictionary of places with registered Resources.""",
-                      parameter=[("places", "Place filter string")]),
-    "resource": RPCDesc(name="resource",
-                        endpoint="localhost.resource",
-                        remote_endpoint="org.labgrid.coordinator.get_resources",),
-    "power_state": RPCDesc(name="power_state",
-                           endpoint="localhost.power_state",
-                           )
-}
+def _localfile(p): return Path(os.path.dirname(
+    os.path.realpath(__file__))).joinpath(p)
+
+
+FUNCTION_INFO = {}
+with open(_localfile('rpc_desc.yaml'), 'r', encoding='utf-8') as file:
+    tmp = {key: RPCDesc(**val) for key, val in yaml.load(file,
+                                                         yaml.loader.FullLoader).items() if val is not None}
+
 
 # non exhaustive list of serializable primitive types
 _serializable_primitive: List[Type] = [int, float, str, bool]
@@ -104,10 +107,10 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     assert attribute is not None
     assert endpoint is not None
 
-    data: Optional[Dict] = context.__getattribute__(attribute)
-    if context.__getattribute__(attribute) is None:
+    data: Optional[Dict] = getattr(context, attribute)
+    if data is None:
         data: Optional[Dict] = await context.call(endpoint, *args, **kwargs)
-        context.__setattr__(attribute, data)
+        setattr(context, attribute, data)
     return data
 
 
@@ -199,7 +202,7 @@ async def fetch_power_state(context: Session,
 
 @labby_serialized
 async def places(context: Session,
-               place: Optional[PlaceName] = None) -> Union[List[LabbyPlace], LabbyError]:
+                 place: Optional[PlaceName] = None) -> Union[List[LabbyPlace], LabbyError]:
     """
     returns registered places as dict of lists
     """
@@ -229,7 +232,7 @@ async def places(context: Session,
 @labby_serialized
 async def resource(context: Session,
                    place: Optional[PlaceName] = None,
-                   ) -> Union[Resource, LabbyError]:
+                   ) -> Union[Dict[ResourceName, Resource], LabbyError]:
     """
     rpc: returns resources registered for given place
     """
