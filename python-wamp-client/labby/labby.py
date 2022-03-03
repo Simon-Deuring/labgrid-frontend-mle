@@ -72,14 +72,11 @@ class LabbyClient(Session):
         """
         Listen on resource changes on coordinator and update cache on changes
         """
-        group = self.resources if self.resources is not None else {}
-        # Do not replace the ResourceEntry object, as other components may keep
-        # a reference to it and want to see changes.
-        old = None if resource_name not in group else group[resource_name]
-        group[resource_name] = resource_data
-        if resource_data and not old:
+        if self.resources is None:
+            self.resources = {}
+        self.resources[exporter] = resource_data
+        if resource_name not in self.resources:
             self.log.info(
-                # f"Resource {exporter}/{group_name}/{resource_name} created: {resource_data}")
                 f"Resource {exporter}/{group_name}/{resource_name} created.")
         elif resource_data:
             self.log.info(
@@ -87,6 +84,7 @@ class LabbyClient(Session):
         else:
             self.log.info(
                 f"Resource {exporter}/{group_name}/{resource_name} deleted")
+        
         self.power_states = None # Invalidate power state cache
 
 
@@ -116,7 +114,6 @@ class LabbyClient(Session):
         self.power_states = None # Invalidate power state cache
 
 
-
 class RouterInterface(ApplicationSession):
     """
     Wamp router, for communicaion with frontend
@@ -137,8 +134,8 @@ class RouterInterface(ApplicationSession):
         """
         endpoint = f"localhost.{func_key}"
 
-        async def bind(*a):
-            return await procedure(get_context_callback(), *args, *a)
+        async def bind(*o_args):
+            return await procedure(get_context_callback(), *args, *o_args)
         func = bind
         self.log.info(f"Registered function for endpoint {endpoint}.")
         super().register(func, endpoint)
