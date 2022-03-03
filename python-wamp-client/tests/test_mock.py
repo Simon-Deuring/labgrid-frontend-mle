@@ -295,7 +295,7 @@ class TestLabby(unittest.TestCase):
         client = LabbyClient()
         assert RESOURCES is not None
         exporter = 'exporter2'
-        await client.on_resource_changed(exporter=exporter, group_name='NetworkService', resource_name='NetworkService', resource_data=RESOURCES[exporter])
+        await client.on_resource_changed(exporter=exporter, group_name='NetworkService', resource_name='NetworkService', resource_data=RESOURCES['exporter1'])
         assert client.resources
         assert client.resources['exporter2'] is not None
         # TODO create
