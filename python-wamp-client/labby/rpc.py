@@ -27,8 +27,8 @@ class RPCDesc():
     return_type: Optional[str] = attrib(default=None)
 
 
-def _localfile(p): return Path(os.path.dirname(
-    os.path.realpath(__file__))).joinpath(p)
+def _localfile(path): return Path(os.path.dirname(
+    os.path.realpath(__file__))).joinpath(path)
 
 
 FUNCTION_INFO = {}
@@ -41,8 +41,6 @@ with open(_localfile('rpc_desc.yaml'), 'r', encoding='utf-8') as file:
 _serializable_primitive: List[Type] = [int, float, str, bool]
 
 # TODO (Kevin) create a function to invalidate cache
-
-
 def invalidate_cache(attribute):
     """
     on call clear attribute (e.g. set to None)
