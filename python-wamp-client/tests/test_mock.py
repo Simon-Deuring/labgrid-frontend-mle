@@ -287,13 +287,17 @@ class TestLabby(unittest.TestCase):
         assert client.places[place_name]['acquired']
         assert user == client.places[place_name]['acquired']
 
+    @async_test
     async def test_on_resource_changed_changed(self) -> None:
         """
         Test onResourceChanged callback function, mock ApplicationSession Super class
         """
         client = LabbyClient()
         assert RESOURCES is not None
-        asyncio.run(client.on_resource_changed(exporter='mle-lg-ref-1', group_name='NetworkService', resource_name='NetworkService', resource_data={}))
+        exporter = 'exporter2'
+        await client.on_resource_changed(exporter=exporter, group_name='NetworkService', resource_name='NetworkService', resource_data=RESOURCES[exporter])
+        assert client.resources
+        assert client.resources['exporter2'] is not None
         # TODO create
         # test once onResourceChanged is done
 
