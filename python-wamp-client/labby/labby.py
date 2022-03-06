@@ -1,7 +1,7 @@
 """
 A wamp client which registers a rpc function
 """
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, Optional
 from time import sleep
 
 import logging
@@ -10,44 +10,26 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import RPC, forward, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
+from .rpc import (cancel_reservation, create_place, create_resource,
+                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache,
+                  places, places_names, get_reservations, create_reservation, resource, power_state,
+                  acquire, release, info, resource_by_name, resource_overview)
 from .router import Router
-from .labby_types import PlaceKey, Session
-
-LOADED_RPC_FUNCTIONS: Dict[str, RPC] = {}
-ACQUIRED_PLACES: List[PlaceKey] = []
-CALLBACK_REF: Optional[ApplicationSession] = None
+from .labby_types import GroupName, PlaceName, ResourceName, Session
 
 
-def get_context_callback():
+def get_context_callback() -> Optional['LabbyClient']:
     """
     If context takes longer to create, prevent Context to be None in Crossbar router context
     """
-    return globals()["CALLBACK_REF"]
+    return globals().get("CALLBACK_REF", None)
 
 
-def register_rpc(func_key: str, endpoint: str, func: Callable) -> None:
+def get_frontend_callback() -> Optional['RouterInterface']:
     """
-    Short hand to inline RPC function registration
+    If context takes longer to create, prevent Context to be None in Crossbar router context
     """
-    assert not func_key is None
-    assert not endpoint is None
-    assert not func is None
-    globals()["LOADED_RPC_FUNCTIONS"][func_key] = RPC(
-        endpoint=endpoint, func=func)
-
-
-def load_rpc(func_key: str):
-    """
-    Short hand to retrieve loaded RPCs
-    """
-    assert not func_key is None
-    assert func_key in globals()["LOADED_RPC_FUNCTIONS"]
-    return globals()["LOADED_RPC_FUNCTIONS"][func_key]
-
-
-def get_acquired_places() -> List[PlaceKey]:
-    return globals()["ACQUIRED_PLACES"]
+    return globals().get("FRONTEND_REF", None)
 
 
 class LabbyClient(Session):
@@ -56,6 +38,7 @@ class LabbyClient(Session):
     """
 
     def __init__(self, config=None):
+        # make sure only one active labby client exists
         globals()["CALLBACK_REF"] = self
         super().__init__(config=config)
 
@@ -68,33 +51,76 @@ class LabbyClient(Session):
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
         if challenge.method == 'ticket':
-            return ""
-        else:
-            self.log.error(
-                "Only Ticket authentication enabled, atm. Aborting...")
-            raise NotImplementedError(
-                "Only Ticket authentication enabled, atm")
+            return ""  # don't provide a password
+        self.log.error(
+            "Only Ticket authentication enabled, atm. Aborting...")
+        raise NotImplementedError(
+            "Only Ticket authentication enabled, atm")
 
-    def onJoin(self, details):
+    async def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
-        self.subscribe(self.onPlaceChanged,
-                       u"org.labgrid.coordinator.place_changed")
-        self.subscribe(self.onResourceChanged,
-                       u"org.labgrid.coordinator.resource_changed")
+        res = await self.call("wamp.registration.list")
+        for proc in res['exact']:
+            p = await self.call("wamp.registration.get", proc)
+            print(p['uri'])
+
+        self.subscribe(self.on_place_changed,
+                       "org.labgrid.coordinator.place_changed")
+        self.subscribe(self.on_resource_changed,
+                       "org.labgrid.coordinator.resource_changed")
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
 
-    def onPlaceChanged(self, place_name, place, *args):
-        self.log.info(f"Changed place {place_name}.")
+    @invalidates_cache('power_states')
+    async def on_resource_changed(self,
+                                  exporter: str,
+                                  group_name: GroupName,
+                                  resource_name: ResourceName,
+                                  resource_data: Dict):
+        """
+        Listen on resource changes on coordinator and update cache on changes
+        """
+        if self.resources is None:
+            self.resources = {}
+        self.resources[exporter] = resource_data
+        if resource_name not in self.resources:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} created.")
+        elif resource_data:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} changed:")
+        else:
+            self.log.info(
+                f"Resource {exporter}/{group_name}/{resource_name} deleted")
+
+        self.power_states = None  # Invalidate power state cache
+
+    @invalidates_cache('power_states')
+    async def on_place_changed(self, name: PlaceName, place_data: Optional[Dict] = None):
+        """
+        Listen on place changes on coordinator and update cache on changes
+        """
+        if self.places is not None and not place_data:
+            del self.places[name]
+            self.log.info(f"Place {name} deleted")
+            return
+
         if self.places is None:
             self.places = {}
-        self.places[place_name] = place
 
-    def onResourceChanged(self, *args):
-        self.log.info("Changed resource.")
-        pass
+        if name not in self.places:
+            self.places[name] = place_data
+            self.log.info(f"Place {name} created.")
+        else:
+            place = self.places[name]
+            # old = flat_dict(place.asdict())
+            place.update(place_data)
+            # new = flat_dict(place.asdict())
+            self.log.info(f"Place {name} changed:")
+            # for k, v_old, v_new in diff_dict(old, new):
+            #     print(f"  {k}: {v_old} -> {v_new}")
 
 
 class RouterInterface(ApplicationSession):
@@ -102,36 +128,53 @@ class RouterInterface(ApplicationSession):
     Wamp router, for communicaion with frontend
     """
 
+    def __init__(self, config=None):
+        globals()["FRONTEND_REF"] = self
+        super().__init__(config=config)
+
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
         self.join(self.config.realm)
 
-    def register(self, func_key: str, *args, **kwargs):
+    def register(self, func_key: str, procedure: Callable, *args):
         """
         Register functions from RPC store from key, overrides ApplicationSession::register
         """
-        callback: RPC = load_rpc(func_key)
-        endpoint = callback.endpoint
-        func = callback.bind(get_context_callback, *args, **kwargs)
-        self.log.info(f"Registered function for endpoint {endpoint}.")
-        super().register(func, endpoint)
+        endpoint = f"localhost.{func_key}"
 
-    def onJoin(self, details):
-        self.log.info("Joined Frontend Session.")
+        async def bind(*o_args):
+            return await procedure(get_context_callback(), *args, *o_args)
+        func = bind
+        self.log.info(f"Registered function for endpoint {endpoint}.")
         try:
-            self.register("places")
-            self.register("resource",    'cup')
-            self.register("power_state", 'cup')
-            self.register("acquire")
-            self.register("release")
-            self.register("resource_overview")
-            self.register("resource_by_name")
-            self.register("info")
-            self.register("forward")
+            super().register(func, endpoint)
         except wexception.Error as err:
             self.log.error(
                 f"Could not register procedure: {err}.\n{err.with_traceback(None)}")
+
+    def onJoin(self, details):
+        self.log.info("Joined Frontend Session.")
+
+        self.register("places", places)
+        self.register("resource", resource)
+        self.register("power_state", power_state)
+        self.register("acquire", acquire)
+        self.register("release", release)
+        self.register("get_reservations", get_reservations)
+        self.register("resource_overview", resource_overview)
+        self.register("resource_by_name", resource_by_name)
+        self.register("info", info)
+        self.register("forward", forward)
+        self.register("create_place", create_place)
+        self.register("delete_place", delete_place)
+        self.register("create_reservation", create_reservation)
+        self.register("cancel_reservation", cancel_reservation)
+        self.register("create_resource", create_resource)
+        self.register("delete_resource", delete_resource)
+        self.register("place_names", places_names)
+        self.register("get_alias", get_alias)
+        self.register("get_exporters", get_exporters)
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
@@ -144,27 +187,9 @@ def run_router(url: str, realm: str):
     """
 
     globals()["LOADED_RPC_FUNCTIONS"] = {}
-    globals()["ACQUIRED_PLACES"] = {}
+    loop = asyncio.get_event_loop()
+    # asyncio.set_event_loop(loop)
 
-    register_rpc(func_key="places",
-                 endpoint="localhost.places", func=places)
-    register_rpc(func_key="resource",
-                 endpoint="localhost.resource", func=resource)
-    register_rpc(func_key="power_state",
-                 endpoint="localhost.power_state", func=power_state)
-    register_rpc(func_key="acquire",
-                 endpoint="localhost.acquire", func=acquire)
-    register_rpc(func_key="release",
-                 endpoint="localhost.release", func=release)
-    register_rpc(func_key="info", endpoint="localhost.info", func=info)
-    register_rpc(func_key="resource_overview",
-                 endpoint="localhost.resource_overview", func=resource_overview)
-    register_rpc(func_key="resource_by_name",
-                 endpoint="localhost.resource_by_name", func=resource_by_name)
-    register_rpc(func_key="reservations",
-                 endpoint="localhost.reservations", func=reservations)
-    register_rpc(func_key="forward",
-                 endpoint="localhost.forward", func=forward)
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
@@ -177,11 +202,10 @@ def run_router(url: str, realm: str):
     asyncio.log.logger.info("Starting Frontend Router")
     router = Router("labby/router/.crossbar")
     sleep(4)
-    loop = asyncio.get_event_loop()
-    assert not labby_coro is None
-    assert not frontend_coro is None
-    try:
+    assert labby_coro is not None
+    assert frontend_coro is not None
 
+    try:
         asyncio.log.logger.info("Connecting to %s on realm '%s'", url, realm)
         loop.run_until_complete(labby_coro)
         loop.run_until_complete(frontend_coro)

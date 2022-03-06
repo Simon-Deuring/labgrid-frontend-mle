@@ -25,9 +25,9 @@
                 <span
                     class="resource-label"
                     *ngFor="let resource of place.acquired_resources"
-                    (click)="navigateToResource(resource, $event)"
+                    (click)="navigateToResource(resource[3], $event)"
                 >
-                    {{ resource }}
+                    {{ resource[3] }}
                 </span>
             </td>
         </ng-container>

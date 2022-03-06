@@ -1,0 +1,40 @@
+mle-lg-ref-1:
+  acquired: labby/dummy
+  acquired_resources:
+  - - cup
+    - mle-lg-ref-1
+    - NetworkService
+    - NetworkService
+  - - cup
+    - mle-lg-ref-1
+    - PDUDaemonPort
+    - PDUDaemonPort
+  - - cup
+    - mle-lg-ref-1
+    - NetworkUSBSDMuxDevice
+    - USBSDMuxDevice
+  - - cup
+    - mle-lg-ref-1
+    - NetworkSerialPort
+    - USBSerialPort
+  - - cup
+    - mle-lg-ref-1
+    - NetworkUSBVideo
+    - USBVideo
+  - - cup
+    - mle-lg-ref-1
+    - NetworkXilinxUSBJTAG
+    - XilinxUSBJTAG
+  aliases: []
+  allowed: []
+  changed: 1644747656.9261515
+  comment: ''
+  created: 1634541529.0187278
+  matches:
+  - cls: '*'
+    exporter: '*'
+    group: mle-lg-ref-1
+    name: null
+    rename: null
+  reservation: null
+  tags: {}
