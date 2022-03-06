@@ -113,20 +113,35 @@ export class PlaceComponent implements OnInit {
     public async acquirePlace() {
         const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
 
-        if (ret) {
+        if (ret.successful) {
             this._snackBar.open('Place has been acquired succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
+            });
+        } else if(!ret.successful && !ret.errorMessage) {
+            this._snackBar.open('Place could not be acuired.', 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
+            });
+        }else {
+            this._snackBar.open(ret.errorMessage, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
             });
         }
     }
 
     public async releasePlace() {
         const ret = await this._ps.releasePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
-        if (ret) {
+        if (ret.successful) {
             this._snackBar.open('Place has been released succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
+            });
+        } else {
+            this._snackBar.open(ret.errorMessage, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
             });
         }
     }
@@ -134,7 +149,7 @@ export class PlaceComponent implements OnInit {
     public async reservePlace() {
         const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
         if (ret) {
-            this._snackBar.open('Place has been reserved succesfully!', 'OK', {
+            this._snackBar.open('Place has been reserved succesfully! (placeholder, not implemented yet)', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });

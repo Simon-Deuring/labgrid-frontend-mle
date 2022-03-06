@@ -72,29 +72,25 @@ export class PlaceService {
         }
     }
 
-    public async acquirePlace(placeName: string): Promise<boolean> {
-        let body = (await this.getPlace(placeName)) as Place;
-
-        if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
-            console.log('This place is already acquired.');
-            return false;
+    public async acquirePlace(placeName: string): Promise<{successful: boolean, errorMessage: string}> {
+        const acquire = await this.session.call('localhost.acquire', [placeName]);
+        if (acquire === true){
+            return  {successful: true, errorMessage: ''};
+        } else if (acquire === false){
+            return {successful: false, errorMessage: ''};
         } else {
-            console.log('Place not yet acquired. Try to acquire.');
-            // TODO: Connect to server
-            return true;
+            return {successful: false, errorMessage: acquire.error.message};
         }
     }
 
-    public async releasePlace(placeName: string): Promise<boolean> {
-        let body = (await this.getPlace(placeName)) as Place;
+    public async releasePlace(placeName: string): Promise<{successful: boolean, errorMessage: string}> {
+        const release = await this.session.call('localhost.release', [placeName]);
+        console.log('release: ', release);
 
-        if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
-            console.log('Something went wrong while releasing the place.');
-            return false;
+        if (release === true) {
+            return {successful: true, errorMessage: ''};
         } else {
-            console.log('Place released successfully.');
-            // TODO: Connect to server
-            return true;
+            return {successful: false, errorMessage: release.error.message};
         }
     }
 
