@@ -35,10 +35,15 @@ export class PlaceComponent implements OnInit {
         route.params.subscribe((val) => {
             const currentRoute = route.snapshot.url[route.snapshot.url.length - 1].path;
             this._ps.getPlace(currentRoute).then((data) => {
-                this.place = data;
-                this.getResources();
-                this.readPlaceState();
-                this.table.renderRows();
+                // Check if the specified place exists
+                if (Array.isArray(data) && data.length > 0) {
+                    this.place = data[0];
+                    this.getResources();
+                    this.readPlaceState();
+                    this.table.renderRows();
+                } else {
+                    this.router.navigate(['error']);
+                }
             });
         });
     }
@@ -70,27 +75,30 @@ export class PlaceComponent implements OnInit {
         }
 
         /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
-    switch (allocationEnum) {
-      case AllocationState.Allocated:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-        break;
-      case AllocationState.Acquired:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-        break;
-      case AllocationState.Expired:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-        break;
-      case AllocationState.Invalid:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-        this.allocationStateInvalid = true;
-        break;
-      case AllocationState.Waiting:
-        this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-        break;
-      default:
-        this.placeStates.push({ name: 'Allocation status: ', value: 'something went wrong: ' + this.place.reservation.toString() });
-        break;
-    }*/
+        switch (allocationEnum) {
+            case AllocationState.Allocated:
+                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
+                break;
+            case AllocationState.Acquired:
+                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
+                break;
+            case AllocationState.Expired:
+                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
+                break;
+            case AllocationState.Invalid:
+                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
+                this.allocationStateInvalid = true;
+                break;
+            case AllocationState.Waiting:
+                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
+                break;
+            default:
+                this.placeStates.push({
+                    name: 'Allocation status: ',
+                    value: 'something went wrong: ' + this.place.reservation.toString(),
+                });
+                break;
+        }*/
 
         // TODO: Check if place was aquired by current user, if so set is isAquiredByUser to true for enabling the release button
         if (!this.place.acquired) {

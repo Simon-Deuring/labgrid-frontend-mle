@@ -59,24 +59,15 @@ export class PlaceService {
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
         if (this.session) {
-            const places = (await this.session.call('localhost.places')) as Place[];
-            const place = places.find((element) => element.name === placeName);
-
-            if (!place) {
-                throw new Error('No such place');
-            }
+            const place = (await this.session.call('localhost.places', [placeName])) as Place;
             return place;
         } else {
             await new Promise((resolve, reject) => {
                 // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const places = (await this.session.call('localhost.places')) as Place[];
-            const place = places.find((element) => element.name === placeName);
 
-            if (!place) {
-                throw new Error('No such place');
-            }
+            const place = (await this.session.call('localhost.places', [placeName])) as Place;
             return place;
         }
     }
