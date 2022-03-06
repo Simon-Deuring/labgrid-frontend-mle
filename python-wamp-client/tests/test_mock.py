@@ -10,6 +10,7 @@ from random import random
 from typing import Callable, List, Union
 from unittest import mock
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import yaml
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
@@ -380,6 +381,16 @@ class TestStartRouter(unittest.TestCase):
     @patch.object(ApplicationRunner, 'run')
     def test_start(self, run, loop):
         run_router("localhost", "realm1")
+
+
+class TestCreateDelete(unittest.TestCase):
+    @async_test
+    async def test_create(self):
+        context = MockSession()
+        
+        created = await rpc.create_place(context, f'test_place_create_{uuid4()}')
+        assert not isinstance(created, SerLabbyError), "Create place call failed"
+        
 
 
 if __name__ == "__main__":
