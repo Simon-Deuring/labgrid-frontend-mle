@@ -1,0 +1,49 @@
+# description of rpcs for info rpc call
+places:
+  name: places
+  endpoint: localhost.places
+  remote_endpoint: org.labgrid.coordinator.get_places
+  info: "Takes an optional string parameter by which locations can be filtered. Returns the list of places with registered resources."
+  parameter:
+    place: "string, Filter places by name"
+  return_type: "Union[List[Place], LabbyError]"
+resource:
+  name: resource
+  endpoint: localhost.resource
+  remote_endpoint: org.labgrid.coordinator.get_resources
+  info: "Takes an optional place name as a filter and returns all resources of that place or all registered resources if the place name was none."
+  parameter:
+    place: "string, Select place by name"
+  return_type: "Union[Resource, LabbyError]"
+power_state:
+  name: power_state
+  endpoint: localhost.power_state
+  remote_endpoint: null
+  info: "Takes place name as Filter and returns the power state for that place."
+  parameter:
+    place: "string, Select place by name"
+  return_type: "Union[PowerState, LabbyError]"
+resource_overview:
+  name: resource_overview
+  endpoint: localhost.resource_overview
+  remote_endpoint: null
+  info: "Takes an optional place name as filter and returns all resources of that place or all registered resources if place name was None as a flattened overview."
+  return_type: "Union[List[Resource], LabbyError]"
+resource_by_name:
+  name: resource_by_name
+  endpoint: localhost.resource_by_name
+  remote_endpoint: null
+  info: "Takes a resource name as filter and returns all resources with that name as a flattened overview."
+  return_type: "Union[List[Resource], LabbyError]"
+acquire:
+release:
+info:
+reservations:
+reset:
+console:
+video:
+forward:
+create_place:
+delete_place:
+create_resource:
+delete_resource:
