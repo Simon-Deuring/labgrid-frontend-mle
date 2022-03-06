@@ -33,7 +33,13 @@ export class PlaceComponent implements OnInit {
         private router: Router
     ) {
         route.params.subscribe((val) => {
-            const currentRoute = route.snapshot.url[route.snapshot.url.length - 1].path;
+            this.updateData();
+        });
+    }
+
+    private updateData(){
+        this.route.params.subscribe((val) => {
+            const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
             this._ps.getPlace(currentRoute).then((data) => {
                 // Check if the specified place exists
                 if (Array.isArray(data) && data.length > 0) {
@@ -49,7 +55,7 @@ export class PlaceComponent implements OnInit {
     }
 
     ngOnInit(): void {}
-
+    
     private getResources(): void {
         this._rs.getResourcesForPlace(this.place.name).then((resources) => {
             this.resources = resources;
@@ -100,7 +106,12 @@ export class PlaceComponent implements OnInit {
                 break;
         }*/
 
-        // TODO: Check if place was aquired by current user, if so set is isAquiredByUser to true for enabling the release button
+        // TODO: user has to be replaced by dynamic username
+        if (this.place.acquired === 'labby/dummy') {
+            this.isAcquiredByUser = true;
+        } else {
+            this.isAcquiredByUser = false;
+        }
         if (!this.place.acquired) {
             this.placeStates.push({ name: 'Acquired: ', value: 'no' });
             this.isAcquired = false;
@@ -118,6 +129,7 @@ export class PlaceComponent implements OnInit {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });
+            this.updateData();
         } else if(!ret.successful && !ret.errorMessage) {
             this._snackBar.open('Place could not be acuired.', 'OK', {
                 duration: 3000,
@@ -138,6 +150,7 @@ export class PlaceComponent implements OnInit {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });
+            this.updateData();
         } else {
             this._snackBar.open(ret.errorMessage, 'OK', {
                 duration: 3000,
