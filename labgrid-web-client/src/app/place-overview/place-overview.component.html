@@ -39,10 +39,10 @@
         </ng-container>
 
         <ng-container matColumnDef="isRunning">
-            <th mat-header-cell *matHeaderCellDef>Running</th>
+            <th mat-header-cell *matHeaderCellDef>Power State</th>
             <td mat-cell *matCellDef="let place">
                 <mat-icon [ngClass]="{ notRunning: !place.power_state, running: place.power_state }">
-                    {{ getRunningIcon(place.power_state) }}
+                    {{ getPowerStateIcon(place.power_state) }}
                 </mat-icon>
             </td>
         </ng-container>

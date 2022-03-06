@@ -30,11 +30,11 @@ export class PlaceOverviewComponent implements OnInit {
         });
     }
 
-    getRunningIcon(isRunning: boolean): string {
+    getPowerStateIcon(isRunning: boolean): string {
         if (isRunning) {
-            return 'check_circle';
+            return 'power';
         } else {
-            return 'cancel';
+            return 'power_off';
         }
     }
 
