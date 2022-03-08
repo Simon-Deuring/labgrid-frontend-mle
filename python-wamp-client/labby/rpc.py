@@ -10,7 +10,7 @@ import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 
-from .labby_error import (ErrorKind, LabbyError, failed, invalid_parameter,
+from .labby_error import (LabbyError, failed, invalid_parameter,
                           not_found)
 from .labby_types import (ExporterName, GroupName, LabbyPlace, PlaceName, PowerState, Resource,
                           ResourceName, Session)
@@ -70,7 +70,7 @@ def cached(attribute: str):
             else:
                 data: Optional[Dict] = context.__getattribute__(
                     attribute)
-            if context.__getattribute__(attribute) is None:
+            if data is None:
                 data: Optional[Dict] = await func(context, *args, **kwargs)
                 context.__setattr__(attribute, data)
             return data
@@ -115,17 +115,14 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
         setattr(context, attribute, data)
     return data
 
-
+@cached('places')
 async def fetch_places(context: Session,
                        place: Optional[PlaceName]) -> Union[Dict, LabbyError]:
     """
     Fetch places from coordinator, update if missing and handle possible errors
     """
     assert context is not None
-    data: Optional[Dict] = await fetch(context=context,
-                                       attribute="places",
-                                       endpoint="org.labgrid.coordinator.get_places")
-
+    data = await context.call("org.labgrid.coordinator.get_places")
     if data is None:
         if place is None:
             return not_found("Could not find any places.")
@@ -152,15 +149,16 @@ async def fetch_resources(context: Session,
             return not_found("Could not find any resources.")
         return not_found(f"No resources found for place {place}.")
 
-    if resource_key is not None:
-        ret = {
-            place_name: {k: v for k, v in place_res if k == resource_key}
-            for place_name, place_res in data.items()
-        }
+    if place is not None:
+        data = {exporter: {k: v for k, v in exporter_data.items() if k == place and v}
+                for exporter, exporter_data in data.items()}
 
-        if not ret:
-            return not_found(f"Could not find any resources with key {resource_key}.")
-        return ret
+    if resource_key is not None:
+        data = {exporter:
+                {place_name:
+                    {k: v for k, v in place_res.items() if k == resource_key if v}
+                    for place_name, place_res in exporter_data.items() if place_res}
+                for exporter, exporter_data in data.items()}
     return data
 
 
@@ -256,21 +254,22 @@ async def places(context: Session,
 @labby_serialized
 async def resource(context: Session,
                    place: Optional[PlaceName] = None,
+                   resource_key=None
                    ) -> Union[Dict[ResourceName, Resource], LabbyError]:
     """
     rpc: returns resources registered for given place
     """
     context.log.info(f"Fetching resources for {place}.")
-    resource_data = await fetch_resources(context=context, place=place, resource_key=None)
+    resource_data = await fetch_resources(context=context, place=place, resource_key=resource_key)
 
     if isinstance(resource_data, LabbyError):
         return resource_data
 
     if place is None:
         return resource_data
-    if place not in resource_data.keys():
+    if len(flatten(resource_data)) == 0:
         return not_found(f"Place {place} not found.")
-    return resource_data[place]
+    return resource_data
 
 
 @labby_serialized
@@ -426,7 +425,6 @@ async def cancel_reservation(context, place: PlaceName):
     return await context.call("org.labgrid.coordinator.cancel_reservation", token)
     
 
-
 async def reset(context: Session, place: PlaceName) -> bool:
     """
     Send a reset request to a place matching a given place name
@@ -481,6 +479,7 @@ async def delete_place(context: Session, place: PlaceName) -> Union[bool, LabbyE
 
 @labby_serialized
 async def create_resource(context: Session, group_name: GroupName, resource_name: ResourceName) -> Union[bool, LabbyError]:
+    # TODO (Kevin) Find a way to do this without being a exporter/ delegate to exporter
     if group_name is None:
         return invalid_parameter("Missing required parameter: group_name.")
     if resource_name is None:
@@ -491,6 +490,7 @@ async def create_resource(context: Session, group_name: GroupName, resource_name
 
 @labby_serialized
 async def delete_resource(context: Session, group_name: GroupName, resource_name: ResourceName) -> Union[bool, LabbyError]:
+    # TODO (Kevin) Find a way to do this without being a exporter/ delegate to exporter
     if group_name is None:
         return invalid_parameter("Missing required parameter: group_name.")
     if resource_name is None:
