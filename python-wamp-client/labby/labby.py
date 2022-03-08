@@ -84,8 +84,12 @@ class LabbyClient(Session):
         """
         if self.resources is None:
             self.resources = {}
-        self.resources[exporter] = resource_data
-        if resource_name not in self.resources:
+        if exporter not in self.resources:
+            self.resources[exporter] = {group_name: {resource_name:resource_data}}
+        else:
+            self.resources[exporter][group_name].update({resource_name:resource_data})
+
+        if resource_name not in self.resources[exporter][group_name]:
             self.log.info(
                 f"Resource {exporter}/{group_name}/{resource_name} created.")
         elif resource_data:
@@ -118,7 +122,7 @@ class LabbyClient(Session):
             # old = flat_dict(place.asdict())
             place.update(place_data)
             # new = flat_dict(place.asdict())
-            self.log.info(f"Place {name} changed:")
+            self.log.info(f"Place {name} changed.")
             # for k, v_old, v_new in diff_dict(old, new):
             #     print(f"  {k}: {v_old} -> {v_new}")
 
