@@ -190,7 +190,7 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
 
     globals()["LOADED_RPC_FUNCTIONS"] = {}
     logging.basicConfig(
-        level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
+        level="WARNING", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
     labby_runner = ApplicationRunner(
         url=backend_url, realm=backend_realm, extra=None)

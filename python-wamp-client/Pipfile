@@ -9,10 +9,14 @@ autobahn = {version = "*", extras = ["asyncio", "encryption", "serialization"]}
 pywin32 = {version="*", markers="sys_platform == 'win32'"}
 PyYaml = "*"
 attrs = "*"
+labby = {editable = true, path = "."}
 
 [dev-packages]
+pylint = "*"
 prospector = "*"
-pep8 = "*"
+build = "*"
+autopep8 = "*"
+coverage = "*"
 
 [requires]
 python_version = "3.8"
