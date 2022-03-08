@@ -1,18 +1,40 @@
-exporter:
-  place1:
-    acquired: null
-    acquired_resources:
-      - Resource11
-      - Resource12
-      - Resource13
-      - Resource14
-      - Resource15
-    aliases: []
-    allowed: []
-    changed: 1644713069.4180038
-    comment: ''
-    created: 1644712447.272959
-    matches: []
-    reservation: null
-    tags: {}
-    exporter: exporter
+mle-lg-ref-1:
+  acquired: labby/dummy
+  acquired_resources:
+  - - cup
+    - mle-lg-ref-1
+    - NetworkService
+    - NetworkService
+  - - cup
+    - mle-lg-ref-1
+    - PDUDaemonPort
+    - PDUDaemonPort
+  - - cup
+    - mle-lg-ref-1
+    - NetworkUSBSDMuxDevice
+    - USBSDMuxDevice
+  - - cup
+    - mle-lg-ref-1
+    - NetworkSerialPort
+    - USBSerialPort
+  - - cup
+    - mle-lg-ref-1
+    - NetworkUSBVideo
+    - USBVideo
+  - - cup
+    - mle-lg-ref-1
+    - NetworkXilinxUSBJTAG
+    - XilinxUSBJTAG
+  aliases: []
+  allowed: []
+  changed: 1644747656.9261515
+  comment: ''
+  created: 1634541529.0187278
+  matches:
+  - cls: '*'
+    exporter: '*'
+    group: mle-lg-ref-1
+    name: null
+    rename: null
+  reservation: null
+  tags: {}

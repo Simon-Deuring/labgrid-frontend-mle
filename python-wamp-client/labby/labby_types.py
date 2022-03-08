@@ -8,6 +8,7 @@ from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
 
 TargetName = str
+ExporterName = str
 PlaceName = str
 ResourceName = str
 GroupName = str
@@ -29,6 +30,7 @@ class Session(ApplicationSession):
         self.places: Optional[Dict] = None
         self.acquired_places: List = []
         self.power_states: Optional[List] = None
+        self.reservations: Dict = {}
         super().__init__(*args, **kwargs)
 
 
@@ -38,7 +40,6 @@ class LabbyType:
         """
         convert to json serializable dict
         """
-        pass
 
 
 @attrs

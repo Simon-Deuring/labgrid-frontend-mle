@@ -14,7 +14,7 @@ import { ResourceService } from '../_services/resource.service';
 export class PlaceOverviewComponent implements OnInit {
     places: Place[] = [];
     dataSource: MatTableDataSource<any> = new MatTableDataSource();
-    displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isRunning'];
+    displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isPowerStateOn'];
 
     @ViewChild('paginator') paginator!: MatPaginator;
 
@@ -30,11 +30,11 @@ export class PlaceOverviewComponent implements OnInit {
         });
     }
 
-    getRunningIcon(isRunning: boolean): string {
-        if (isRunning) {
-            return 'check_circle';
+    getPowerStateIcon(isPowerStateOn: boolean): string {
+        if (isPowerStateOn) {
+            return 'power';
         } else {
-            return 'cancel';
+            return 'power_off';
         }
     }
 

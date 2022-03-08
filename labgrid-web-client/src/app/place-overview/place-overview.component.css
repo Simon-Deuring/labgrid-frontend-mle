@@ -4,11 +4,11 @@
     margin-top: 16px;
 }
 
-.running {
+.powerStateOn {
     color: #98dfaf;
 }
 
-.notRunning {
+.powerStateOff {
     color: #ff595e;
 }
 

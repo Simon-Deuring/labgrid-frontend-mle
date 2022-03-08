@@ -2,39 +2,33 @@
 Generic RPC functions for labby
 """
 
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+import os
+from pathlib import Path
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 
+import yaml
 from attr import attrib, attrs
-
-from .labby_error import ErrorKind, LabbyError, failed, invalid_parameter, not_found
-from .labby_types import LabbyPlace, PlaceName, PowerState, Resource, ResourceName, TargetName, Session
-
 from autobahn.wamp.exception import ApplicationError
+
+from .labby_error import (ErrorKind, LabbyError, failed, invalid_parameter,
+                          not_found)
+from .labby_types import (ExporterName, GroupName, LabbyPlace, PlaceName, PowerState, Resource,
+                          ResourceName, Session)
+from .labby_util import flatten, prepare_place
 
 
 @attrs()
 class RPCDesc():
-    name: str = attrib()
-    endpoint: str = attrib()
+    name: str = attrib(default=None)
+    endpoint: str = attrib(default=None)
     remote_endpoint: str = attrib(default=None)
     info: Optional[str] = attrib(default=None)
-    parameter: Optional[List[Tuple[str, str]]] = attrib(default=None)
+    parameter: Optional[List[Dict[str, str]]] = attrib(default=None)
+    return_type: Optional[str] = attrib(default=None)
 
 
-FUNCTION_INFO = {
-    "places": RPCDesc(name="places",
-                      endpoint="localhost.places",
-                      remote_endpoint="org.labgrid.coordinator.get_places",
-                      info="""Takes optional string parameter to filter Places by.
-Returns Dictionary of places with registered Resources.""",
-                      parameter=[("places", "Place filter string")]),
-    "resource": RPCDesc(name="resource",
-                        endpoint="localhost.resource",
-                        remote_endpoint="org.labgrid.coordinator.get_resources",),
-    "power_state": RPCDesc(name="power_state",
-                           endpoint="localhost.power_state",
-                           )
-}
+def _localfile(path): return Path(os.path.dirname(
+    os.path.realpath(__file__))).joinpath(path)
 
 # non exhaustive list of serializable primitive types
 _serializable_primitive: List[Type] = [int, float, str, bool]
@@ -95,7 +89,77 @@ def labby_serialized(func):
     return wrapped
 
 
-async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs) -> Optional[Dict]:
+FUNCTION_INFO = {}
+with open(_localfile('rpc_desc.yaml'), 'r', encoding='utf-8') as file:
+    FUNCTION_INFO = {key: RPCDesc(**val) for key, val in yaml.load(file,
+                                                                   yaml.loader.FullLoader).items() if val is not None}
+
+
+# non exhaustive list of serializable primitive types
+_serializable_primitive: List[Type] = [int, float, str, bool]
+
+
+def invalidates_cache(attribute, *rec_args, reconstitute: Optional[Callable] = None):
+    """
+    on call clear attribute (e.g. set to None)
+    """
+    def decorator(func: Callable):
+        def wrapped(self: Session, *args, **kwargs):
+            setattr(self, attribute, None)
+            return func(self, *args, **kwargs)
+        return wrapped
+    return decorator
+
+
+def cached(attribute: str):
+    """
+    Decorator defintion to cache data in labby context and fetch data from server
+    """
+    assert attribute is not None
+
+    def decorator(func: Callable):
+
+        async def wrapped(context: Session, *args, **kwargs):
+            assert context is not None
+
+            if not hasattr(context, attribute):
+                context.__dict__.update({attribute: None})
+                data = None
+            else:
+                data: Optional[Dict] = context.__getattribute__(
+                    attribute)
+            if context.__getattribute__(attribute) is None:
+                data: Optional[Dict] = await func(context, *args, **kwargs)
+                context.__setattr__(attribute, data)
+            return data
+
+        return wrapped
+
+    return decorator
+
+
+def labby_serialized(func):
+    """
+    Custom serializer decorator for labby rpc functions
+    to make sure returned values are cbor/json serializable
+    """
+    async def wrapped(*args, **kwargs):
+        ret = await func(*args, **kwargs)
+        if ret is None:
+            return None
+        if isinstance(ret, LabbyError):
+            return ret.to_json()
+        if isinstance(ret, LabbyPlace):
+            return ret.to_json()
+        if isinstance(ret, (dict, list)) or type(ret) in _serializable_primitive:
+            return ret
+        raise NotImplementedError(
+            f"{type(ret)} can currently not be serialized!")
+
+    return wrapped
+
+
+async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs) -> Any:
     """
     QoL function to fetch data drom Coordinator and store in attribute member in Session
     """
@@ -103,59 +167,32 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     assert attribute is not None
     assert endpoint is not None
 
-    data: Optional[Dict] = context.__getattribute__(attribute)
-    if context.__getattribute__(attribute) is None:
+    data: Optional[Dict] = getattr(context, attribute)
+    if data is None:
         data: Optional[Dict] = await context.call(endpoint, *args, **kwargs)
-        context.__setattr__(attribute, data)
+        setattr(context, attribute, data)
     return data
-
-
-async def fetch_partial(context: Session,
-                        attribute: str,
-                        key: str,
-                        endpoint: str,
-                        *args) -> Optional[Dict]:
-    """
-    QoL function to fetch data drom Coordinator, stores in attribute member in Session
-    and returns particular key if present
-    """
-    assert context is not None
-    assert attribute is not None
-    assert endpoint is not None
-    assert key is not None
-
-    data: Optional[Dict] = context.__getattribute__(attribute)
-    if context.__getattribute__(attribute) is None:
-        data: Optional[Dict] = await context.call(endpoint, *args)
-        context.__setattr__(attribute, data)
-
-    if data is not None and key in data.keys():
-        return data[key]
-    return None
 
 
 async def fetch_places(context: Session,
                        place: Optional[PlaceName]) -> Union[Dict, LabbyError]:
     """
-    Fetch resources from coordinator, update if missing and handle possible errors
+    Fetch places from coordinator, update if missing and handle possible errors
     """
     assert context is not None
     data: Optional[Dict] = await fetch(context=context,
                                        attribute="places",
-                                       endpoint="org.labgrid.coordinator.get_resources")
+                                       endpoint="org.labgrid.coordinator.get_places")
+
     if data is None:
         if place is None:
             return not_found("Could not find any places.")
         return not_found(f"Could not find place with name {place}.")
-
-    # TODO(Kevin) overwrites equal placenames for multiple exporters
-    ret = {}
-    for exporter, place_data in data.items():
-        # place_data.update({})
-        tmp = {key: {"acquired_resources": list(_data), "exporter": exporter}
-               for key, _data in place_data.items()}
-        ret.update(tmp)
-    return ret
+    if place is not None:
+        if place in data.keys():
+            return {place: data[place]}
+        return not_found(f"Could not find place with name {place}.")
+    return data
 
 
 async def fetch_resources(context: Session,
@@ -185,6 +222,36 @@ async def fetch_resources(context: Session,
     return data
 
 
+@cached("peers")
+async def fetch_peers(context: Session) -> Union[Dict, LabbyError]:
+    # TODO (Kevin) Handle errors
+    session_ids = await context.call("wamp.session.list")
+    sessions = {}
+    for sess in session_ids:  # ['exact']:
+        tmp = await context.call("wamp.session.get", sess)
+        if tmp and 'authid' in tmp:
+            sessions[tmp['authid']] = tmp
+    return sessions
+
+
+async def get_exporters(context: Session) -> Union[List[ExporterName], LabbyError]:
+    peers = await fetch_peers(context)
+    if isinstance(peers, LabbyError):
+        return peers
+    assert peers is not None
+    return [x.replace('exporter/', '') for x in peers if x.startswith('exporter')]
+
+
+def _calc_power_for_place(place_name, resources: Iterable[Dict]):
+    pstate = False
+    for res in resources:
+        if isinstance(res['acquired'], Iterable):
+            pstate |= place_name in res['acquired']
+        else:
+            pstate |= res['acquired'] == place_name
+    return pstate
+
+
 @cached("power_states")
 async def fetch_power_state(context: Session,
                             place: Optional[PlaceName]) -> Union[PowerState, LabbyError]:
@@ -192,24 +259,26 @@ async def fetch_power_state(context: Session,
     Use fetch resource to determine power state, this may update context.resource
     """
 
-    data = await fetch_resources(context=context, place=place, resource_key=None)
-    if isinstance(data, LabbyError):
-        return data
-
+    _resources = await fetch_resources(context=context, place=place, resource_key=None)
+    if isinstance(_resources, LabbyError):
+        return _resources
+    if len(_resources) > 0:
+        _resources = flatten(_resources)
+    _places = await fetch_places(context, place)
+    if isinstance(_places, LabbyError):
+        return _places
     power_states = {}
-    for exporter, _places in data.items():
-        tmp = {}
-        for place_name, place_data in _places.items():
-            power = any(
-                "avail" in resource_data.keys()
-                for _, resource_data in place_data.items()
-            )
-
-            tmp[place_name] = {"power_state": power}
-        power_states[exporter] = tmp
+    for place_name, place_data in _places.items():
+        if 'acquired_resources' in place_data:
+            if len(place_data['acquired_resources']) == 0 or place_name not in _resources:
+                power_states[place_name] = {'power_state': False}
+                continue
+            resources_to_check = ((v for k, v in _resources[place_name].items() if any(
+                (k in a for a in place_data['acquired_resources']))))
+            power_states[place_name] = {
+                'power_state': _calc_power_for_place(place_name, resources_to_check)}
     return power_states
 
-@cached("places__")
 @labby_serialized
 async def places(context: Session,
                  place: Optional[PlaceName] = None) -> Union[List[LabbyPlace], LabbyError]:
@@ -225,76 +294,60 @@ async def places(context: Session,
     assert power_states is not None
     if isinstance(power_states, LabbyError):
         return power_states
-    place_res : List[LabbyPlace] = []
+    place_res = []
     for place_name, place_data in data.items():
         if place is not None and place_name != place:
             continue
-        exporter = place_data["exporter"]
-        assert exporter is not None
+        # ??? (Kevin) what if there are more than one or no matches
+        if len(place_data["matches"]) > 0 and 'exporter' in place_data["matches"]:
+            exporter = place_data["matches"][0]["exporter"]
+        else:
+            exporter = None
         place_res.append(
-            LabbyPlace(
-                name=place_name,
-                exporter=exporter,
-                power_state=power_states[exporter][place_name]['power_state'],
-                acquired_resources=place_data["acquired_resources"]
-            )
+            prepare_place(place_data, place_name, exporter,
+                          power_states[place_name]['power_state'])
         )
     return place_res
 
 
 @labby_serialized
 async def resource(context: Session,
-                   target: TargetName,
                    place: Optional[PlaceName] = None,
-                   ) -> Union[Resource, LabbyError]:
+                   ) -> Union[Dict[ResourceName, Resource], LabbyError]:
     """
     rpc: returns resources registered for given place
     """
-    context.log.info(f"Fetching resources for {target}.{place}.")
+    context.log.info(f"Fetching resources for {place}.")
     resource_data = await fetch_resources(context=context, place=place, resource_key=None)
 
     if isinstance(resource_data, LabbyError):
         return resource_data
 
-    def resource_for_place():
-        if place is None:
-            return resource_data[target]
-        if place not in resource_data[target].keys():
-            return not_found(f"Place {place} not found on Target.")
-        return resource_data[target][place]
-
-    if target not in resource_data:
-        err_str = f"Target {target} not found on Coordinator."
-        context.log.warn(err_str)
-        return not_found(err_str)
-    return resource_for_place()
+    if place is None:
+        return resource_data
+    if place not in resource_data.keys():
+        return not_found(f"Place {place} not found.")
+    return resource_data[place]
 
 
 @labby_serialized
 async def power_state(context: Session,
-                      target: TargetName,
                       place: PlaceName,
-                      ) -> Union[Resource, LabbyError]:
+                      ) -> Union[PowerState, LabbyError]:
     """
     rpc: return power state for a given place
     """
     if place is None:
-        return invalid_parameter("Missing required parameter: place.")
-    if target is None:
-        return invalid_parameter("Missing required parameter: target.")
+        return invalid_parameter("Missing required parameter: place.").to_json()
     power_data = await fetch_power_state(context=context, place=place)
     assert power_data is not None
-
     if isinstance(power_data, LabbyError):
         return power_data
 
-    if target not in power_data.keys():
-        return not_found(f"Target {target} not found on Coordinator.")
+    if place not in power_data.keys():
+        return not_found(f"Place {place} not found on Coordinator.").to_json()
 
-    if place not in power_data[target].keys():
-        return not_found(f"Place {target} not found on Target {target}.")
-
-    return power_data[target][place]
+    return power_data[place]
 
 
 @labby_serialized
@@ -311,10 +364,10 @@ async def resource_overview(context: Session,
         return targets
 
     ret = []
-    for target, resources in targets.items():
+    for exporter, resources in targets.items():
         for res_place, res in resources.items():
             if place is None or place == res_place:
-                ret.extend({'name': key, 'target': target,
+                ret.extend({'name': key, 'target': exporter,
                             'place': res_place, **values} for key, values in res.items())
     return ret
 
@@ -355,14 +408,14 @@ async def acquire(context: Session,
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
     if place in context.acquired_places:
-        return failed(f"Already acquired place {place}.").to_json()
+        return failed(f"Already acquired place {place}.")
 
     # , group, resource_key, place)
     context.log.info(f"Acquiring place {place}.")
     try:
         acquire_successful = await context.call("org.labgrid.coordinator.acquire_place", place)
     except ApplicationError as err:
-        return failed(f"Got exception while trying to call org.labgrid.coordinator.acquire_place. {err}").to_json()
+        return failed(f"Got exception while trying to call org.labgrid.coordinator.acquire_place. {err}")
     if acquire_successful:
         context.acquired_places.append(place)
     return acquire_successful
@@ -377,12 +430,12 @@ async def release(context: Session,
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
     if place not in context.acquired_places:
-        return failed(f"Place {place} is not acquired").to_json()
+        return failed(f"Place {place} is not acquired")
     context.log.info(f"Releasing place {place}.")
     try:
         release_successful = await context.call('org.labgrid.coordinator.release_place', place)
     except ApplicationError as err:
-        return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}").to_json()
+        return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}")
     if release_successful:
         context.acquired_places.remove(place)
     return release_successful
@@ -400,13 +453,34 @@ async def info(_context=None, func_key: Optional[str] = None) -> Union[List[Dict
     return globals()["FUNCTION_INFO"][func_key].__dict__
 
 
-async def reservations(context: Session) -> Dict:
+async def get_reservations(context: Session) -> Dict:
     """
     RPC call to list current reservations on the Coordinator
     """
     reservation_data = await context.call("org.labgrid.coordinator.get_reservations")
     # TODO (Kevin) handle errors
     return reservation_data
+
+
+@labby_serialized
+async def create_reservation(context: Session, place: PlaceName, priority: float = 0.):
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    reservation = await context.call("org.labgrid.coordinator.create_reservation", f"name={place}", prio=priority)
+    if not reservation:
+        return failed("Failed to create reservation")
+    context.reservations.update({place: reservation})
+
+
+async def cancel_reservation(context, place: PlaceName):
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    if place not in context.reservations:
+        return failed(f"No reservations available for place {place}.")
+    token = next(iter(context.reservations[place]))
+    assert token
+    return await context.call("org.labgrid.coordinator.cancel_reservation", token)
+    
 
 
 async def reset(context: Session, place: PlaceName) -> bool:
@@ -426,35 +500,77 @@ async def video(context: Session, *args):
     pass
 
 
+@labby_serialized
 async def forward(context: Session, *args):
     """
     Forward a rpc call to the labgrid coordinator
     """
-    return context.call(*args)
+    return await context.call(*args)
+
 
 @labby_serialized
 async def create_place(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
     """
     Create a new place on the coordinator
     """
-    assert place # not None or empty
-    places = fetch_places(context, place)
-    if isinstance(places, LabbyError):
-        if places.kind == ErrorKind.NOT_FOUND:
-            return failed(f"Place {place} already exists on Coordinator")
-        else:
-            return places
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    _places = await fetch_places(context, place=None)
+    if isinstance(_places, LabbyError):
+        return _places
+    if place in _places:
+        return failed(f"Place {place} already exists.")
     res = await context.call("org.labgrid.coordinator.add_place", place)
     return res
 
 
-async def delete_place(context: Session, place: PlaceName) -> bool:
-    return False
+@labby_serialized
+async def delete_place(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    _places = await fetch_places(context, place)
+    assert context.places  # should have been set with fetch_places
+    if place not in context.places:
+        return not_found(f"Place {place} not found on Coordinator")
+    res = await context.call("org.labgrid.coordinator.del_place", place)
+    return res
 
 
-async def create_resource(context: Session, place: PlaceName, resource: Resource) -> bool:
-    return False
+@labby_serialized
+async def create_resource(context: Session, group_name: GroupName, resource_name: ResourceName) -> Union[bool, LabbyError]:
+    if group_name is None:
+        return invalid_parameter("Missing required parameter: group_name.")
+    if resource_name is None:
+        return invalid_parameter("Missing required parameter: resource_name.")
+    ret = await context.call("org.labgrid.coordinator.set_resource", group_name, resource_name, {})
+    return ret
 
 
-async def delete_resource(context: Session, place: PlaceName, resource: ResourceName) -> bool:
-    return False
+@labby_serialized
+async def delete_resource(context: Session, group_name: GroupName, resource_name: ResourceName) -> Union[bool, LabbyError]:
+    if group_name is None:
+        return invalid_parameter("Missing required parameter: group_name.")
+    if resource_name is None:
+        return invalid_parameter("Missing required parameter: resource_name.")
+    ret = await context.call("org.labgrid.coordinator.update_resource", group_name, resource_name, None)
+    return ret
+
+
+@labby_serialized
+async def places_names(context: Session) -> Union[List[PlaceName], LabbyError]:
+    _places = await fetch_places(context, None)
+    if isinstance(_places, LabbyError):
+        return _places
+    return list(_places.keys())
+
+
+@labby_serialized
+async def get_alias(context: Session, place: PlaceName) -> Union[List[str], LabbyError]:
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    data = await fetch_places(context, place)
+    if isinstance(data, LabbyError):
+        return data
+    if len(data) == 0:
+        return []
+    return [a for x in data.values() for a in x['aliases']]

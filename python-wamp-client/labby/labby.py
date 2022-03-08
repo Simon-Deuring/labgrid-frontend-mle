@@ -1,7 +1,7 @@
 """
 A wamp client which registers a rpc function
 """
-from typing import Callable, Dict, Optional  
+from typing import Callable, Dict, Optional
 from time import sleep
 
 import logging
@@ -10,16 +10,27 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import forward, places, reservations, resource, power_state, acquire, release, info, resource_by_name, resource_overview
+from .rpc import (cancel_reservation, create_place, create_resource,
+                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache,
+                  places, places_names, get_reservations, create_reservation, resource, power_state,
+                  acquire, release, info, resource_by_name, resource_overview)
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
 
 
-def get_context_callback():
+def get_context_callback() -> Optional['LabbyClient']:
     """
     If context takes longer to create, prevent Context to be None in Crossbar router context
     """
-    return globals()["CALLBACK_REF"]
+    return globals().get("CALLBACK_REF", None)
+
+
+def get_frontend_callback() -> Optional['RouterInterface']:
+    """
+    If context takes longer to create, prevent Context to be None in Crossbar router context
+    """
+    return globals().get("FRONTEND_REF", None)
+
 
 class LabbyClient(Session):
     """
@@ -29,7 +40,6 @@ class LabbyClient(Session):
 
     def __init__(self, config=None):
         # make sure only one active labby client exists
-        assert "CALLBACK_REF" not in globals() or globals()["CALLBACK_REF"] is None
         globals()["CALLBACK_REF"] = self
         super().__init__(config=config)
 
@@ -47,17 +57,23 @@ class LabbyClient(Session):
         raise NotImplementedError(
             "Only Ticket authentication enabled, atm")
 
-    def onJoin(self, details):
+    async def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
+        res = await self.call("wamp.registration.list")
+        for proc in res['exact']:
+            p = await self.call("wamp.registration.get", proc)
+            print(p['uri'])
+
         self.subscribe(self.on_place_changed,
-                       u"org.labgrid.coordinator.place_changed")
+                       "org.labgrid.coordinator.place_changed")
         self.subscribe(self.on_resource_changed,
-                       u"org.labgrid.coordinator.resource_changed")
+                       "org.labgrid.coordinator.resource_changed")
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
 
+    @invalidates_cache('power_states')
     async def on_resource_changed(self,
                                   exporter: str,
                                   group_name: GroupName,
@@ -66,14 +82,11 @@ class LabbyClient(Session):
         """
         Listen on resource changes on coordinator and update cache on changes
         """
-        group = self.resources if self.resources is not None else {}
-        # Do not replace the ResourceEntry object, as other components may keep
-        # a reference to it and want to see changes.
-        old = None if resource_name not in group else group[resource_name]
-        group[resource_name] = resource_data
-        if resource_data and not old:
+        if self.resources is None:
+            self.resources = {}
+        self.resources[exporter] = resource_data
+        if resource_name not in self.resources:
             self.log.info(
-                # f"Resource {exporter}/{group_name}/{resource_name} created: {resource_data}")
                 f"Resource {exporter}/{group_name}/{resource_name} created.")
         elif resource_data:
             self.log.info(
@@ -81,23 +94,24 @@ class LabbyClient(Session):
         else:
             self.log.info(
                 f"Resource {exporter}/{group_name}/{resource_name} deleted")
-        self.power_states = None # Invalidate power state cache
 
+        self.power_states = None  # Invalidate power state cache
 
-    async def on_place_changed(self, name: PlaceName, place_data: Dict):
+    @invalidates_cache('power_states')
+    async def on_place_changed(self, name: PlaceName, place_data: Optional[Dict] = None):
         """
         Listen on place changes on coordinator and update cache on changes
         """
         if self.places is not None and not place_data:
             del self.places[name]
-            self.log.info("Place {} deleted", name)
+            self.log.info(f"Place {name} deleted")
+            return
 
         if self.places is None:
             self.places = {}
 
         if name not in self.places:
             self.places[name] = place_data
-            # self.log.info("Place {} created: {}", name, place)
             self.log.info(f"Place {name} created.")
         else:
             place = self.places[name]
@@ -107,8 +121,6 @@ class LabbyClient(Session):
             self.log.info(f"Place {name} changed:")
             # for k, v_old, v_new in diff_dict(old, new):
             #     print(f"  {k}: {v_old} -> {v_new}")
-        self.power_states = None # Invalidate power state cache
-
 
 
 class RouterInterface(ApplicationSession):
@@ -119,7 +131,8 @@ class RouterInterface(ApplicationSession):
     def __init__(self, config=None):
         if config is not None and 'exporter' in config.extra:
             self.exporter = config.extra['exporter']
-        super().__init__(config)
+        globals()["FRONTEND_REF"] = self
+        super().__init__(config=config)
 
     def onConnect(self):
         self.log.info(
@@ -132,28 +145,38 @@ class RouterInterface(ApplicationSession):
         """
         endpoint = f"localhost.{func_key}"
 
-        async def bind(*a):
-            return await procedure(get_context_callback(), *args, *a)
+        async def bind(*o_args):
+            return await procedure(get_context_callback(), *args, *o_args)
         func = bind
         self.log.info(f"Registered function for endpoint {endpoint}.")
-        super().register(func, endpoint)
-
-    def onJoin(self, details):
-        self.log.info("Joined Frontend Session.")
         try:
-            self.register("places", places)
-            self.register("resource", resource, self.exporter)
-            self.register("power_state", power_state, self.exporter)
-            self.register("acquire", acquire)
-            self.register("release", release)
-            self.register("reservations", reservations)
-            self.register("resource_overview", resource_overview)
-            self.register("resource_by_name", resource_by_name)
-            self.register("info", info)
-            self.register("forward", forward)
+            super().register(func, endpoint)
         except wexception.Error as err:
             self.log.error(
                 f"Could not register procedure: {err}.\n{err.with_traceback(None)}")
+
+    def onJoin(self, details):
+        self.log.info("Joined Frontend Session.")
+
+        self.register("places", places)
+        self.register("resource", resource)
+        self.register("power_state", power_state)
+        self.register("acquire", acquire)
+        self.register("release", release)
+        self.register("get_reservations", get_reservations)
+        self.register("resource_overview", resource_overview)
+        self.register("resource_by_name", resource_by_name)
+        self.register("info", info)
+        self.register("forward", forward)
+        self.register("create_place", create_place)
+        self.register("delete_place", delete_place)
+        self.register("create_reservation", create_reservation)
+        self.register("cancel_reservation", cancel_reservation)
+        self.register("create_resource", create_resource)
+        self.register("delete_resource", delete_resource)
+        self.register("place_names", places_names)
+        self.register("get_alias", get_alias)
+        self.register("get_exporters", get_exporters)
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
@@ -179,12 +202,11 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
     asyncio.log.logger.info(
         "Starting Frontend Router on url %s and realm %s", frontend_url, frontend_realm)
     router = Router("labby/router/.crossbar")
-    sleep(5)
+    sleep(4)
     loop = asyncio.get_event_loop()
     assert labby_coro is not None
     assert frontend_coro is not None
     try:
-
         asyncio.log.logger.info(
             "Connecting to %s on realm '%s'", backend_url, backend_realm)
         loop.run_until_complete(labby_coro)

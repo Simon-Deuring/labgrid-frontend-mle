@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
     providedIn: 'root',
 })
 export class LoginService {
-    isLoggedIn = false;
+    isLoggedIn = true; // Set to false in production mode
     username = '';
 
     // Store the URL to redirect after logging in

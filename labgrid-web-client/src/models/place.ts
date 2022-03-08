@@ -3,7 +3,7 @@ import { AllocationState } from '../app/_enums/allocation-state';
 
 export class Place {
     public acquired: string;
-    public acquired_resources: object[];
+    public acquired_resources: Array<string[]>;
     public exporter: string;
     public power_state: boolean;
     public matches: object[];
@@ -11,7 +11,7 @@ export class Place {
     public reservation: AllocationState;
 
     // prettier-ignore
-    constructor(acquired: string, acquired_resources: object[], exporter: string, power_state: boolean, matches: object[], name: string, reservation: AllocationState) {
+    constructor(acquired: string, acquired_resources: Array<string[]>, exporter: string, power_state: boolean, matches: object[], name: string, reservation: AllocationState) {
         this.acquired = acquired;
         this.acquired_resources = acquired_resources;
         this.exporter = exporter;
