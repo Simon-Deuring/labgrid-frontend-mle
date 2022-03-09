@@ -77,7 +77,7 @@ export class PlaceService {
         if (acquire === true) {
             return { successful: true, errorMessage: '' };
         } else if (acquire === false) {
-            return { successful: false, errorMessage: '' };
+            return { successful: false, errorMessage: 'An unknown error occured!' };
         } else {
             return { successful: false, errorMessage: acquire.error.message };
         }
@@ -88,7 +88,7 @@ export class PlaceService {
         console.log('release: ', release);
 
         if (release === true) {
-            return { successful: true, errorMessage: '' };
+            return { successful: true, errorMessage: 'An unknown error occured!' };
         } else {
             return { successful: false, errorMessage: release.error.message };
         }
@@ -98,12 +98,24 @@ export class PlaceService {
         let body = (await this.getPlace(placeName)) as Place;
 
         if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
-            console.log('Something went wrong while reserve the place.');
+            console.log('Something went wrong while reserving the place.');
             return false;
         } else {
             console.log('Place is reserved.');
             // TODO: Connect to server
             return true;
+        }
+    }
+
+    public async createNewPlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
+        let response = await this.session.call('localhost.create_place', [placeName]);
+
+        if (response === true) {
+            return { successful: true, errorMessage: '' };
+        } else if (response === false) {
+            return { successful: false, errorMessage: 'An unknown error occured!' };
+        } else {
+            return { successful: false, errorMessage: response.error.message };
         }
     }
 }
