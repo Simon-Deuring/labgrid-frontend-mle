@@ -72,25 +72,25 @@ export class PlaceService {
         }
     }
 
-    public async acquirePlace(placeName: string): Promise<{successful: boolean, errorMessage: string}> {
+    public async acquirePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
         const acquire = await this.session.call('localhost.acquire', [placeName]);
-        if (acquire === true){
-            return  {successful: true, errorMessage: ''};
-        } else if (acquire === false){
-            return {successful: false, errorMessage: ''};
+        if (acquire === true) {
+            return { successful: true, errorMessage: '' };
+        } else if (acquire === false) {
+            return { successful: false, errorMessage: '' };
         } else {
-            return {successful: false, errorMessage: acquire.error.message};
+            return { successful: false, errorMessage: acquire.error.message };
         }
     }
 
-    public async releasePlace(placeName: string): Promise<{successful: boolean, errorMessage: string}> {
+    public async releasePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
         const release = await this.session.call('localhost.release', [placeName]);
         console.log('release: ', release);
 
         if (release === true) {
-            return {successful: true, errorMessage: ''};
+            return { successful: true, errorMessage: '' };
         } else {
-            return {successful: false, errorMessage: release.error.message};
+            return { successful: false, errorMessage: release.error.message };
         }
     }
 

@@ -37,7 +37,7 @@ export class PlaceComponent implements OnInit {
         });
     }
 
-    private updateData(){
+    private updateData() {
         this.route.params.subscribe((val) => {
             const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
             this._ps.getPlace(currentRoute).then((data) => {
@@ -55,7 +55,7 @@ export class PlaceComponent implements OnInit {
     }
 
     ngOnInit(): void {}
-    
+
     private getResources(): void {
         this._rs.getResourcesForPlace(this.place.name).then((resources) => {
             this.resources = resources;
@@ -130,12 +130,12 @@ export class PlaceComponent implements OnInit {
                 panelClass: ['success-snackbar'],
             });
             this.updateData();
-        } else if(!ret.successful && !ret.errorMessage) {
+        } else if (!ret.successful && !ret.errorMessage) {
             this._snackBar.open('Place could not be acuired.', 'OK', {
                 duration: 3000,
                 panelClass: ['error-snackbar'],
             });
-        }else {
+        } else {
             this._snackBar.open(ret.errorMessage, 'OK', {
                 duration: 3000,
                 panelClass: ['error-snackbar'],
