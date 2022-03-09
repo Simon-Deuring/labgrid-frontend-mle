@@ -1,10 +1,14 @@
 import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+
+import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource } from '@angular/material/table';
-import { Router } from '@angular/router';
+
 import { Place } from 'src/models/place';
+import { PlaceCreationDialogComponent } from '../dialogs/place-creation-dialog/place-creation-dialog.component';
 import { PlaceService } from '../_services/place.service';
-import { ResourceService } from '../_services/resource.service';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-place-overview',
@@ -18,11 +22,20 @@ export class PlaceOverviewComponent implements OnInit {
 
     @ViewChild('paginator') paginator!: MatPaginator;
 
-    constructor(private _ps: PlaceService, private router: Router) {
+    constructor(
+        private _dialog: MatDialog,
+        private _ps: PlaceService,
+        private _router: Router,
+        private _snackBar: MatSnackBar
+    ) {
         this.dataSource = new MatTableDataSource(this.places);
     }
 
     ngOnInit(): void {
+        this.loadPlaces();
+    }
+
+    private loadPlaces(): void {
         this._ps.getPlaces().then((data) => {
             this.places = data;
             this.dataSource = new MatTableDataSource(this.places);
@@ -44,12 +57,37 @@ export class PlaceOverviewComponent implements OnInit {
     }
 
     navigateToPlace(placeName: string) {
-        this.router.navigate(['place/', placeName]);
+        this._router.navigate(['place/', placeName]);
     }
 
     navigateToResource(resourceName: string, event: Event) {
         const correspondingPlace = (event.currentTarget as HTMLInputElement).parentNode?.parentNode?.firstChild
             ?.textContent;
-        this.router.navigate(['resource/', resourceName, { placeName: correspondingPlace }]);
+        this._router.navigate(['resource/', resourceName, { placeName: correspondingPlace }]);
+    }
+
+    openNewPlaceDialog(): void {
+        const dialogRef = this._dialog.open(PlaceCreationDialogComponent);
+
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result) this.createNewPlace(result);
+        });
+    }
+
+    private async createNewPlace(placeName: string) {
+        const response = await this._ps.createNewPlace(placeName);
+
+        if (response.successful) {
+            this._snackBar.open('Place has been added succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+            this.loadPlaces();
+        } else {
+            this._snackBar.open(response.errorMessage, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
+            });
+        }
     }
 }
