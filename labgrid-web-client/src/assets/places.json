@@ -9,7 +9,7 @@
             ["cup", "mle-lg-ref-1", "NetworkUSBVideo", "USBVideo"],
             ["cup", "mle-lg-ref-1", "NetworkXilinxUSBJTAG", "XilinxUSBJTAG"]
         ],
-        "isRunning": true,
+        "isPowerStateOn": true,
         "name": "mle-lg-ref-1",
         "matches": [
             {
@@ -28,7 +28,7 @@
             ["cup", "mle-lg-ref-2", "NetworkService", "NetworkService"],
             ["cup", "mle-lg-ref-2", "NetworkUSBSDMuxDevice", "USBSDMuxDevice"]
         ],
-        "isRunning": true,
+        "isPowerSateOn": true,
         "name": "mle-lg-ref-2",
         "matches": [
             {
@@ -46,7 +46,7 @@
         "acquired_resources": [
             ["cup", "mle-lg-ref-3", "NetworkService", "NetworkService"]
         ],
-        "isRunning": true,
+        "isPowerStateOn": true,
         "name": "mle-lg-ref-3",
         "matches": [
             {

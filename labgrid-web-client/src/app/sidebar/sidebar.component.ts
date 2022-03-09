@@ -29,4 +29,12 @@ export class SidebarComponent implements OnInit {
     navigateToOverview() {
         this.router.navigate(['/']);
     }
+
+    getAvailableIcon(isAvailable: boolean): string {
+        if (isAvailable) {
+            return 'lock';
+        } else {
+            return 'lock_open';
+        }
+    }
 }

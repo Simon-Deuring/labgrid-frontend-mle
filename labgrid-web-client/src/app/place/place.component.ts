@@ -75,9 +75,9 @@ export class PlaceComponent implements OnInit {
         }
 
         if (this.place.power_state) {
-            this.placeStates.push({ name: 'Is running: ', value: 'yes' });
+            this.placeStates.push({ name: 'Power State: ', value: 'on' });
         } else {
-            this.placeStates.push({ name: 'Is running: ', value: 'no' });
+            this.placeStates.push({ name: 'Power State: ', value: 'off' });
         }
 
         /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
