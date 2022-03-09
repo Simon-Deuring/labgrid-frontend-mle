@@ -72,7 +72,8 @@ def cached(attribute: str):
                     attribute)
             if data is None:
                 data: Optional[Dict] = await func(context, *args, **kwargs)
-                context.__setattr__(attribute, data)
+                if not isinstance(data, LabbyError):
+                    context.__setattr__(attribute, data)
             return data
 
         return wrapped
