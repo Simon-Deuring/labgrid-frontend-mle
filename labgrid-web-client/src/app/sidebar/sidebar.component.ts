@@ -24,6 +24,7 @@ export class SidebarComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadPlaces();
+        this._ps.places.subscribe((newState) => (this.places = newState));
     }
 
     private loadPlaces(): void {

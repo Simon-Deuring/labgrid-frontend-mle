@@ -6,12 +6,15 @@ import { AllocationState } from '../_enums/allocation-state';
 import * as autobahn from 'autobahn-browser';
 
 import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',
 })
 export class PlaceService {
     private session: any;
+
+    public places = new BehaviorSubject<Place[]>([]);
 
     constructor(private _http: HttpClient) {
         const connection = new autobahn.Connection({
@@ -36,13 +39,16 @@ export class PlaceService {
         // Otherwise we wait 1 second.
         if (this.session) {
             const places = await this.session.call('localhost.places');
+            this.places.next(places);
             return places;
         } else {
             await new Promise((resolve, reject) => {
                 // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
+
             const places = await this.session.call('localhost.places');
+            this.places.next(places);
             return places;
         }
     }

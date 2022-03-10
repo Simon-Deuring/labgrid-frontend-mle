@@ -33,6 +33,11 @@ export class PlaceOverviewComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadPlaces();
+        this._ps.places.subscribe((newState) => {
+            this.places = newState;
+            this.dataSource = new MatTableDataSource(this.places);
+            this.dataSource.paginator = this.paginator;
+        });
     }
 
     private loadPlaces(): void {
