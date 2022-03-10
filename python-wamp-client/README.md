@@ -5,8 +5,10 @@
 To start the python backend router run following command in this directory.
 
 ```sh
-> python run.py [-h] [--url URL] [--realm REALM]
+> python -m labby [-h] [--backend_url URL] [--backend_realm REALM] [--frontend_url URL] [--frontend_realm REALM] [--prompty] --exporter EXPORTER
 ```
+__NOTICE__: 
+ Supplying a exporter is mandatory and can either be set via commandline args with the `--exporter` option or in a `.labby_config.json` file in the current working directory with a `"exporter" : "exporter"` key.
 
 The port of the crossbar router is `8083` and can be changed in the [config](./labby/router/.crossbar/config.json).
 
