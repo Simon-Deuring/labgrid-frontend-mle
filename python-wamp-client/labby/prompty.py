@@ -17,9 +17,10 @@ def _parse(command: str):
     cmd_list[0] = f"localhost.{cmd_list[0]}"
     for i, s in enumerate(cmd_list):
         if '=' in s:
-            a,b = s.split('=')
-            cmd_list[i] = {a.strip() : b.strip()}
+            a, b = s.split('=')
+            cmd_list[i] = {a.strip(): b.strip()}
     return cmd_list
+
 
 async def prompty():
     count = 0
@@ -38,14 +39,11 @@ async def prompty():
             pass
 
 
-def main():
+def run(backend_url, backend_realm, frontend_url, frontend_realm, exporter):
     try:
         loop = asyncio.get_event_loop()
         asyncio.run_coroutine_threadsafe(prompty(), loop)
-        run_router('ws://localhost:20408/ws', 'realm1')
+        run_router(backend_url, backend_realm,
+                   frontend_url, frontend_realm, exporter)
     except KeyboardInterrupt:
         pass
-
-
-if __name__ == "__main__":
-    main()
