@@ -34,7 +34,8 @@ def get_frontend_callback() -> Optional['RouterInterface']:
 
 class LabbyClient(Session):
     """
-    Specializes Application Session to handle Communication specifically with the labgrid-frontend and the labgrid coordinator
+    Specializes Application Session to handle Communication
+    specifically with the labgrid-frontend and the labgrid coordinator
     """
 
     def __init__(self, config=None):
@@ -43,8 +44,7 @@ class LabbyClient(Session):
         super().__init__(config=config)
 
     def onConnect(self):
-        self.log.info(
-            f"Connected to Coordinator, joining realm '{self.config.realm}'")
+        self.log.info(f"Connected to Coordinator, joining realm '{self.config.realm}'")
         # TODO load from config or get from frontend
         self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
 
@@ -133,6 +133,8 @@ class RouterInterface(ApplicationSession):
     """
 
     def __init__(self, config=None):
+        if config is not None and 'exporter' in config.extra:
+            self.exporter = config.extra['exporter']
         globals()["FRONTEND_REF"] = self
         super().__init__(config=config)
 
@@ -185,32 +187,32 @@ class RouterInterface(ApplicationSession):
         self.disconnect()
 
 
-def run_router(url: str, realm: str):
+def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend_realm: str, exporter: str):
     """
     Connect to labgrid coordinator and start local crossbar router
     """
 
     globals()["LOADED_RPC_FUNCTIONS"] = {}
-    loop = asyncio.get_event_loop()
-    # asyncio.set_event_loop(loop)
-
     logging.basicConfig(
-        level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
+        level="WARNING", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
-    labby_runner = ApplicationRunner(url=url, realm=realm, extra=None)
+    labby_runner = ApplicationRunner(
+        url=backend_url, realm=backend_realm, extra=None)
     labby_coro = labby_runner.run(LabbyClient, start_loop=False)
     frontend_runner = ApplicationRunner(
-        url='ws://localhost:8083/ws', realm='frontend', extra=None)
+        url=frontend_url, realm=frontend_realm, extra={"exporter": exporter})
     frontend_coro = frontend_runner.run(RouterInterface, start_loop=False)
 
-    asyncio.log.logger.info("Starting Frontend Router")
+    asyncio.log.logger.info(
+        "Starting Frontend Router on url %s and realm %s", frontend_url, frontend_realm)
     router = Router("labby/router/.crossbar")
     sleep(4)
+    loop = asyncio.get_event_loop()
     assert labby_coro is not None
     assert frontend_coro is not None
-
     try:
-        asyncio.log.logger.info("Connecting to %s on realm '%s'", url, realm)
+        asyncio.log.logger.info(
+            "Connecting to %s on realm '%s'", backend_url, backend_realm)
         loop.run_until_complete(labby_coro)
         loop.run_until_complete(frontend_coro)
         loop.run_forever()

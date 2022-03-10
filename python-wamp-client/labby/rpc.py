@@ -30,6 +30,64 @@ class RPCDesc():
 def _localfile(path): return Path(os.path.dirname(
     os.path.realpath(__file__))).joinpath(path)
 
+# non exhaustive list of serializable primitive types
+_serializable_primitive: List[Type] = [int, float, str, bool]
+
+# TODO (Kevin) create a function to invalidate cache
+def invalidate_cache(attribute):
+    """
+    on call clear attribute (e.g. set to None)
+    """
+    def decorator(func: Callable):
+        pass
+
+    return decorator
+
+def cached(attribute: str):
+    """
+    Decorator defintion to cache data in labby context and fetch data from server
+    """
+    assert attribute is not None
+
+    def decorator(func: Callable):
+
+        async def wrapped(context: Session, *args, **kwargs):
+            assert context is not None
+
+            if not hasattr(context, attribute):
+                context.__dict__.update({attribute: None})
+                data = None
+            else:
+                data: Optional[Dict] = context.__getattribute__(
+                    attribute)
+            if context.__getattribute__(attribute) is None:
+                data: Optional[Dict] = await func(context, *args, **kwargs)
+                context.__setattr__(attribute, data)
+            return data
+
+        return wrapped
+
+    return decorator
+
+
+def labby_serialized(func):
+    """
+    Custom serializer decorator for labby rpc functions
+    to make sure returned values are cbor/json serializable
+    """
+    async def wrapped(*args, **kwargs):
+        ret = await func(*args, **kwargs)
+        if isinstance(ret, LabbyError):
+            return ret.to_json()
+        if isinstance(ret, LabbyPlace):
+            return ret.to_json()
+        if isinstance(ret, (dict, list)) or type(ret) in _serializable_primitive:
+            return ret
+        raise NotImplementedError(
+            f"{type(ret)} can currently not be serialized!")
+
+    return wrapped
+
 
 FUNCTION_INFO = {}
 with open(_localfile('rpc_desc.yaml'), 'r', encoding='utf-8') as file:
@@ -220,7 +278,6 @@ async def fetch_power_state(context: Session,
                 'power_state': _calc_power_for_place(place_name, resources_to_check)}
     return power_states
 
-
 @labby_serialized
 async def places(context: Session,
                  place: Optional[PlaceName] = None) -> Union[List[LabbyPlace], LabbyError]:
@@ -280,13 +337,12 @@ async def power_state(context: Session,
     """
     rpc: return power state for a given place
     """
-    # TODO (Kevin) Cache resource updates and get powerstates from there
     if place is None:
         return invalid_parameter("Missing required parameter: place.").to_json()
     power_data = await fetch_power_state(context=context, place=place)
     assert power_data is not None
     if isinstance(power_data, LabbyError):
-        return power_data.to_json()
+        return power_data
 
     if place not in power_data.keys():
         return not_found(f"Place {place} not found on Coordinator.").to_json()
@@ -429,13 +485,14 @@ async def cancel_reservation(context, place: PlaceName):
 async def reset(context: Session, place: PlaceName) -> bool:
     """
     Send a reset request to a place matching a given place name
-    Note 
+    Note
     """
     return False
 
 
 async def console(context: Session, *args):
     pass
+
 
 
 async def video(context: Session, *args):

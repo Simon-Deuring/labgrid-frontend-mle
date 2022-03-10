@@ -1,0 +1,22 @@
+## Iterate from group 1001 to 1016
+targets:
+  # for idx in range(1, 17)
+  Resource{{ 10 + idx }}:
+    NetworkSerialPort:
+      {host: rl1, port: {{ 4000 + idx }}}
+    NetworkPowerPort:
+      # if 1 <= idx <= 8
+      {model: apc, host: apc1, index: {{ idx }}}
+      # elif 9 <= idx <= 12
+      {model: netio, host: netio4, index: {{ idx - 8 }}}
+      # elif 13 <= idx <= 16
+      {model: netio, host: netio5, index: {{ idx - 12 }}}
+      # endif
+  # endfor
+  example-group:
+    location: docker-exporter
+    NetworkService:
+      address: 127.0.0.1
+      port: 2222
+      username: root
+
