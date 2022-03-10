@@ -52,4 +52,11 @@
     </table>
     <mat-paginator #paginator [pageSizeOptions]="[10, 5, 20, 30]" showFirstLastButtons class="mat-elevation-z2">
     </mat-paginator>
+
+    <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" class="mat-elevation-z2" (click)="openNewPlaceDialog()">
+            <mat-icon>add</mat-icon>
+            Add a new place
+        </button>
+    </div>
 </div>

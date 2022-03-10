@@ -21,11 +21,13 @@ import { AppComponent } from './app.component';
 import { ErrorComponent } from './error/error.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 
-import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
+import { RouterModule } from '@angular/router';
+import { MatDialogModule } from '@angular/material/dialog';
 
 import { LoginComponent } from './login/login.component';
 import { LoginService } from './auth/login.service';
+import { PlaceCreationDialogComponent } from './dialogs/place-creation-dialog/place-creation-dialog.component';
 import { PlaceComponent } from './place/place.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
 import { PlaceService } from './_services/place.service';
@@ -43,6 +45,7 @@ import { ResourceService } from './_services/resource.service';
         ResourceOverviewComponent,
         PlaceOverviewComponent,
         LoginComponent,
+        PlaceCreationDialogComponent,
     ],
     imports: [
         AppRoutingModule,
@@ -55,6 +58,7 @@ import { ResourceService } from './_services/resource.service';
         MatToolbarModule,
         MatCardModule,
         MatButtonModule,
+        MatDialogModule,
         MatDividerModule,
         MatTableModule,
         MatPaginatorModule,
