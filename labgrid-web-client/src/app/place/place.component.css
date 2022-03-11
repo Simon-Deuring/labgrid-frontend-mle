@@ -23,12 +23,27 @@
     width: 50% !important;
 }
 
-.action-bar > * {
+#invalidIcon {
+    font-size: 15px;
+    color: #ff595e;
+}
+
+.action-bar > button {
     margin-top: 16px;
     margin-right: 16px;
 }
 
-#invalidIcon {
-    font-size: 15px;
-    color: #ff595e;
+@media only screen and (min-width: 560px) {
+    .action-bar {
+        display: flex;
+        width: 100%;
+        max-width: 800px;
+        min-width: 520px;
+    }
+}
+
+@media only screen and (max-width: 560px) {
+    .action-bar {
+        width: 300px;
+    }
 }

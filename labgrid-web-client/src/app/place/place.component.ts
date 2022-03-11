@@ -1,13 +1,17 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { PlaceService } from '../_services/place.service';
-import { Place } from '../../models/place';
-import { ResourceService } from '../_services/resource.service';
-import { Resource } from '../../models/resource';
 import { AllocationState } from '../_enums/allocation-state';
-import { MatTable } from '@angular/material/table';
+import { Place } from '../../models/place';
+import { Resource } from '../../models/resource';
+
+import { PlaceDeletionDialogComponent } from '../dialogs/place-deletion-dialog/place-deletion-dialog.component';
+import { PlaceService } from '../_services/place.service';
+import { ResourceService } from '../_services/resource.service';
+
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTable } from '@angular/material/table';
 
 @Component({
     selector: 'app-place',
@@ -19,13 +23,16 @@ export class PlaceComponent implements OnInit {
 
     place: Place = new Place('', [], '', false, [], '', AllocationState.Invalid);
     resources: Resource[] = [];
+
     placeStates: Array<{ name: string; value: string }> = [];
     displayedColumns: Array<string> = ['state-name', 'state-value'];
-    allocationStateInvalid = false;
-    isAcquired = false;
-    isAcquiredByUser = false;
+
+    allocationStateInvalid: boolean = false;
+    isAcquired: boolean = false;
+    isAcquiredByUser: boolean = false;
 
     constructor(
+        private _dialog: MatDialog,
         private _ps: PlaceService,
         private _rs: ResourceService,
         private _snackBar: MatSnackBar,
@@ -182,6 +189,34 @@ export class PlaceComponent implements OnInit {
             this._snackBar.open('Place has been reset succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
+            });
+        }
+    }
+
+    openDeletePlaceDialog(): void {
+        const dialogRef = this._dialog.open(PlaceDeletionDialogComponent, {
+            data: this.place.name,
+            autoFocus: false,
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result !== undefined) this.deletePlace(result);
+        });
+    }
+
+    private async deletePlace(placeName: string) {
+        const response = await this._ps.deletePlace(placeName);
+
+        if (response.successful) {
+            this._snackBar.open('Place has been deleted succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+            this.router.navigate(['/']);
+        } else {
+            this._snackBar.open(response.errorMessage, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
             });
         }
     }

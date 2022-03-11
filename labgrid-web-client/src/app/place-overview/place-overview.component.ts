@@ -76,7 +76,7 @@ export class PlaceOverviewComponent implements OnInit {
         const dialogRef = this._dialog.open(PlaceCreationDialogComponent);
 
         dialogRef.afterClosed().subscribe((result) => {
-            if (result) this.createNewPlace(result);
+            if (result !== undefined) this.createNewPlace(result);
         });
     }
 
@@ -87,8 +87,7 @@ export class PlaceOverviewComponent implements OnInit {
         });
 
         dialogRef.afterClosed().subscribe((result) => {
-            console.log(result);
-            if (result) this.deletePlace(placeName);
+            if (result !== undefined) this.deletePlace(placeName);
         });
     }
 
