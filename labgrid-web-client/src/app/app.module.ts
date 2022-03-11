@@ -19,34 +19,36 @@ import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { AppComponent } from './app.component';
-import { ErrorComponent } from './error/error.component';
-import { SidebarComponent } from './sidebar/sidebar.component';
-
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
 
+import { AppComponent } from './app.component';
+import { ErrorComponent } from './error/error.component';
 import { LoginComponent } from './login/login.component';
-import { LoginService } from './auth/login.service';
-import { PlaceCreationDialogComponent } from './dialogs/place-creation-dialog/place-creation-dialog.component';
 import { PlaceComponent } from './place/place.component';
+import { PlaceCreationDialogComponent } from './dialogs/place-creation-dialog/place-creation-dialog.component';
+import { PlaceDeletionDialogComponent } from './dialogs/place-deletion-dialog/place-deletion-dialog.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
-import { PlaceService } from './_services/place.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
+import { SidebarComponent } from './sidebar/sidebar.component';
+
+import { LoginService } from './auth/login.service';
+import { PlaceService } from './_services/place.service';
 import { ResourceService } from './_services/resource.service';
 
 @NgModule({
     declarations: [
         AppComponent,
-        SidebarComponent,
         ErrorComponent,
+        LoginComponent,
         PlaceComponent,
+        PlaceCreationDialogComponent,
+        PlaceDeletionDialogComponent,
+        PlaceOverviewComponent,
         ResourceComponent,
         ResourceOverviewComponent,
-        PlaceOverviewComponent,
-        LoginComponent,
-        PlaceCreationDialogComponent,
+        SidebarComponent,
     ],
     imports: [
         AppRoutingModule,

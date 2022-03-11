@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
@@ -7,8 +8,8 @@ import { MatTableDataSource } from '@angular/material/table';
 
 import { Place } from 'src/models/place';
 import { PlaceCreationDialogComponent } from '../dialogs/place-creation-dialog/place-creation-dialog.component';
+import { PlaceDeletionDialogComponent } from '../dialogs/place-deletion-dialog/place-deletion-dialog.component';
 import { PlaceService } from '../_services/place.service';
-import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-place-overview',
@@ -80,7 +81,10 @@ export class PlaceOverviewComponent implements OnInit {
     }
 
     openDeletePlaceDialog(placeName: string): void {
-        const dialogRef = this._dialog.open(PlaceCreationDialogComponent);
+        const dialogRef = this._dialog.open(PlaceDeletionDialogComponent, {
+            data: placeName,
+            autoFocus: false,
+        });
 
         dialogRef.afterClosed().subscribe((result) => {
             console.log(result);
