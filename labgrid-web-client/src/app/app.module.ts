@@ -24,6 +24,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { LoginComponent } from './login/login.component';
 import { LoginService } from './auth/login.service';
@@ -53,18 +54,19 @@ import { ResourceService } from './_services/resource.service';
         BrowserAnimationsModule,
         FormsModule,
         HttpClientModule,
-        MatIconModule,
-        MatSidenavModule,
-        MatToolbarModule,
-        MatCardModule,
         MatButtonModule,
+        MatCardModule,
         MatDialogModule,
         MatDividerModule,
-        MatTableModule,
-        MatPaginatorModule,
         MatFormFieldModule,
+        MatIconModule,
         MatInputModule,
+        MatPaginatorModule,
+        MatSidenavModule,
         MatSnackBarModule,
+        MatTableModule,
+        MatToolbarModule,
+        MatTooltipModule,
         RouterModule.forRoot([{ path: 'place', component: PlaceComponent }]),
     ],
     providers: [LoginService, PlaceService, ResourceService],

@@ -1,3 +1,7 @@
+.action-item {
+    cursor: pointer;
+}
+
 .mat-table {
     width: 100%;
     padding: 16px;

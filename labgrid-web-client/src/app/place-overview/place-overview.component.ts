@@ -18,7 +18,7 @@ import { Router } from '@angular/router';
 export class PlaceOverviewComponent implements OnInit {
     places: Place[] = [];
     dataSource: MatTableDataSource<any> = new MatTableDataSource();
-    displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isPowerStateOn'];
+    displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isPowerStateOn', 'actions'];
 
     @ViewChild('paginator') paginator!: MatPaginator;
 
@@ -79,11 +79,37 @@ export class PlaceOverviewComponent implements OnInit {
         });
     }
 
+    openDeletePlaceDialog(placeName: string): void {
+        const dialogRef = this._dialog.open(PlaceCreationDialogComponent);
+
+        dialogRef.afterClosed().subscribe((result) => {
+            console.log(result);
+            if (result) this.deletePlace(placeName);
+        });
+    }
+
     private async createNewPlace(placeName: string) {
         const response = await this._ps.createNewPlace(placeName);
 
         if (response.successful) {
             this._snackBar.open('Place has been added succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+            this.loadPlaces();
+        } else {
+            this._snackBar.open(response.errorMessage, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
+            });
+        }
+    }
+
+    private async deletePlace(placeName: string) {
+        const response = await this._ps.deletePlace(placeName);
+
+        if (response.successful) {
+            this._snackBar.open('Place has been deleted succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });
