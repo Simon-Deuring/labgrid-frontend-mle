@@ -57,7 +57,7 @@ export class SidebarComponent implements OnInit {
         const dialogRef = this._dialog.open(PlaceCreationDialogComponent);
 
         dialogRef.afterClosed().subscribe((result) => {
-            if (result) this.createNewPlace(result);
+            if (result !== undefined) this.createNewPlace(result);
         });
     }
 

@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PlaceCreationDialogComponent } from './place-creation-dialog.component';
+import { PlaceDeletionDialogComponent } from './place-deletion-dialog.component';
 
-describe('PlaceCreationDialogComponent', () => {
-    let component: PlaceCreationDialogComponent;
-    let fixture: ComponentFixture<PlaceCreationDialogComponent>;
+describe('PlaceDeletionDialogComponent', () => {
+    let component: PlaceDeletionDialogComponent;
+    let fixture: ComponentFixture<PlaceDeletionDialogComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [PlaceCreationDialogComponent],
+            declarations: [PlaceDeletionDialogComponent],
         }).compileComponents();
     });
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(PlaceCreationDialogComponent);
+        fixture = TestBed.createComponent(PlaceDeletionDialogComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

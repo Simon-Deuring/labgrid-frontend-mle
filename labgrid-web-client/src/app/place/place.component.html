@@ -57,8 +57,17 @@
     <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="reservePlace()" [disabled]="true">
         Reserve
     </button>
-</div>
 
-<div class="action-bar">
-    <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="resetPlace()">Reset Place</button>
+    <span class="spacer"></span>
+
+    <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="resetPlace()">Reset place</button>
+    <button
+        mat-raised-button
+        color="warn"
+        class="mat-elevation-z2"
+        style="margin-right: 0px"
+        (click)="openDeletePlaceDialog()"
+    >
+        Delete place
+    </button>
 </div>

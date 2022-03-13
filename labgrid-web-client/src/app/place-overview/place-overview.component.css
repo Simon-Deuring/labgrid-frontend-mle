@@ -1,3 +1,7 @@
+.action-item {
+    cursor: pointer;
+}
+
 .mat-table {
     width: 100%;
     padding: 16px;
@@ -29,7 +33,7 @@
 }
 
 #resource-column {
-    width: 70%;
+    width: 60%;
 }
 
 #search-input {
