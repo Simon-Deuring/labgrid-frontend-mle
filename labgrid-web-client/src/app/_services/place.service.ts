@@ -100,15 +100,12 @@ export class PlaceService {
     }
 
     public async reservePlace(placeName: string): Promise<boolean> {
-        let body = (await this.getPlace(placeName)) as Place;
+        let result = await this.session.call('localhost.create_reservation', [placeName]);
+        return result;
+    }
 
-        if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
-            console.log('Something went wrong while reserving the place.');
-            return false;
-        } else {
-            let result = await this.session.call('localhost.create_reservation', [placeName]);
-            return result;
-        }
+    public async getReservations(): Promise<any> {
+        return await this.session.call('localhost.get_reservations');
     }
 
     public async createNewPlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {

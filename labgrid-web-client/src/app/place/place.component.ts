@@ -18,10 +18,10 @@ import { MatTable } from '@angular/material/table';
     templateUrl: './place.component.html',
     styleUrls: ['./place.component.css'],
 })
-export class PlaceComponent implements OnInit {
+export class PlaceComponent {
     @ViewChild('placeStateTable') table!: MatTable<any>;
 
-    place: Place = new Place('', [], '', false, [], '', AllocationState.Invalid);
+    place: Place = new Place('', [], '', false, [], '', null);
     resources: Resource[] = [];
 
     placeStates: Array<{ name: string; value: string }> = [];
@@ -47,13 +47,17 @@ export class PlaceComponent implements OnInit {
     private updateData() {
         this.route.params.subscribe((val) => {
             const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
-            this._ps.getPlace(currentRoute).then((data) => {
+            this._ps.getPlace(currentRoute).then((data: Place) => {
                 // Check if the specified place exists
                 if (Array.isArray(data) && data.length > 0) {
                     this.place = data[0];
                     this.getResources();
                     this.readPlaceState();
                     this.table.renderRows();
+
+                    if (this.place.reservation !== undefined && this.place.reservation !== null) {
+                        this.loadReservation(this.place.reservation);
+                    }
                 } else {
                     this.router.navigate(['error']);
                 }
@@ -61,7 +65,17 @@ export class PlaceComponent implements OnInit {
         });
     }
 
-    ngOnInit(): void {}
+    private async loadReservation(rName: string): Promise<void> {
+        let reservations: any = await this._ps.getReservations();
+
+        if (reservations[rName] !== undefined) {
+            console.log(reservations[rName]);
+            this.placeStates.push({ name: 'Status of reservation: ', value: reservations[rName].state });
+            this.placeStates.push({ name: 'Reservation owner: ', value: reservations[rName].owner });
+            this.placeStates.push({ name: 'Reservation timeout: ', value: reservations[rName].timeout });
+            this.table.renderRows();
+        }
+    }
 
     private getResources(): void {
         this._rs.getResourcesForPlace(this.place.name).then((resources) => {
@@ -82,9 +96,9 @@ export class PlaceComponent implements OnInit {
         }
 
         if (this.place.power_state) {
-            this.placeStates.push({ name: 'Power State: ', value: 'on' });
+            this.placeStates.push({ name: 'Power state: ', value: 'on' });
         } else {
-            this.placeStates.push({ name: 'Power State: ', value: 'off' });
+            this.placeStates.push({ name: 'Power state: ', value: 'off' });
         }
 
         /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
