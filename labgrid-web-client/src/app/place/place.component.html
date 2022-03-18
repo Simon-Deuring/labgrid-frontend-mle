@@ -54,7 +54,13 @@
     >
         Release
     </button>
-    <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="reservePlace()" [disabled]="true">
+    <button
+        mat-stroked-button
+        color="primary"
+        class="mat-elevation-z2"
+        (click)="reservePlace()"
+        [disabled]="!isAcquired || isAcquiredByUser || place.reservation !== null"
+    >
         Reserve
     </button>
 

@@ -91,7 +91,6 @@ export class PlaceService {
 
     public async releasePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
         const release = await this.session.call('localhost.release', [placeName]);
-        console.log('release: ', release);
 
         if (release === true) {
             return { successful: true, errorMessage: 'An unknown error occured!' };
@@ -107,9 +106,8 @@ export class PlaceService {
             console.log('Something went wrong while reserving the place.');
             return false;
         } else {
-            console.log('Place is reserved.');
-            // TODO: Connect to server
-            return true;
+            let result = await this.session.call('localhost.create_reservation', [placeName]);
+            return result;
         }
     }
 

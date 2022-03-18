@@ -168,10 +168,15 @@ export class PlaceComponent implements OnInit {
 
     public async reservePlace() {
         const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
-        if (ret) {
-            this._snackBar.open('Place has been reserved succesfully! (placeholder, not implemented yet)', 'OK', {
+        if (ret === null) {
+            this._snackBar.open('Place has been reserved succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
+            });
+        } else {
+            this._snackBar.open('An error has occured during the reservation!', 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
             });
         }
     }
