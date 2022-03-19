@@ -464,23 +464,32 @@ async def get_reservations(context: Session) -> Dict:
 
 @labby_serialized
 async def create_reservation(context: Session, place: PlaceName, priority: float = 0.):
+    # TODO figure out filters, priorities, etc
+    # TODO should multiple reservations be allowed?
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
-    reservation = await context.call("org.labgrid.coordinator.create_reservation", f"name={place}", prio=priority)
+    if place in context.reservations:
+        return failed(f"Place {place} is already reserved.")
+    reservation = await context.call("org.labgrid.coordinator.create_reservation",
+                                     f"name={place}",
+                                     prio=priority)
     if not reservation:
         return failed("Failed to create reservation")
-    context.reservations.update({place: reservation})
+    context.reservations[place] = reservation
+    return reservation
 
-
-async def cancel_reservation(context, place: PlaceName):
+@labby_serialized
+async def cancel_reservation(context: Session, place: PlaceName):
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
     if place not in context.reservations:
         return failed(f"No reservations available for place {place}.")
     token = next(iter(context.reservations[place]))
-    assert token
+    if not token:
+        return failed("Failed to cancel reservation.")
+    del context.reservations[place]
     return await context.call("org.labgrid.coordinator.cancel_reservation", token)
-    
+
 
 async def reset(context: Session, place: PlaceName) -> bool:
     """
