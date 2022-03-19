@@ -72,7 +72,10 @@ export class PlaceComponent {
             console.log(reservations[rName]);
             this.placeStates.push({ name: 'Status of reservation: ', value: reservations[rName].state });
             this.placeStates.push({ name: 'Reservation owner: ', value: reservations[rName].owner });
-            this.placeStates.push({ name: 'Reservation timeout: ', value: reservations[rName].timeout });
+            this.placeStates.push({
+                name: 'Reservation timeout: ',
+                value: new Date(reservations[rName].timeout * 1000).toLocaleString('en-US'),
+            });
             this.table.renderRows();
         }
     }
