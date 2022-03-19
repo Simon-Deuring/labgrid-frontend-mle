@@ -39,7 +39,7 @@
         </ng-container>
 
         <ng-container matColumnDef="isPowerStateOn">
-            <th mat-header-cell *matHeaderCellDef>Power State</th>
+            <th mat-header-cell *matHeaderCellDef>Power state</th>
             <td mat-cell *matCellDef="let place">
                 <mat-icon [ngClass]="{ powerStateOff: !place.power_state, powerStateOn: place.power_state }">
                     {{ getPowerStateIcon(place.power_state) }}
