@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { AllocationState } from '../_enums/allocation-state';
 import { Place } from '../../models/place';
 import { Resource } from '../../models/resource';
 
@@ -27,7 +26,6 @@ export class PlaceComponent {
     placeStates: Array<{ name: string; value: string }> = [];
     displayedColumns: Array<string> = ['state-name', 'state-value'];
 
-    allocationStateInvalid: boolean = false;
     isAcquired: boolean = false;
     isAcquiredByUser: boolean = false;
 
@@ -92,7 +90,6 @@ export class PlaceComponent {
 
     private readPlaceState(): void {
         this.placeStates = [];
-        this.allocationStateInvalid = false;
 
         if (this.place.exporter) {
             this.placeStates.push({ name: 'Host name: ', value: this.place.exporter });

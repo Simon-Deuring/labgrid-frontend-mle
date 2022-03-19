@@ -26,7 +26,7 @@
     <ng-container matColumnDef="state-value">
         <td mat-cell *matCellDef="let element">
             {{ element.value }}
-            <mat-icon id="invalidIcon" *ngIf="allocationStateInvalid && element.name === 'Allocation status: '">
+            <mat-icon id="invalidIcon" *ngIf="element.name === 'Power state: ' && place.power_state && !place.acquired">
                 bolt
             </mat-icon>
         </td>
