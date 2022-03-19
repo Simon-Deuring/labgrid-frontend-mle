@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 
 import { Place } from '../../models/place';
-import { AllocationState } from '../_enums/allocation-state';
 
 import * as autobahn from 'autobahn-browser';
 
