@@ -1,6 +1,3 @@
-import { Resource } from './resource';
-import { AllocationState } from '../app/_enums/allocation-state';
-
 export class Place {
     public acquired: string;
     public acquired_resources: Array<string[]>;

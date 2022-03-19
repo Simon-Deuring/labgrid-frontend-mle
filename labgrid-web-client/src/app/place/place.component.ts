@@ -104,32 +104,6 @@ export class PlaceComponent {
             this.placeStates.push({ name: 'Power state: ', value: 'off' });
         }
 
-        /*const allocationEnum = (<any>AllocationState)[this.place.reservation];
-        switch (allocationEnum) {
-            case AllocationState.Allocated:
-                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-                break;
-            case AllocationState.Acquired:
-                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-                break;
-            case AllocationState.Expired:
-                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-                break;
-            case AllocationState.Invalid:
-                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-                this.allocationStateInvalid = true;
-                break;
-            case AllocationState.Waiting:
-                this.placeStates.push({ name: 'Allocation status: ', value: this.place.reservation.toString() });
-                break;
-            default:
-                this.placeStates.push({
-                    name: 'Allocation status: ',
-                    value: 'something went wrong: ' + this.place.reservation.toString(),
-                });
-                break;
-        }*/
-
         // TODO: user has to be replaced by dynamic username
         if (this.place.acquired === 'labby/dummy') {
             this.isAcquiredByUser = true;
