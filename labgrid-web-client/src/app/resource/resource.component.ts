@@ -17,6 +17,8 @@ export class ResourceComponent implements OnInit {
 
     dataReady: boolean = false;
 
+    videoStreamStarted: boolean = false;
+
     constructor(private _rs: ResourceService, private route: ActivatedRoute) {
         route.params.subscribe(() => {
             const resourceName = route.snapshot.url[route.snapshot.url.length - 1].path;
@@ -91,5 +93,9 @@ export class ResourceComponent implements OnInit {
         }
 
         this.dataReady = true;
+    }
+
+    public startVideoStream(): void {
+        this.videoStreamStarted = true;
     }
 }

@@ -15,3 +15,26 @@
 
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 </table>
+
+<div
+    class="action-bar"
+    *ngIf="
+        (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') &&
+        videoStreamStarted === false
+    "
+>
+    <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="startVideoStream()">
+        Show video stream
+    </button>
+</div>
+
+<div
+    class="video-stream"
+    style="padding-top: 20px"
+    *ngIf="
+        (resource.cls === 'USBVideo' || resource.cls === 'NetworkUSBVideo' || resource.cls === 'HTTPVideoStream') &&
+        videoStreamStarted === true
+    "
+>
+    <p>The video stream has been started.</p>
+</div>
