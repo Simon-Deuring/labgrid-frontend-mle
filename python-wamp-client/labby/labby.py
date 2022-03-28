@@ -12,7 +12,7 @@ import autobahn.wamp.exception as wexception
 
 from .rpc import (cancel_reservation, create_place, create_resource,
                   delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache,
-                  places, places_names, get_reservations, create_reservation, resource, power_state,
+                  places, places_names, get_reservations, create_reservation, poll_reservation, resource, power_state,
                   acquire, release, info, resource_by_name, resource_overview)
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
@@ -62,6 +62,10 @@ class LabbyClient(Session):
         res = await self.call("wamp.registration.list")
         for proc in res['exact']:
             p = await self.call("wamp.registration.get", proc)
+            print(p['uri'])
+        res = await self.call("wamp.subscription.list")
+        for proc in res['exact']:
+            p = await self.call("wamp.subscription.get", proc)
             print(p['uri'])
 
         self.subscribe(self.on_place_changed,
@@ -167,15 +171,16 @@ class RouterInterface(ApplicationSession):
         self.register("power_state", power_state)
         self.register("acquire", acquire)
         self.register("release", release)
-        self.register("get_reservations", get_reservations)
         self.register("resource_overview", resource_overview)
         self.register("resource_by_name", resource_by_name)
         self.register("info", info)
         self.register("forward", forward)
         self.register("create_place", create_place)
         self.register("delete_place", delete_place)
+        self.register("get_reservations", get_reservations)
         self.register("create_reservation", create_reservation)
         self.register("cancel_reservation", cancel_reservation)
+        self.register("poll_reservation", poll_reservation)
         self.register("create_resource", create_resource)
         self.register("delete_resource", delete_resource)
         self.register("place_names", places_names)

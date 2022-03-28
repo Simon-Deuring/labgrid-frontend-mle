@@ -2,8 +2,10 @@
 Generic RPC functions for labby
 """
 
+# import asyncio
 import os
 from pathlib import Path
+from time import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 
 import yaml
@@ -27,66 +29,8 @@ class RPCDesc():
     return_type: Optional[str] = attrib(default=None)
 
 
-def _localfile(path): return Path(os.path.dirname(
-    os.path.realpath(__file__))).joinpath(path)
-
-# non exhaustive list of serializable primitive types
-_serializable_primitive: List[Type] = [int, float, str, bool]
-
-# TODO (Kevin) create a function to invalidate cache
-def invalidate_cache(attribute):
-    """
-    on call clear attribute (e.g. set to None)
-    """
-    def decorator(func: Callable):
-        pass
-
-    return decorator
-
-def cached(attribute: str):
-    """
-    Decorator defintion to cache data in labby context and fetch data from server
-    """
-    assert attribute is not None
-
-    def decorator(func: Callable):
-
-        async def wrapped(context: Session, *args, **kwargs):
-            assert context is not None
-
-            if not hasattr(context, attribute):
-                context.__dict__.update({attribute: None})
-                data = None
-            else:
-                data: Optional[Dict] = context.__getattribute__(
-                    attribute)
-            if context.__getattribute__(attribute) is None:
-                data: Optional[Dict] = await func(context, *args, **kwargs)
-                context.__setattr__(attribute, data)
-            return data
-
-        return wrapped
-
-    return decorator
-
-
-def labby_serialized(func):
-    """
-    Custom serializer decorator for labby rpc functions
-    to make sure returned values are cbor/json serializable
-    """
-    async def wrapped(*args, **kwargs):
-        ret = await func(*args, **kwargs)
-        if isinstance(ret, LabbyError):
-            return ret.to_json()
-        if isinstance(ret, LabbyPlace):
-            return ret.to_json()
-        if isinstance(ret, (dict, list)) or type(ret) in _serializable_primitive:
-            return ret
-        raise NotImplementedError(
-            f"{type(ret)} can currently not be serialized!")
-
-    return wrapped
+def _localfile(path):
+    return Path(os.path.dirname(os.path.realpath(__file__))).joinpath(path)
 
 
 FUNCTION_INFO = {}
@@ -173,6 +117,7 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
         data: Optional[Dict] = await context.call(endpoint, *args, **kwargs)
         setattr(context, attribute, data)
     return data
+
 
 @cached('places')
 async def fetch_places(context: Session,
@@ -277,6 +222,7 @@ async def fetch_power_state(context: Session,
             power_states[place_name] = {
                 'power_state': _calc_power_for_place(place_name, resources_to_check)}
     return power_states
+
 
 @labby_serialized
 async def places(context: Session,
@@ -457,38 +403,55 @@ async def get_reservations(context: Session) -> Dict:
     """
     RPC call to list current reservations on the Coordinator
     """
-    reservation_data = await context.call("org.labgrid.coordinator.get_reservations")
-    # TODO (Kevin) handle errors
+    reservation_data: Dict = await context.call("org.labgrid.coordinator.get_reservations")
+    if not reservation_data:
+        return {}
     return reservation_data
 
 
 @labby_serialized
-async def create_reservation(context: Session, place: PlaceName, priority: float = 0.):
+async def create_reservation(context: Session, place: PlaceName, priority: float = 0.) -> Union[Dict, LabbyError]:
     # TODO figure out filters, priorities, etc
     # TODO should multiple reservations be allowed?
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
-    if place in context.reservations:
+    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'])):
         return failed(f"Place {place} is already reserved.")
+    await get_reservations(context)  # update existing
     reservation = await context.call("org.labgrid.coordinator.create_reservation",
                                      f"name={place}",
                                      prio=priority)
     if not reservation:
         return failed("Failed to create reservation")
-    context.reservations[place] = reservation
+    context.reservations.update(reservation)
     return reservation
 
+
 @labby_serialized
-async def cancel_reservation(context: Session, place: PlaceName):
+async def cancel_reservation(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
-    if place not in context.reservations:
+    token = next((token for token, x in context.reservations.items()
+                 if x['filters']['main']['name'] == place), None)
+    if token is None:
         return failed(f"No reservations available for place {place}.")
-    token = next(iter(context.reservations[place]))
-    if not token:
-        return failed("Failed to cancel reservation.")
-    del context.reservations[place]
+    del context.reservations[token]
     return await context.call("org.labgrid.coordinator.cancel_reservation", token)
+
+
+@labby_serialized
+async def poll_reservation(context: Session, place: PlaceName) -> Union[Dict, LabbyError]:
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    token = next((token for token, x in context.reservations.items()
+                 if x['filters']['main']['name'] == place), None)
+    if token is None:
+        return failed(f"No reservations available for place {place}.")
+    if not token:
+        return failed("Failed to poll reservation.")
+    reservation = await context.call("org.labgrid.coordinator.poll_reservation", token)
+    context.reservations[token] = reservation
+    return reservation
 
 
 async def reset(context: Session, place: PlaceName) -> bool:
@@ -501,7 +464,6 @@ async def reset(context: Session, place: PlaceName) -> bool:
 
 async def console(context: Session, *args):
     pass
-
 
 
 async def video(context: Session, *args):

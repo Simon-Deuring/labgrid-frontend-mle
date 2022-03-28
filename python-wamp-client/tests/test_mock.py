@@ -6,8 +6,8 @@ import asyncio
 import sys
 import unittest
 from datetime import datetime
-from random import random
-from typing import Callable, List, Union
+from random import choice, random
+from typing import Callable, Dict, List, Union
 from unittest import mock
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -74,15 +74,28 @@ def mock_labby(func_names: List[str]):
 
 
 class MockSession(Session):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
     @make_async
-    def call(self, func_str: str, *args):
+    def call(self, func_str: str, *args, **kwargs):
         if func_str in {"org.labgrid.coordinator.acquire_place", "org.labgrid.coordinator.release_place"}:
             return random() > 0.5
         if func_str == "org.labgrid.coordinator.get_places":
             return PLACES
         if func_str == "org.labgrid.coordinator.get_resources":
             return RESOURCES
+        if func_str == "org.labgrid.coordinator.get_reservations":
+            return {'token1': {'owner': 'labby/test', 'state': 'waiting', 'prio': 0.0, 'filters': {'main': {'name': 'place1'}}, 'allocations': {}, 'created': 1.0, 'timeout': 2.0}}
+        if func_str == "org.labgrid.coordinator.create_reservation":
+            prio = 0.0 if 'prio' not in kwargs else kwargs['prio']
+            place = args[0].split("=")[1].strip()
+            return {place: {'owner': 'labby/test', 'state': 'waiting', 'prio': prio, 'filters': {'main': {'name': place}}, 'allocations': {}, 'created': 1.0, 'timeout': 2.0}}
+        if func_str == "org.labgrid.coordinator.cancel_reservation":
+            return True
+        if func_str == "org.labgrid.coordinator.poll_reservation":
+            token=args[0]
+            return {token: {'owner': 'labby/test', 'state': 'waiting', 'prio': 0.0, 'filters': {'main': {'name': token}}, 'allocations': {}, 'created': 1.0, 'timeout': 2.0}}
 
 
 class TestAcquireRelease(unittest.TestCase):
@@ -134,7 +147,7 @@ class TestPlaces(unittest.TestCase):
         context = MockSession()
         assert PLACES
         #############
-        ret : Union[List[Place], LabbyError] = await rpc.places(context)
+        ret: Union[List[Place], LabbyError] = await rpc.places(context)
         assert ret is not None
         assert isinstance(
             ret, list), "Returned Value has to be valid, which means of type list."
@@ -171,7 +184,6 @@ class TestPlaces(unittest.TestCase):
         assert ret["error"] is not None, "Not an error object"
         assert ret["error"]["kind"] == ErrorKind.NOT_FOUND.value, "Not the right error object"
 
-
     @async_test
     async def test_fetch_places(self):
         """
@@ -186,12 +198,11 @@ class TestPlaces(unittest.TestCase):
         ### place is not None
         context = MockSession()
         assert PLACES
-        place_name = place= list(PLACES.keys())[0]
+        place_name = list(PLACES.keys())[0]
         place = await rpc.fetch_places(context, place_name)
         assert place is not None
         assert not isinstance(place, LabbyError)
-        assert place == {place_name:PLACES[place_name]}
-        
+        assert place == {place_name: PLACES[place_name]}
 
     @staticmethod
     @make_async
@@ -215,6 +226,7 @@ class TestPlaces(unittest.TestCase):
         assert places is not None
         assert isinstance(places, LabbyError)
         assert places.kind == ErrorKind.NOT_FOUND
+
 
 class TestPowerState(unittest.TestCase):
     """
@@ -380,17 +392,75 @@ class TestStartRouter(unittest.TestCase):
     @patch('subprocess.run', _run)
     @patch.object(ApplicationRunner, 'run')
     def test_start(self, run, loop):
-        run_router("localhost", "realm1")
+        run_router(backend_url="ws://localhost:20408/ws",
+                   backend_realm="realm1", frontend_url="ws://localhost:8083/ws", frontend_realm="frontend", exporter="exporter")
+
+
+class TestReservation(unittest.TestCase):
+
+    @async_test
+    async def test_create_reservations(self):
+        context = MockSession()
+        registration = await rpc.create_reservation(context, "place1")
+        assert registration
+        assert isinstance(registration, Dict)
+        assert next(iter(registration.values()))['filters']['main']['name'] == 'place1'
+
+    @async_test
+    async def test_create_already_exists(self):
+        context = MockSession()
+        registration = await rpc.create_reservation(context, "place1")
+        assert registration
+        assert isinstance(registration, Dict)
+        registration = next(iter(registration.values()))
+        assert registration['filters']['main']['name'] == 'place1'
+        registration = await rpc.create_reservation(context, 'place1')
+        assert registration
+        assert isinstance(registration, SerLabbyError)
+        assert registration['error']['kind'] == ErrorKind.FAILED.value
+
+    @async_test
+    async def test_get_reservation(self):
+        context = MockSession()
+        ret = await rpc.create_reservation(context, "place2") #!notice mock session will add a 'place1' on get_reservations
+        assert ret
+        assert isinstance(ret, Dict)
+        reservations = await rpc.get_reservations(context)
+        assert reservations
+        assert isinstance(reservations, dict)
+
+    @async_test
+    async def test_cancel_reservation(self):
+        context = MockSession()
+        await rpc.create_reservation(context, "place2")
+        cancel = await rpc.cancel_reservation(context, "place2")
+        assert isinstance(cancel, bool)
+
+    @async_test
+    async def test_cancel_reservation_fail(self):
+        context = MockSession()
+        cancel = await rpc.cancel_reservation(context, "place2")
+        assert isinstance(cancel, SerLabbyError)
+        assert cancel['error']['kind'] == ErrorKind.FAILED.value
+
+
+    @async_test
+    async def test_poll_reservation(self):
+        context = MockSession()
+        await rpc.create_reservation(context, "place2")
+        poll = await rpc.poll_reservation(context, "place2")
+        assert isinstance(poll, Dict)
+        assert 'error' not in poll
 
 
 class TestCreateDelete(unittest.TestCase):
     @async_test
     async def test_create(self):
         context = MockSession()
-        
+
         created = await rpc.create_place(context, f'test_place_create_{uuid4()}')
-        assert not isinstance(created, SerLabbyError), "Create place call failed"
-        
+        assert not isinstance(
+            created, SerLabbyError), "Create place call failed"
 
 
 if __name__ == "__main__":
