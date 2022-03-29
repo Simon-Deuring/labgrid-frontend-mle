@@ -411,7 +411,7 @@ async def get_reservations(context: Session) -> Dict:
     }
 
     for token, data in reservation_data.items():
-        if data['state'] != 'waiting' and token in context.to_refresh:
+        if data['state'] not in ('waiting', 'allocated') and token in context.to_refresh:
             to_remove.add(token)
     map(context.to_refresh.remove, to_remove)
     context.reservations.update(**reservation_data)
@@ -440,12 +440,17 @@ async def create_reservation(context: Session, place: PlaceName, priority: float
 
 async def refresh_reservations(context: Session):
     while True:
+        to_remove = set()
         for token in context.to_refresh:
             if token in context.reservations:
                 context.log.info(f"Refreshing reservation {token}")
+                if context.reservations[token]['state'] not in ('waiting', 'allocated'):
                 ret = await context.call("org.labgrid.coordinator.poll_reservation", token)
                 if not ret:
                     context.log.error(f"Failed to poll reservation {token}.")
+                else:
+                    to_remove.add(token)
+        map(context.to_refresh.remove, to_remove)
         await asyncio.sleep(10)
 
 
