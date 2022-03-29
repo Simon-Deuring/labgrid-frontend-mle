@@ -3,9 +3,10 @@ Generic RPC functions for labby
 """
 
 # import asyncio
+import asyncio
 import os
 from pathlib import Path
-from time import time
+from time import sleep, time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 
 import yaml
@@ -404,8 +405,13 @@ async def get_reservations(context: Session) -> Dict:
     RPC call to list current reservations on the Coordinator
     """
     reservation_data: Dict = await context.call("org.labgrid.coordinator.get_reservations")
-    if not reservation_data:
-        return {}
+    for token in context.to_refresh:
+        if token not in reservation_data:
+            context.to_refresh.remove(token)
+    for token, data in reservation_data.items():
+        if data['state'] != 'waiting' and token in context.to_refresh:
+            context.to_refresh.remove(token)
+    context.reservations.update(**reservation_data)
     return reservation_data
 
 
@@ -415,8 +421,8 @@ async def create_reservation(context: Session, place: PlaceName, priority: float
     # TODO should multiple reservations be allowed?
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
-    await get_reservations(context) # get current state from coordinator
-    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'])):
+    await get_reservations(context)  # get current state from coordinator
+    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'] and x['state'] not in ('expired', 'invalid'))):
         return failed(f"Place {place} is already reserved.")
     await get_reservations(context)  # update existing
     reservation = await context.call("org.labgrid.coordinator.create_reservation",
@@ -425,19 +431,33 @@ async def create_reservation(context: Session, place: PlaceName, priority: float
     if not reservation:
         return failed("Failed to create reservation")
     context.reservations.update(reservation)
+    context.to_refresh.add((next(iter(reservation.keys()))))
     return reservation
+
+
+async def refresh_reservations(context: Session):
+    while True:
+        for token in context.to_refresh:
+            if token in context.reservations:
+                context.log.info(f"Refreshing reservation {token}")
+                ret = await context.call("org.labgrid.coordinator.poll_reservation", token)
+                if not ret:
+                    context.log.error(f"Failed to poll reservation {token}.")
+        await asyncio.sleep(10)
 
 
 @labby_serialized
 async def cancel_reservation(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
+    await get_reservations(context)  # get current state from coordinator
     token = next((token for token, x in context.reservations.items()
                  if x['filters']['main']['name'] == place), None)
-    await get_reservations(context) # get current state from coordinator
     if token is None:
         return failed(f"No reservations available for place {place}.")
     del context.reservations[token]
+    if token in context.to_refresh:
+        context.to_refresh.remove(token)
     return await context.call("org.labgrid.coordinator.cancel_reservation", token)
 
 

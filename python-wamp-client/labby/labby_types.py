@@ -3,7 +3,7 @@ Types used throughout labby
 """
 
 from abc import abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
 
@@ -31,6 +31,7 @@ class Session(ApplicationSession):
         self.acquired_places: List = []
         self.power_states: Optional[List] = None
         self.reservations: Dict = {}
+        self.to_refresh: Set = set()
         super().__init__(*args, **kwargs)
 
 

@@ -12,7 +12,7 @@ import autobahn.wamp.exception as wexception
 
 from .rpc import (cancel_reservation, create_place, create_resource,
                   delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache,
-                  places, places_names, get_reservations, create_reservation, poll_reservation, resource, power_state,
+                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, resource, power_state,
                   acquire, release, info, resource_by_name, resource_overview)
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
@@ -72,6 +72,7 @@ class LabbyClient(Session):
                        "org.labgrid.coordinator.place_changed")
         self.subscribe(self.on_resource_changed,
                        "org.labgrid.coordinator.resource_changed")
+        asyncio.run_coroutine_threadsafe(refresh_reservations(self), asyncio.get_event_loop())
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
@@ -123,12 +124,8 @@ class LabbyClient(Session):
             self.log.info(f"Place {name} created.")
         else:
             place = self.places[name]
-            # old = flat_dict(place.asdict())
             place.update(place_data)
-            # new = flat_dict(place.asdict())
             self.log.info(f"Place {name} changed.")
-            # for k, v_old, v_new in diff_dict(old, new):
-            #     print(f"  {k}: {v_old} -> {v_new}")
 
 
 class RouterInterface(ApplicationSession):
