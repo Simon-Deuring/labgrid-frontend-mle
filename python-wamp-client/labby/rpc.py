@@ -444,13 +444,16 @@ async def refresh_reservations(context: Session):
         for token in context.to_refresh:
             if token in context.reservations:
                 context.log.info(f"Refreshing reservation {token}")
-                if context.reservations[token]['state'] not in ('waiting', 'allocated'):
+                if context.reservations[token]['state'] in ('waiting', 'allocated'):
                     ret = await context.call("org.labgrid.coordinator.poll_reservation", token)
                     if not ret:
                         context.log.error(
                             f"Failed to poll reservation {token}.")
+                    context.reservations[token] = ret
                 else:
                     to_remove.add(token)
+            else:
+                to_remove.add(token)
         map(context.to_refresh.remove, to_remove)
         await asyncio.sleep(10)
 
