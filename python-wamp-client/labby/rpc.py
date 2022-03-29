@@ -405,12 +405,15 @@ async def get_reservations(context: Session) -> Dict:
     RPC call to list current reservations on the Coordinator
     """
     reservation_data: Dict = await context.call("org.labgrid.coordinator.get_reservations")
-    for token in context.to_refresh:
-        if token not in reservation_data:
-            context.to_refresh.remove(token)
+
+    to_remove = {
+        token for token in context.to_refresh if token not in reservation_data
+    }
+
     for token, data in reservation_data.items():
         if data['state'] != 'waiting' and token in context.to_refresh:
-            context.to_refresh.remove(token)
+            to_remove.add(token)
+    map(context.to_refresh.remove, to_remove)
     context.reservations.update(**reservation_data)
     return reservation_data
 

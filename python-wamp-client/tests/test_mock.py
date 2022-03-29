@@ -401,20 +401,20 @@ class TestReservation(unittest.TestCase):
     @async_test
     async def test_create_reservations(self):
         context = MockSession()
-        registration = await rpc.create_reservation(context, "place1")
+        registration = await rpc.create_reservation(context, "place2")
         assert registration
         assert isinstance(registration, Dict)
-        assert next(iter(registration.values()))['filters']['main']['name'] == 'place1'
+        assert next(iter(registration.values()))['filters']['main']['name'] == 'place2'
 
     @async_test
     async def test_create_already_exists(self):
         context = MockSession()
-        registration = await rpc.create_reservation(context, "place1")
+        registration = await rpc.create_reservation(context, "place2")
         assert registration
         assert isinstance(registration, Dict)
         registration = next(iter(registration.values()))
-        assert registration['filters']['main']['name'] == 'place1'
-        registration = await rpc.create_reservation(context, 'place1')
+        assert registration['filters']['main']['name'] == 'place2'
+        registration = await rpc.create_reservation(context, 'place2')
         assert registration
         assert isinstance(registration, SerLabbyError)
         assert registration['error']['kind'] == ErrorKind.FAILED.value
