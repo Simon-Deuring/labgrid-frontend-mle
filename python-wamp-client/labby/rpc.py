@@ -415,6 +415,7 @@ async def create_reservation(context: Session, place: PlaceName, priority: float
     # TODO should multiple reservations be allowed?
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
+    await get_reservations(context) # get current state from coordinator
     if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'])):
         return failed(f"Place {place} is already reserved.")
     await get_reservations(context)  # update existing
@@ -433,6 +434,7 @@ async def cancel_reservation(context: Session, place: PlaceName) -> Union[bool, 
         return invalid_parameter("Missing required parameter: place.")
     token = next((token for token, x in context.reservations.items()
                  if x['filters']['main']['name'] == place), None)
+    await get_reservations(context) # get current state from coordinator
     if token is None:
         return failed(f"No reservations available for place {place}.")
     del context.reservations[token]
