@@ -6,7 +6,7 @@ Generic RPC functions for labby
 import asyncio
 import os
 from pathlib import Path
-from time import sleep, time
+from time import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 
 import yaml
@@ -445,9 +445,10 @@ async def refresh_reservations(context: Session):
             if token in context.reservations:
                 context.log.info(f"Refreshing reservation {token}")
                 if context.reservations[token]['state'] not in ('waiting', 'allocated'):
-                ret = await context.call("org.labgrid.coordinator.poll_reservation", token)
-                if not ret:
-                    context.log.error(f"Failed to poll reservation {token}.")
+                    ret = await context.call("org.labgrid.coordinator.poll_reservation", token)
+                    if not ret:
+                        context.log.error(
+                            f"Failed to poll reservation {token}.")
                 else:
                     to_remove.add(token)
         map(context.to_refresh.remove, to_remove)
