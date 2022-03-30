@@ -155,16 +155,16 @@ export class PlaceComponent {
     }
 
     public async reservePlace() {
-        const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
-        if (ret === null) {
+        const ret: any = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+        if (ret.error !== undefined && ret.error.message !== undefined) {
+            this._snackBar.open(ret.error.message, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
+            });
+        } else {
             this._snackBar.open('Place has been reserved succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
-            });
-        } else {
-            this._snackBar.open('An error has occured during the reservation!', 'OK', {
-                duration: 3000,
-                panelClass: ['error-snackbar'],
             });
         }
     }
