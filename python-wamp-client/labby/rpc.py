@@ -241,6 +241,12 @@ async def places(context: Session,
         return power_states
     place_res = []
     for place_name, place_data in data.items():
+        # append the place to acquired places if
+        # it has been acquired in a previous session
+        if (place_data and place_data['acquired'] == context.user_name
+            and place_name not in context.acquired_places
+            ):
+            context.acquired_places.append(place_name)
         if place is not None and place_name != place:
             continue
         # ??? (Kevin) what if there are more than one or no matches
