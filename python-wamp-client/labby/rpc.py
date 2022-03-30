@@ -6,7 +6,6 @@ Generic RPC functions for labby
 import asyncio
 import os
 from pathlib import Path
-from time import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 
 import yaml
@@ -413,19 +412,10 @@ async def get_reservations(context: Session) -> Dict:
     """
     reservation_data: Dict = await context.call("org.labgrid.coordinator.get_reservations")
 
-    to_remove = {
-        token for token in context.to_refresh if token not in reservation_data
-    }
-
     for token, data in reservation_data.items():
-        if data['state'] not in ('waiting', 'allocated', 'acquired'):
-            if token in context.to_refresh:
-            to_remove.add(token)
-        elif data['owner'] == context.user_name:
-            # state can only be waiting, or allocated ^
+        if (data['state'] in ('waiting', 'allocated', 'acquired')
+                and data['owner'] == context.user_name):
             context.to_refresh.add(token)
-    # for token in to_remove:
-    #     context.to_refresh.remove(token)
     context.reservations.update(**reservation_data)
     return reservation_data
 
@@ -437,7 +427,7 @@ async def create_reservation(context: Session, place: PlaceName, priority: float
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
     await get_reservations(context)  # get current state from coordinator
-    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'] and x['state'] not in ('expired','invalid'))):
+    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'] and x['state'] not in ('expired', 'invalid'))):
         return failed(f"Place {place} is already reserved.")
     reservation = await context.call("org.labgrid.coordinator.create_reservation",
                                      f"name={place}",

@@ -41,6 +41,7 @@ class LabbyClient(Session):
     def __init__(self, config=None):
         # make sure only one active labby client exists
         globals()["CALLBACK_REF"] = self
+        self.user_name = "labby/dummy"
         super().__init__(config=config)
 
     def onConnect(self):
@@ -127,6 +128,12 @@ class LabbyClient(Session):
             place = self.places[name]
             place.update(place_data)
             self.log.info(f"Place {name} changed.")
+        if (# add place to acquired places, if we have acquired it previously
+            place_data
+            and place_data['acquired'] is not None
+            and place_data['acquired'] == self.user_name
+        ):
+            self.acquired_places.append(name)
 
 
 class RouterInterface(ApplicationSession):
@@ -197,7 +204,7 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
 
     globals()["LOADED_RPC_FUNCTIONS"] = {}
     logging.basicConfig(
-        level="WARNING", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
+        level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
     labby_runner = ApplicationRunner(
         url=backend_url, realm=backend_realm, extra=None)

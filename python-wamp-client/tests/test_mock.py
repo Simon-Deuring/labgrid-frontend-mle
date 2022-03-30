@@ -75,6 +75,7 @@ def mock_labby(func_names: List[str]):
 
 class MockSession(Session):
     def __init__(self, *args, **kwargs) -> None:
+        self.user_name = "client/labby/dummy"
         super().__init__(*args, **kwargs)
 
     @make_async

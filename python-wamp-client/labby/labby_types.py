@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
 
+
 TargetName = str
 ExporterName = str
 PlaceName = str
@@ -28,10 +29,11 @@ class Session(ApplicationSession):
     def __init__(self, *args, **kwargs) -> None:
         self.resources: Optional[Dict] = None
         self.places: Optional[Dict] = None
-        self.acquired_places: List = []
+        self.acquired_places: List[PlaceName] = []
         self.power_states: Optional[List] = None
         self.reservations: Dict = {}
         self.to_refresh: Set = set()
+        self.user_name : str
         super().__init__(*args, **kwargs)
 
 
