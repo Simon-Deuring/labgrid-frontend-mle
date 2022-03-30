@@ -365,6 +365,13 @@ async def acquire(context: Session,
         return failed(f"Got exception while trying to call org.labgrid.coordinator.acquire_place. {err}")
     if acquire_successful:
         context.acquired_places.append(place)
+        # remove the reservation if there was one
+        if token := next((token for token, x in context.reservations.items() if x['filters']['main']['name'] == place), None,):
+            ret = await cancel_reservation(context, token)
+            if isinstance(ret, LabbyError):
+                # context.log.error(f"Could not cancel reservation after acquire: {ret}")
+                print(f"Could not cancel reservation after acquire: {ret}")
+            del context.reservations[token]
     return acquire_successful
 
 
@@ -411,9 +418,14 @@ async def get_reservations(context: Session) -> Dict:
     }
 
     for token, data in reservation_data.items():
-        if data['state'] not in ('waiting', 'allocated') and token in context.to_refresh:
+        if data['state'] not in ('waiting', 'allocated', 'acquired'):
+            if token in context.to_refresh:
             to_remove.add(token)
-    map(context.to_refresh.remove, to_remove)
+        elif data['owner'] == context.user_name:
+            # state can only be waiting, or allocated ^
+            context.to_refresh.add(token)
+    # for token in to_remove:
+    #     context.to_refresh.remove(token)
     context.reservations.update(**reservation_data)
     return reservation_data
 
@@ -425,9 +437,8 @@ async def create_reservation(context: Session, place: PlaceName, priority: float
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
     await get_reservations(context)  # get current state from coordinator
-    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'] and x['state'] not in ('expired', 'invalid'))):
+    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'] and x['state'] not in ('expired','invalid'))):
         return failed(f"Place {place} is already reserved.")
-    await get_reservations(context)  # update existing
     reservation = await context.call("org.labgrid.coordinator.create_reservation",
                                      f"name={place}",
                                      prio=priority)
@@ -441,21 +452,35 @@ async def create_reservation(context: Session, place: PlaceName, priority: float
 async def refresh_reservations(context: Session):
     while True:
         to_remove = set()
+        context.reservations = await context.call("org.labgrid.coordinator.get_reservations")
         for token in context.to_refresh:
             if token in context.reservations:
-                context.log.info(f"Refreshing reservation {token}")
-                if context.reservations[token]['state'] in ('waiting', 'allocated'):
+                # context.log.info(f"Refreshing reservation {token}")
+                state = context.reservations[token]['state']
+                place_name = context.reservations[token]['filters']['main']['name']
+                if state == 'waiting':
                     ret = await context.call("org.labgrid.coordinator.poll_reservation", token)
                     if not ret:
                         context.log.error(
                             f"Failed to poll reservation {token}.")
                     context.reservations[token] = ret
+                # acquire the resource, when it has been allocated by the coordinator
+                elif (context.reservations[token]['state'] == 'allocated'
+                      or (context.reservations[token]['state'] == 'acquired' and place_name not in context.acquired_places)
+                      ):
+                    ret = await acquire(context, place_name)
+                    await cancel_reservation(context, place_name)
+                    if not ret:
+                        context.log.error(
+                            f"Could not acquire reserved place {token}: {place_name}")
+                    to_remove.add(token)
                 else:
                     to_remove.add(token)
             else:
                 to_remove.add(token)
-        map(context.to_refresh.remove, to_remove)
-        await asyncio.sleep(10)
+        for token in to_remove:
+            context.to_refresh.remove(token)
+        await asyncio.sleep(1.)  # !! TODO set to 10s
 
 
 @labby_serialized
@@ -468,8 +493,6 @@ async def cancel_reservation(context: Session, place: PlaceName) -> Union[bool, 
     if token is None:
         return failed(f"No reservations available for place {place}.")
     del context.reservations[token]
-    if token in context.to_refresh:
-        context.to_refresh.remove(token)
     return await context.call("org.labgrid.coordinator.cancel_reservation", token)
 
 

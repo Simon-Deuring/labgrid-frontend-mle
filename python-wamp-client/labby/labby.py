@@ -72,7 +72,8 @@ class LabbyClient(Session):
                        "org.labgrid.coordinator.place_changed")
         self.subscribe(self.on_resource_changed,
                        "org.labgrid.coordinator.resource_changed")
-        asyncio.run_coroutine_threadsafe(refresh_reservations(self), asyncio.get_event_loop())
+        asyncio.create_task(refresh_reservations(self))
+        # asyncio.run_coroutine_threadsafe(refresh_reservations(self), asyncio.get_event_loop())
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
