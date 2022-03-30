@@ -132,8 +132,9 @@ class LabbyClient(Session):
             place_data
             and place_data['acquired'] is not None
             and place_data['acquired'] == self.user_name
+            and name not in self.acquired_places
         ):
-            self.acquired_places.append(name)
+            self.acquired_places.add(name)
 
 
 class RouterInterface(ApplicationSession):

@@ -246,7 +246,7 @@ async def places(context: Session,
         if (place_data and place_data['acquired'] == context.user_name
             and place_name not in context.acquired_places
             ):
-            context.acquired_places.append(place_name)
+            context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
         # ??? (Kevin) what if there are more than one or no matches
@@ -369,7 +369,7 @@ async def acquire(context: Session,
     except ApplicationError as err:
         return failed(f"Got exception while trying to call org.labgrid.coordinator.acquire_place. {err}")
     if acquire_successful:
-        context.acquired_places.append(place)
+        context.acquired_places.add(place)
         # remove the reservation if there was one
         if token := next((token for token, x in context.reservations.items() if x['filters']['main']['name'] == place), None,):
             ret = await cancel_reservation(context, token)
@@ -393,10 +393,9 @@ async def release(context: Session,
     context.log.info(f"Releasing place {place}.")
     try:
         release_successful = await context.call('org.labgrid.coordinator.release_place', place)
+        context.acquired_places.remove(place)
     except ApplicationError as err:
         return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}")
-    if release_successful:
-        context.acquired_places.remove(place)
     return release_successful
 
 

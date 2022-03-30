@@ -3,6 +3,7 @@ Types used throughout labby
 """
 
 from abc import abstractmethod
+from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
@@ -29,7 +30,7 @@ class Session(ApplicationSession):
     def __init__(self, *args, **kwargs) -> None:
         self.resources: Optional[Dict] = None
         self.places: Optional[Dict] = None
-        self.acquired_places: List[PlaceName] = []
+        self.acquired_places: Set[PlaceName] = set()
         self.power_states: Optional[List] = None
         self.reservations: Dict = {}
         self.to_refresh: Set = set()
@@ -58,4 +59,38 @@ class LabbyPlace(LabbyType):
             "acquired_resources": self.acquired_resources,
             "exporter": self.exporter,
             "power_state": self.power_state,
+        }
+
+# pylint: disable=invalid-name
+class _ReservationState(Enum):
+    waiting = 0
+    allocated = 1
+    acquired = 2
+    expired = 3
+    invalid = 4
+
+@attrs
+class LabbyReservation(LabbyType):
+    owner : str = attrib(default=None,)
+    token : str = attrib(default=None,)
+    state : _ReservationState = attrib(default=None,)
+    prio : float = attrib(default=None,)
+    filters : Dict[str, Dict[str, str]]= attrib(default=None,)
+    allocations : Dict[str, str] = attrib(default=None,)
+    created : float = attrib(default=None,)
+    timeout : float = attrib(default=None,)
+
+    def place(self):
+        return self.filters['main'].get('name', None)
+
+
+    def to_json(self):
+        return {
+            'owner': self.owner,
+            'state': self.state.name,
+            'prio': self.prio,
+            'filters': self.filters,
+            'allocations': self.allocations,
+            'created': self.created,
+            'timeout': self.timeout,
         }
