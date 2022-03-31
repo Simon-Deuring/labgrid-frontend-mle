@@ -1,0 +1,27 @@
+<div class="resource_selection_container">
+<div class="drag-container">
+    <h1> Current Resources </h1>
+    <div 
+        cdkDropList 
+        #assignedList="cdkDropList" 
+        [cdkDropListData]="assignedResources" 
+        [cdkDropListConnectedTo]="[availableList]"
+        class="drag-list" 
+        (cdkDropListDropped)="drop($event)">
+        <div class="drag-box" *ngFor="let res of assignedResources" cdkDrag>{{res}}</div>
+    </div>
+</div>
+
+<div class="drag-container">    
+    <h1> Available Resources </h1>
+    <div 
+        cdkDropList 
+        #availableList="cdkDropList" 
+        [cdkDropListData]="availableResources" 
+        [cdkDropListConnectedTo]="[assignedList]"
+        class="drag-list" 
+        (cdkDropListDropped)="drop($event)">
+        <div class="drag-box" *ngFor="let res of availableResources" cdkDrag>{{res}}</div>
+    </div>
+</div>
+</div>

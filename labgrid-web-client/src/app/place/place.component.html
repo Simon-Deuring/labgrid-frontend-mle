@@ -57,6 +57,11 @@
     <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="reservePlace()" [disabled]="true">
         Reserve
     </button>
+    <button mat-raised-button color="primary" class="mat-elevation-z2" (click)="navigateToResourceSelector(place.name)" style="float: right;">
+            <mat-icon>add</mat-icon>
+            Add a new resource
+        </button>
+
 </div>
 
 <div class="action-bar">

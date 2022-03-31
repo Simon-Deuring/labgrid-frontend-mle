@@ -66,6 +66,10 @@ export class PlaceComponent implements OnInit {
         this.router.navigate(['resource/', resourceName, { placeName: this.place.name }]);
     }
 
+    navigateToResourceSelector(placeName: string) {
+        this.router.navigate(['place/resource_selector/', placeName]);
+    }
+
     private readPlaceState(): void {
         this.placeStates = [];
         this.allocationStateInvalid = false;

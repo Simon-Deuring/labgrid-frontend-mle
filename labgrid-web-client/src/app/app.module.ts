@@ -16,10 +16,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatListModule } from '@angular/material/list'
 
 import { AppComponent } from './app.component';
 import { ErrorComponent } from './error/error.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
+
+import {DragDropModule} from '@angular/cdk/drag-drop'; 
 
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
@@ -34,6 +37,7 @@ import { PlaceService } from './_services/place.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 import { ResourceService } from './_services/resource.service';
+import { ResourceSelectorComponent } from './resource-selector/resource-selector.component';
 
 @NgModule({
     declarations: [
@@ -46,6 +50,7 @@ import { ResourceService } from './_services/resource.service';
         PlaceOverviewComponent,
         LoginComponent,
         PlaceCreationDialogComponent,
+        ResourceSelectorComponent,
     ],
     imports: [
         AppRoutingModule,
@@ -65,6 +70,8 @@ import { ResourceService } from './_services/resource.service';
         MatFormFieldModule,
         MatInputModule,
         MatSnackBarModule,
+        MatListModule,
+        DragDropModule,
         RouterModule.forRoot([{ path: 'place', component: PlaceComponent }]),
     ],
     providers: [LoginService, PlaceService, ResourceService],
