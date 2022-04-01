@@ -2,6 +2,8 @@
 Generic RPC functions for labby
 """
 
+# import asyncio
+import asyncio
 import os
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
@@ -27,66 +29,8 @@ class RPCDesc():
     return_type: Optional[str] = attrib(default=None)
 
 
-def _localfile(path): return Path(os.path.dirname(
-    os.path.realpath(__file__))).joinpath(path)
-
-# non exhaustive list of serializable primitive types
-_serializable_primitive: List[Type] = [int, float, str, bool]
-
-# TODO (Kevin) create a function to invalidate cache
-def invalidate_cache(attribute):
-    """
-    on call clear attribute (e.g. set to None)
-    """
-    def decorator(func: Callable):
-        pass
-
-    return decorator
-
-def cached(attribute: str):
-    """
-    Decorator defintion to cache data in labby context and fetch data from server
-    """
-    assert attribute is not None
-
-    def decorator(func: Callable):
-
-        async def wrapped(context: Session, *args, **kwargs):
-            assert context is not None
-
-            if not hasattr(context, attribute):
-                context.__dict__.update({attribute: None})
-                data = None
-            else:
-                data: Optional[Dict] = context.__getattribute__(
-                    attribute)
-            if context.__getattribute__(attribute) is None:
-                data: Optional[Dict] = await func(context, *args, **kwargs)
-                context.__setattr__(attribute, data)
-            return data
-
-        return wrapped
-
-    return decorator
-
-
-def labby_serialized(func):
-    """
-    Custom serializer decorator for labby rpc functions
-    to make sure returned values are cbor/json serializable
-    """
-    async def wrapped(*args, **kwargs):
-        ret = await func(*args, **kwargs)
-        if isinstance(ret, LabbyError):
-            return ret.to_json()
-        if isinstance(ret, LabbyPlace):
-            return ret.to_json()
-        if isinstance(ret, (dict, list)) or type(ret) in _serializable_primitive:
-            return ret
-        raise NotImplementedError(
-            f"{type(ret)} can currently not be serialized!")
-
-    return wrapped
+def _localfile(path):
+    return Path(os.path.dirname(os.path.realpath(__file__))).joinpath(path)
 
 
 FUNCTION_INFO = {}
@@ -173,6 +117,7 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
         data: Optional[Dict] = await context.call(endpoint, *args, **kwargs)
         setattr(context, attribute, data)
     return data
+
 
 @cached('places')
 async def fetch_places(context: Session,
@@ -278,6 +223,7 @@ async def fetch_power_state(context: Session,
                 'power_state': _calc_power_for_place(place_name, resources_to_check)}
     return power_states
 
+
 @labby_serialized
 async def places(context: Session,
                  place: Optional[PlaceName] = None) -> Union[List[LabbyPlace], LabbyError]:
@@ -293,8 +239,19 @@ async def places(context: Session,
     assert power_states is not None
     if isinstance(power_states, LabbyError):
         return power_states
+    await get_reservations(context)
+
+    def token_from_place(name): 
+        return next((token for token, x in context.reservations.items()
+         if x['filters']['main']['name'] == name), None)
     place_res = []
     for place_name, place_data in data.items():
+        # append the place to acquired places if
+        # it has been acquired in a previous session
+        if (place_data and place_data['acquired'] == context.user_name
+                    and place_name not in context.acquired_places
+                ):
+            context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
         # ??? (Kevin) what if there are more than one or no matches
@@ -302,10 +259,14 @@ async def places(context: Session,
             exporter = place_data["matches"][0]["exporter"]
         else:
             exporter = None
-        place_res.append(
-            prepare_place(place_data, place_name, exporter,
-                          power_states[place_name]['power_state'])
-        )
+
+        place_data.update({
+            "name": place_name,
+            "exporter": exporter,
+            "power_state": power_states.get(place_name, {}).get('power_state', None),
+            "reservation": token_from_place(place_name)
+        })
+        place_res.append(place_data)
     return place_res
 
 
@@ -417,7 +378,14 @@ async def acquire(context: Session,
     except ApplicationError as err:
         return failed(f"Got exception while trying to call org.labgrid.coordinator.acquire_place. {err}")
     if acquire_successful:
-        context.acquired_places.append(place)
+        context.acquired_places.add(place)
+        # remove the reservation if there was one
+        if token := next((token for token, x in context.reservations.items() if x['filters']['main']['name'] == place), None,):
+            ret = await cancel_reservation(context, token)
+            if isinstance(ret, LabbyError):
+                # context.log.error(f"Could not cancel reservation after acquire: {ret}")
+                print(f"Could not cancel reservation after acquire: {ret}")
+            del context.reservations[token]
     return acquire_successful
 
 
@@ -434,10 +402,9 @@ async def release(context: Session,
     context.log.info(f"Releasing place {place}.")
     try:
         release_successful = await context.call('org.labgrid.coordinator.release_place', place)
+        context.acquired_places.remove(place)
     except ApplicationError as err:
         return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}")
-    if release_successful:
-        context.acquired_places.remove(place)
     return release_successful
 
 
@@ -457,30 +424,96 @@ async def get_reservations(context: Session) -> Dict:
     """
     RPC call to list current reservations on the Coordinator
     """
-    reservation_data = await context.call("org.labgrid.coordinator.get_reservations")
-    # TODO (Kevin) handle errors
+    reservation_data: Dict = await context.call("org.labgrid.coordinator.get_reservations")
+
+    for token, data in reservation_data.items():
+        if (data['state'] in ('waiting', 'allocated', 'acquired')
+                and data['owner'] == context.user_name):
+            context.to_refresh.add(token)
+    context.reservations.update(**reservation_data)
     return reservation_data
 
 
 @labby_serialized
-async def create_reservation(context: Session, place: PlaceName, priority: float = 0.):
+async def create_reservation(context: Session, place: PlaceName, priority: float = 0.) -> Union[Dict, LabbyError]:
+    # TODO figure out filters, priorities, etc
+    # TODO should multiple reservations be allowed?
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
-    reservation = await context.call("org.labgrid.coordinator.create_reservation", f"name={place}", prio=priority)
+    await get_reservations(context)  # get current state from coordinator
+    if any((place == x['filters']['main']['name'] for x in context.reservations.values() if 'name' in x['filters']['main'] and x['state'] not in ('expired', 'invalid'))):
+        return failed(f"Place {place} is already reserved.")
+    reservation = await context.call("org.labgrid.coordinator.create_reservation",
+                                     f"name={place}",
+                                     prio=priority)
     if not reservation:
         return failed("Failed to create reservation")
-    context.reservations.update({place: reservation})
+    context.reservations.update(reservation)
+    context.to_refresh.add((next(iter(reservation.keys()))))
+    return reservation
 
 
-async def cancel_reservation(context, place: PlaceName):
+async def refresh_reservations(context: Session):
+    while True:
+        to_remove = set()
+        context.reservations = await context.call("org.labgrid.coordinator.get_reservations")
+        for token in context.to_refresh:
+            if token in context.reservations:
+                # context.log.info(f"Refreshing reservation {token}")
+                state = context.reservations[token]['state']
+                place_name = context.reservations[token]['filters']['main']['name']
+                if state == 'waiting':
+                    ret = await context.call("org.labgrid.coordinator.poll_reservation", token)
+                    if not ret:
+                        context.log.error(
+                            f"Failed to poll reservation {token}.")
+                    context.reservations[token] = ret
+                # acquire the resource, when it has been allocated by the coordinator
+                elif (context.reservations[token]['state'] == 'allocated'
+                      or (context.reservations[token]['state'] == 'acquired' and place_name not in context.acquired_places)
+                      ):
+                    ret = await acquire(context, place_name)
+                    await cancel_reservation(context, place_name)
+                    if not ret:
+                        context.log.error(
+                            f"Could not acquire reserved place {token}: {place_name}")
+                    to_remove.add(token)
+                else:
+                    to_remove.add(token)
+            else:
+                to_remove.add(token)
+        for token in to_remove:
+            context.to_refresh.remove(token)
+        await asyncio.sleep(1.)  # !! TODO set to 10s
+
+
+@labby_serialized
+async def cancel_reservation(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
     if place is None:
         return invalid_parameter("Missing required parameter: place.")
-    if place not in context.reservations:
+    await get_reservations(context)  # get current state from coordinator
+    token = next((token for token, x in context.reservations.items()
+                 if x['filters']['main']['name'] == place), None)
+    if token is None:
         return failed(f"No reservations available for place {place}.")
-    token = next(iter(context.reservations[place]))
-    assert token
+    del context.reservations[token]
     return await context.call("org.labgrid.coordinator.cancel_reservation", token)
-    
+
+
+@labby_serialized
+async def poll_reservation(context: Session, place: PlaceName) -> Union[Dict, LabbyError]:
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    token = next((token for token, x in context.reservations.items()
+                 if x['filters']['main']['name'] == place), None)
+    if token is None:
+        return failed(f"No reservations available for place {place}.")
+    if not token:
+        return failed("Failed to poll reservation.")
+    reservation = await context.call("org.labgrid.coordinator.poll_reservation", token)
+    context.reservations[token] = reservation
+    return reservation
+
 
 async def reset(context: Session, place: PlaceName) -> bool:
     """
@@ -492,7 +525,6 @@ async def reset(context: Session, place: PlaceName) -> bool:
 
 async def console(context: Session, *args):
     pass
-
 
 
 async def video(context: Session, *args):
