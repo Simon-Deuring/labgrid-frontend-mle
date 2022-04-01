@@ -239,13 +239,18 @@ async def places(context: Session,
     assert power_states is not None
     if isinstance(power_states, LabbyError):
         return power_states
+    await get_reservations(context)
+
+    def token_from_place(name): 
+        return next((token for token, x in context.reservations.items()
+         if x['filters']['main']['name'] == name), None)
     place_res = []
     for place_name, place_data in data.items():
         # append the place to acquired places if
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
-            and place_name not in context.acquired_places
-            ):
+                    and place_name not in context.acquired_places
+                ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
@@ -254,10 +259,14 @@ async def places(context: Session,
             exporter = place_data["matches"][0]["exporter"]
         else:
             exporter = None
-        place_res.append(
-            prepare_place(place_data, place_name, exporter,
-                          power_states[place_name]['power_state'])
-        )
+
+        place_data.update({
+            "name": place_name,
+            "exporter": exporter,
+            "power_state": power_states.get(place_name, {}).get('power_state', None),
+            "reservation": token_from_place(place_name)
+        })
+        place_res.append(place_data)
     return place_res
 
 
