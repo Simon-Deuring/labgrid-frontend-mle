@@ -111,8 +111,8 @@ class LabbyClient(Session):
 
         self.power_states = None  # Invalidate power state cache
         if frontend := get_frontend_callback():
-            frontend.fire("localhost.onResourceChanged",
-                          self.resources[exporter][group_name][resource_name])
+            frontend.publish("localhost.onResourceChanged",
+                             self.resources[exporter][group_name][resource_name])
 
     @invalidates_cache('power_states')
     async def on_place_changed(self, name: PlaceName, place_data: Optional[Dict] = None):
