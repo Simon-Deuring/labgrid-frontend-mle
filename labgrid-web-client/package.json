@@ -22,6 +22,7 @@
         "@angular/router": "~13.1.1",
         "@types/when": "^2.4.34",
         "autobahn-browser": "^20.9.2",
+        "chart.js": "^3.7.1",
         "rxjs": "~6.6.0",
         "tslib": "^2.3.0",
         "when": "^3.7.8",

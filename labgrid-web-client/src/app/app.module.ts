@@ -36,6 +36,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { LoginService } from './auth/login.service';
 import { PlaceService } from './_services/place.service';
 import { ResourceService } from './_services/resource.service';
+import { ChartComponent } from './chart/chart.component';
 
 @NgModule({
     declarations: [
@@ -49,6 +50,7 @@ import { ResourceService } from './_services/resource.service';
         ResourceComponent,
         ResourceOverviewComponent,
         SidebarComponent,
+        ChartComponent,
     ],
     imports: [
         AppRoutingModule,

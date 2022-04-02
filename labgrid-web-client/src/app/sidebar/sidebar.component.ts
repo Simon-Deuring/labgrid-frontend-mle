@@ -33,6 +33,10 @@ export class SidebarComponent implements OnInit {
         });
     }
 
+    navigateToDashboard() {
+        this._router.navigate(['dashboard']);
+    }
+
     navigateToPlace(placeName: string) {
         if (this._router.url.startsWith('/place/')) {
             this._router

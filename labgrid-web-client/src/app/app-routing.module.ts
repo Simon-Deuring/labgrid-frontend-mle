@@ -8,9 +8,11 @@ import { PlaceComponent } from './place/place.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
+import { ChartComponent } from './chart/chart.component';
 
 const routes: Routes = [
     { path: '', component: PlaceOverviewComponent, canActivate: [LoginGuard] },
+    { path: 'dashboard', component: ChartComponent, canActivate: [LoginGuard] },
     { path: 'place/:placename', component: PlaceComponent, canActivate: [LoginGuard] },
     { path: 'resourceOverview', component: ResourceOverviewComponent, canActivate: [LoginGuard] },
     { path: 'resource/:resourceName', component: ResourceComponent, canActivate: [LoginGuard] },
