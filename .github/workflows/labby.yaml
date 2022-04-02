@@ -6,7 +6,7 @@ name: Python run unittests
 on:
   push:
     paths:
-    - 'python-wamp-client'
+    - 'python-wamp-client/**'
 jobs:
   build:
     runs-on: ubuntu-latest
