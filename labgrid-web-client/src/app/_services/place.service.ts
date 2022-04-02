@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 
 import { Place } from '../../models/place';
-import { AllocationState } from '../_enums/allocation-state';
 
 import * as autobahn from 'autobahn-browser';
 
@@ -91,7 +90,6 @@ export class PlaceService {
 
     public async releasePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
         const release = await this.session.call('localhost.release', [placeName]);
-        console.log('release: ', release);
 
         if (release === true) {
             return { successful: true, errorMessage: 'An unknown error occured!' };
@@ -101,16 +99,12 @@ export class PlaceService {
     }
 
     public async reservePlace(placeName: string): Promise<boolean> {
-        let body = (await this.getPlace(placeName)) as Place;
+        let result = await this.session.call('localhost.create_reservation', [placeName]);
+        return result;
+    }
 
-        if ((<any>AllocationState)[body.reservation] === AllocationState.Acquired) {
-            console.log('Something went wrong while reserving the place.');
-            return false;
-        } else {
-            console.log('Place is reserved.');
-            // TODO: Connect to server
-            return true;
-        }
+    public async getReservations(): Promise<any> {
+        return await this.session.call('localhost.get_reservations');
     }
 
     public async createNewPlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
@@ -127,6 +121,17 @@ export class PlaceService {
 
     public async createNewResource(resourceName: string): Promise<{ successful: boolean; errorMessage: string }> {
         let response = await this.session.call('localhost.create_resource', [resourceName]);
+        if (response === true) {
+            return { successful: true, errorMessage: '' };
+        } else if (response === false) {
+            return { successful: false, errorMessage: 'An unknown error occured!' };
+        } else {
+            return { successful: false, errorMessage: response.error.message };
+        }
+    }
+    
+    public async deletePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
+        let response = await this.session.call('localhost.delete_place', [placeName]);
 
         if (response === true) {
             return { successful: true, errorMessage: '' };

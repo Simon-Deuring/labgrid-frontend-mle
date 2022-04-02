@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
@@ -7,8 +8,8 @@ import { MatTableDataSource } from '@angular/material/table';
 
 import { Place } from 'src/models/place';
 import { PlaceCreationDialogComponent } from '../dialogs/place-creation-dialog/place-creation-dialog.component';
+import { PlaceDeletionDialogComponent } from '../dialogs/place-deletion-dialog/place-deletion-dialog.component';
 import { PlaceService } from '../_services/place.service';
-import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-place-overview',
@@ -18,7 +19,8 @@ import { Router } from '@angular/router';
 export class PlaceOverviewComponent implements OnInit {
     places: Place[] = [];
     dataSource: MatTableDataSource<any> = new MatTableDataSource();
-    displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isPowerStateOn'];
+    displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isPowerStateOn', 'actions'];
+    loading = true;
 
     @ViewChild('paginator') paginator!: MatPaginator;
 
@@ -45,7 +47,7 @@ export class PlaceOverviewComponent implements OnInit {
             this.places = data;
             this.dataSource = new MatTableDataSource(this.places);
             this.dataSource.paginator = this.paginator;
-        });
+        }).then(() => this.loading = false);
     }
 
     getPowerStateIcon(isPowerStateOn: boolean): string {
@@ -75,7 +77,18 @@ export class PlaceOverviewComponent implements OnInit {
         const dialogRef = this._dialog.open(PlaceCreationDialogComponent);
 
         dialogRef.afterClosed().subscribe((result) => {
-            if (result) this.createNewPlace(result);
+            if (result !== undefined) this.createNewPlace(result);
+        });
+    }
+
+    openDeletePlaceDialog(placeName: string): void {
+        const dialogRef = this._dialog.open(PlaceDeletionDialogComponent, {
+            data: placeName,
+            autoFocus: false,
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result !== undefined) this.deletePlace(placeName);
         });
     }
 
@@ -84,6 +97,23 @@ export class PlaceOverviewComponent implements OnInit {
 
         if (response.successful) {
             this._snackBar.open('Place has been added succesfully!', 'OK', {
+                duration: 3000,
+                panelClass: ['success-snackbar'],
+            });
+            this.loadPlaces();
+        } else {
+            this._snackBar.open(response.errorMessage, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
+            });
+        }
+    }
+
+    private async deletePlace(placeName: string) {
+        const response = await this._ps.deletePlace(placeName);
+
+        if (response.successful) {
+            this._snackBar.open('Place has been deleted succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });

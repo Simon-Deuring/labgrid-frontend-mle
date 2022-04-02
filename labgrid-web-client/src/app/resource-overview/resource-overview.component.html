@@ -1,96 +1,72 @@
-<h1>Resource Overview</h1>
+<app-loading *ngIf="loading"></app-loading>
 
-<mat-divider></mat-divider>
+<div *ngIf="!loading">
 
-<h2 style="margin-top: 16px">Serial Ports:</h2>
-<div class="resource-bar" *ngIf="serialPorts.length > 0; else noSerials">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        *ngFor="let sp of serialPorts"
-        (click)="navigateToResource(sp.name)"
-    >
-        {{ sp.name }}
-    </button>
-</div>
-<ng-template #noSerials>
-    <p class="else-block">Currently there are no serial ports.</p>
-</ng-template>
+    <h1>Resource Overview</h1>
 
-<h2 style="margin-top: 16px">Power Ports:</h2>
-<div class="resource-bar" *ngIf="powerPorts.length > 0; else noPDUs">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        *ngFor="let pdu of powerPorts"
-        (click)="navigateToResource(pdu.name)"
-    >
-        {{ pdu.name }}
-    </button>
-</div>
-<ng-template #noPDUs>
-    <p class="else-block">Currently there are no power ports.</p>
-</ng-template>
+    <mat-divider></mat-divider>
 
-<h2 style="margin-top: 16px">Video Streams:</h2>
-<div class="resource-bar" *ngIf="videoStreams.length > 0; else noVideos">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        *ngFor="let video of videoStreams"
-        (click)="navigateToResource(video.name)"
-    >
-        {{ video.name }}
-    </button>
-</div>
-<ng-template #noVideos>
-    <p class="else-block">Currently there are no video streams.</p>
-</ng-template>
+    <h2 style="margin-top: 16px">Serial Ports:</h2>
+    <div class="resource-bar" *ngIf="serialPorts.length > 0; else noSerials">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" *ngFor="let sp of serialPorts"
+            (click)="navigateToResource(sp.name)">
+            {{ sp.name }}
+        </button>
+    </div>
+    <ng-template #noSerials>
+        <p class="else-block">Currently there are no serial ports.</p>
+    </ng-template>
 
-<h2 style="margin-top: 16px">Network Interfaces:</h2>
-<div class="resource-bar" *ngIf="networkInterfaces.length > 0; else noNetworks">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        *ngFor="let network of networkInterfaces"
-        (click)="navigateToResource(network.name)"
-    >
-        {{ network.name }}
-    </button>
-</div>
-<ng-template #noNetworks>
-    <p class="else-block">Currently there are no network interfaces.</p>
-</ng-template>
+    <h2 style="margin-top: 16px">Power Ports:</h2>
+    <div class="resource-bar" *ngIf="powerPorts.length > 0; else noPDUs">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" *ngFor="let pdu of powerPorts"
+            (click)="navigateToResource(pdu.name)">
+            {{ pdu.name }}
+        </button>
+    </div>
+    <ng-template #noPDUs>
+        <p class="else-block">Currently there are no power ports.</p>
+    </ng-template>
 
-<h2 style="margin-top: 16px">JTAG Resources:</h2>
-<div class="resource-bar" *ngIf="JTAGResources.length > 0; else noJTAGs">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        *ngFor="let jtag of JTAGResources"
-        (click)="navigateToResource(jtag.name)"
-    >
-        {{ jtag.name }}
-    </button>
-</div>
-<ng-template #noJTAGs>
-    <p class="else-block">Currently there are no JTAG resources.</p>
-</ng-template>
+    <h2 style="margin-top: 16px">Video Streams:</h2>
+    <div class="resource-bar" *ngIf="videoStreams.length > 0; else noVideos">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" *ngFor="let video of videoStreams"
+            (click)="navigateToResource(video.name)">
+            {{ video.name }}
+        </button>
+    </div>
+    <ng-template #noVideos>
+        <p class="else-block">Currently there are no video streams.</p>
+    </ng-template>
 
-<h2 style="margin-top: 16px" *ngIf="otherResources.length > 0">Other Resources:</h2>
-<div class="resource-bar" *ngIf="otherResources.length > 0">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        *ngFor="let other of otherResources"
-        (click)="navigateToResource(other.name)"
-    >
-        {{ other.name }}
-    </button>
+    <h2 style="margin-top: 16px">Network Interfaces:</h2>
+    <div class="resource-bar" *ngIf="networkInterfaces.length > 0; else noNetworks">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" *ngFor="let network of networkInterfaces"
+            (click)="navigateToResource(network.name)">
+            {{ network.name }}
+        </button>
+    </div>
+    <ng-template #noNetworks>
+        <p class="else-block">Currently there are no network interfaces.</p>
+    </ng-template>
+
+    <h2 style="margin-top: 16px">JTAG Resources:</h2>
+    <div class="resource-bar" *ngIf="JTAGResources.length > 0; else noJTAGs">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" *ngFor="let jtag of JTAGResources"
+            (click)="navigateToResource(jtag.name)">
+            {{ jtag.name }}
+        </button>
+    </div>
+    <ng-template #noJTAGs>
+        <p class="else-block">Currently there are no JTAG resources.</p>
+    </ng-template>
+
+    <h2 style="margin-top: 16px" *ngIf="otherResources.length > 0">Other Resources:</h2>
+    <div class="resource-bar" *ngIf="otherResources.length > 0">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" *ngFor="let other of otherResources"
+            (click)="navigateToResource(other.name)">
+            {{ other.name }}
+        </button>
+    </div>
+
 </div>

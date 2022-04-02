@@ -1,69 +1,69 @@
-<div class="resource-bar" *ngIf="resources.length > 0; else elseBlock">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        *ngFor="let res of resources"
-        (click)="navigateToResource(res.name)"
-    >
-        {{ res.name }}
-    </button>
-</div>
-<ng-template #elseBlock>
-    <p>This place has no resources acquired.</p>
-</ng-template>
-<mat-divider></mat-divider>
+<app-loading *ngIf="loading"></app-loading>
 
-<h1 class="place-overview">{{ place.name }}</h1>
+<div *ngIf="!loading">
 
-<table #placeStateTable mat-table [dataSource]="placeStates" class="mat-elevation-z2 place-table">
-    <!-- Attribute name -->
-    <ng-container matColumnDef="state-name">
-        <td mat-cell *matCellDef="let element">{{ element.name }}</td>
-    </ng-container>
+    <div class="resource-bar" *ngIf="resources.length > 0; else elseBlock">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" *ngFor="let res of resources"
+            (click)="navigateToResource(res.name)">
+            {{ res.name }}
+        </button>
+    </div>
+    <ng-template #elseBlock>
+        <p>This place has no resources acquired.</p>
+    </ng-template>
+    <mat-divider></mat-divider>
 
-    <!-- Attribute value -->
-    <ng-container matColumnDef="state-value">
-        <td mat-cell *matCellDef="let element">
-            {{ element.value }}
-            <mat-icon id="invalidIcon" *ngIf="allocationStateInvalid && element.name === 'Allocation status: '">
-                bolt
-            </mat-icon>
-        </td>
-    </ng-container>
+    <h1 class="place-overview">{{ place.name }}</h1>
 
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-</table>
+    <table #placeStateTable mat-table [dataSource]="placeStates" class="mat-elevation-z2 place-table">
+        <!-- Attribute name -->
+        <ng-container matColumnDef="state-name">
+            <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+        </ng-container>
 
-<div class="action-bar">
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        (click)="acquirePlace()"
-        [disabled]="isAcquired"
-    >
-        Acquire
-    </button>
-    <button
-        mat-stroked-button
-        color="primary"
-        class="mat-elevation-z2"
-        (click)="releasePlace()"
-        [disabled]="!isAcquiredByUser"
-    >
-        Release
-    </button>
-    <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="reservePlace()" [disabled]="true">
-        Reserve
-    </button>
-    <button mat-raised-button color="primary" class="mat-elevation-z2" (click)="navigateToResourceSelector(place.name)" style="float: right;">
+        <!-- Attribute value -->
+        <ng-container matColumnDef="state-value">
+            <td mat-cell *matCellDef="let element">
+                {{ element.value }}
+                <mat-icon id="invalidIcon"
+                    *ngIf="element.name === 'Power state: ' && place.power_state && !place.acquired">
+                    bolt
+                </mat-icon>
+            </td>
+        </ng-container>
+
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <div class="action-bar">
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="acquirePlace()"
+            [disabled]="isAcquired">
+            Acquire
+        </button>
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="releasePlace()"
+            [disabled]="!isAcquiredByUser">
+            Release
+        </button>
+        <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="reservePlace()"
+            [disabled]="!isAcquired || isAcquiredByUser || place.reservation !== null">
+            Reserve
+        </button>
+        <button mat-raised-button color="primary" class="mat-elevation-z2"
+            (click)="navigateToResourceSelector(place.name)" style="float: right;">
             <mat-icon>add</mat-icon>
-            Add a new resource
+            Assign resources
         </button>
 
-</div>
+    </div>
 
-<div class="action-bar">
-    <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="resetPlace()">Reset Place</button>
+    <div class="action-bar">
+
+        <span class="spacer"></span>
+
+        <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="resetPlace()">Reset place</button>
+        <button mat-raised-button color="warn" class="mat-elevation-z2" style="margin-right: 0px"
+            (click)="openDeletePlaceDialog()">
+            Delete place
+        </button>
+    </div>
 </div>
