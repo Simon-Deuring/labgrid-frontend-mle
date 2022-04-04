@@ -67,7 +67,6 @@ export class PlaceComponent {
         let reservations: any = await this._ps.getReservations();
 
         if (reservations[rName] !== undefined) {
-            console.log(reservations[rName]);
             this.placeStates.push({ name: 'Status of reservation: ', value: reservations[rName].state });
             this.placeStates.push({ name: 'Reservation owner: ', value: reservations[rName].owner });
             this.placeStates.push({
@@ -167,6 +166,23 @@ export class PlaceComponent {
                 panelClass: ['success-snackbar'],
             });
         }
+
+        // Reload place to get reservation information
+        const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
+        this._ps.getPlace(currentRoute).then((data: Place) => {
+            // Check if the specified place exists
+            if (Array.isArray(data) && data.length > 0) {
+                this.place = data[0];
+                this.readPlaceState();
+                this.table.renderRows();
+
+                if (this.place.reservation !== undefined && this.place.reservation !== null) {
+                    this.loadReservation(this.place.reservation);
+                }
+            } else {
+                this.router.navigate(['error']);
+            }
+        });
     }
 
     public async resetPlace() {
