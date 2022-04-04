@@ -51,8 +51,8 @@ export class PlaceComponent {
             const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
             this._ps.getPlace(currentRoute).then((data: Place) => {
                 // Check if the specified place exists
-                if (Array.isArray(data) && data.length > 0) {
-                    this.place = data[0];
+                if (data !== undefined) {
+                    this.place = data;
                     this.getResources();
                     this.readPlaceState();
                     this.table.renderRows();
@@ -126,7 +126,6 @@ export class PlaceComponent {
         }
 
         // If no NetworkSerialPort has been found for the place
-        console.log('Fehler');
         this.hasNetworkSerialPort = false;
     }
 
@@ -190,8 +189,8 @@ export class PlaceComponent {
         const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
         this._ps.getPlace(currentRoute).then((data: Place) => {
             // Check if the specified place exists
-            if (Array.isArray(data) && data.length > 0) {
-                this.place = data[0];
+            if (data !== undefined) {
+                this.place = data;
                 this.readPlaceState();
                 this.table.renderRows();
 

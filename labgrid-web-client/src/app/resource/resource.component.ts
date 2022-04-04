@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
 import { Resource } from 'src/models/resource';
 
@@ -9,15 +10,17 @@ import { Resource } from 'src/models/resource';
     templateUrl: './resource.component.html',
     styleUrls: ['./resource.component.css'],
 })
-export class ResourceComponent implements OnInit {
+export class ResourceComponent {
     resource: Resource = new Resource('', '', '', '', false, '', {});
+
+    isAcquiredByUser: boolean = false;
 
     resourceAttributes: Array<{ name: string; value: string }> = [];
     displayedColumns: Array<string> = ['attr-name', 'attr-value'];
 
     dataReady: boolean = false;
 
-    constructor(private _rs: ResourceService, private route: ActivatedRoute) {
+    constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute) {
         route.params.subscribe(() => {
             const resourceName = route.snapshot.url[route.snapshot.url.length - 1].path;
             // const placeName = this.route.snapshot.paramMap.get('placeName');
@@ -32,11 +35,13 @@ export class ResourceComponent implements OnInit {
             this._rs.getResourceByName(resourceName, 'placeholdername').then((data) => {
                 this.resource = data;
                 this.readResourceAttributes();
+
+                if (this.resource.cls === 'NetworkSerialPort') {
+                    this.readAcquiringUser();
+                }
             });
         });
     }
-
-    ngOnInit(): void {}
 
     private readResourceAttributes(): void {
         if (this.resource.cls) {
@@ -91,5 +96,17 @@ export class ResourceComponent implements OnInit {
         }
 
         this.dataReady = true;
+    }
+
+    private async readAcquiringUser(): Promise<void> {
+        const place = await this._ps.getPlace(this.resource.place);
+
+        if (place.acquired === 'labby/dummy') {
+            this.isAcquiredByUser = true;
+        }
+    }
+
+    public startSerialConsole(): void {
+        //
     }
 }
