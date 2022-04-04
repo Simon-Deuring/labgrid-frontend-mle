@@ -29,6 +29,8 @@ export class PlaceComponent {
     isAcquired: boolean = false;
     isAcquiredByUser: boolean = false;
 
+    hasNetworkSerialPort: boolean = false;
+
     constructor(
         private _dialog: MatDialog,
         private _ps: PlaceService,
@@ -44,6 +46,8 @@ export class PlaceComponent {
 
     private updateData() {
         this.route.params.subscribe((val) => {
+            this.hasNetworkSerialPort = false;
+
             const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
             this._ps.getPlace(currentRoute).then((data: Place) => {
                 // Check if the specified place exists
@@ -56,6 +60,8 @@ export class PlaceComponent {
                     if (this.place.reservation !== undefined && this.place.reservation !== null) {
                         this.loadReservation(this.place.reservation);
                     }
+
+                    this.checkForNetworkSerialConsole();
                 } else {
                     this.router.navigate(['error']);
                 }
@@ -63,28 +69,10 @@ export class PlaceComponent {
         });
     }
 
-    private async loadReservation(rName: string): Promise<void> {
-        let reservations: any = await this._ps.getReservations();
-
-        if (reservations[rName] !== undefined) {
-            this.placeStates.push({ name: 'Status of reservation: ', value: reservations[rName].state });
-            this.placeStates.push({ name: 'Reservation owner: ', value: reservations[rName].owner });
-            this.placeStates.push({
-                name: 'Reservation timeout: ',
-                value: new Date(reservations[rName].timeout * 1000).toLocaleString('en-US'),
-            });
-            this.table.renderRows();
-        }
-    }
-
     private getResources(): void {
         this._rs.getResourcesForPlace(this.place.name).then((resources) => {
             this.resources = resources;
         });
-    }
-
-    public navigateToResource(resourceName: string) {
-        this.router.navigate(['resource/', resourceName, { placeName: this.place.name }]);
     }
 
     private readPlaceState(): void {
@@ -113,6 +101,37 @@ export class PlaceComponent {
             this.placeStates.push({ name: 'Acquired: ', value: this.place.acquired });
             this.isAcquired = true;
         }
+    }
+
+    private async loadReservation(rName: string): Promise<void> {
+        let reservations: any = await this._ps.getReservations();
+
+        if (reservations[rName] !== undefined) {
+            this.placeStates.push({ name: 'Status of reservation: ', value: reservations[rName].state });
+            this.placeStates.push({ name: 'Reservation owner: ', value: reservations[rName].owner });
+            this.placeStates.push({
+                name: 'Reservation timeout: ',
+                value: new Date(reservations[rName].timeout * 1000).toLocaleString('en-US'),
+            });
+            this.table.renderRows();
+        }
+    }
+
+    private checkForNetworkSerialConsole(): void {
+        for (let i = 0; i < this.place.acquired_resources.length; i++) {
+            if (this.place.acquired_resources[i][2] === 'NetworkSerialPort') {
+                this.hasNetworkSerialPort = true;
+                return;
+            }
+        }
+
+        // If no NetworkSerialPort has been found for the place
+        console.log('Fehler');
+        this.hasNetworkSerialPort = false;
+    }
+
+    public navigateToResource(resourceName: string) {
+        this.router.navigate(['resource/', resourceName, { placeName: this.place.name }]);
     }
 
     public async acquirePlace() {
@@ -228,5 +247,9 @@ export class PlaceComponent {
                 panelClass: ['error-snackbar'],
             });
         }
+    }
+
+    public startSerialConsole(): void {
+        //
     }
 }
