@@ -12,7 +12,7 @@ import autobahn.wamp.exception as wexception
 
 from .rpc import (cancel_reservation, create_place, create_resource,
                   delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache,
-                  places, places_names, get_reservations, create_reservation, resource, power_state,
+                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, resource, power_state,
                   acquire, release, info, resource_by_name, resource_overview)
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
@@ -41,6 +41,7 @@ class LabbyClient(Session):
     def __init__(self, config=None):
         # make sure only one active labby client exists
         globals()["CALLBACK_REF"] = self
+        self.user_name = "labby/dummy"
         super().__init__(config=config)
 
     def onConnect(self):
@@ -63,11 +64,17 @@ class LabbyClient(Session):
         for proc in res['exact']:
             p = await self.call("wamp.registration.get", proc)
             print(p['uri'])
+        res = await self.call("wamp.subscription.list")
+        for proc in res['exact']:
+            p = await self.call("wamp.subscription.get", proc)
+            print(p['uri'])
 
         self.subscribe(self.on_place_changed,
                        "org.labgrid.coordinator.place_changed")
         self.subscribe(self.on_resource_changed,
                        "org.labgrid.coordinator.resource_changed")
+        asyncio.create_task(refresh_reservations(self))
+        # asyncio.run_coroutine_threadsafe(refresh_reservations(self), asyncio.get_event_loop())
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
@@ -119,12 +126,15 @@ class LabbyClient(Session):
             self.log.info(f"Place {name} created.")
         else:
             place = self.places[name]
-            # old = flat_dict(place.asdict())
             place.update(place_data)
-            # new = flat_dict(place.asdict())
             self.log.info(f"Place {name} changed.")
-            # for k, v_old, v_new in diff_dict(old, new):
-            #     print(f"  {k}: {v_old} -> {v_new}")
+        if (# add place to acquired places, if we have acquired it previously
+            place_data
+            and place_data['acquired'] is not None
+            and place_data['acquired'] == self.user_name
+            and name not in self.acquired_places
+        ):
+            self.acquired_places.add(name)
 
 
 class RouterInterface(ApplicationSession):
@@ -167,15 +177,16 @@ class RouterInterface(ApplicationSession):
         self.register("power_state", power_state)
         self.register("acquire", acquire)
         self.register("release", release)
-        self.register("get_reservations", get_reservations)
         self.register("resource_overview", resource_overview)
         self.register("resource_by_name", resource_by_name)
         self.register("info", info)
         self.register("forward", forward)
         self.register("create_place", create_place)
         self.register("delete_place", delete_place)
+        self.register("get_reservations", get_reservations)
         self.register("create_reservation", create_reservation)
         self.register("cancel_reservation", cancel_reservation)
+        self.register("poll_reservation", poll_reservation)
         self.register("create_resource", create_resource)
         self.register("delete_resource", delete_resource)
         self.register("place_names", places_names)
@@ -194,7 +205,7 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
 
     globals()["LOADED_RPC_FUNCTIONS"] = {}
     logging.basicConfig(
-        level="WARNING", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
+        level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
     labby_runner = ApplicationRunner(
         url=backend_url, realm=backend_realm, extra=None)

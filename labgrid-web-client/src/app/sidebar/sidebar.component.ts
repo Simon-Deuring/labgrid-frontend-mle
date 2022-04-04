@@ -34,7 +34,13 @@ export class SidebarComponent implements OnInit {
     }
 
     navigateToPlace(placeName: string) {
-        this._router.navigate(['place/', placeName]);
+        if (this._router.url.startsWith('/place/')) {
+            this._router
+                .navigateByUrl('/', { skipLocationChange: true })
+                .then(() => this._router.navigate(['place/', placeName]));
+        } else {
+            this._router.navigate(['place/', placeName]);
+        }
     }
 
     navigateToResources() {

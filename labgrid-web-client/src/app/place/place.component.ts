@@ -69,7 +69,6 @@ export class PlaceComponent {
         let reservations: any = await this._ps.getReservations();
 
         if (reservations[rName] !== undefined) {
-            console.log(reservations[rName]);
             this.placeStates.push({ name: 'Status of reservation: ', value: reservations[rName].state });
             this.placeStates.push({ name: 'Reservation owner: ', value: reservations[rName].owner });
             this.placeStates.push({
@@ -161,18 +160,35 @@ export class PlaceComponent {
     }
 
     public async reservePlace() {
-        const ret = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
-        if (ret === null) {
+        const ret: any = await this._ps.reservePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
+        if (ret.error !== undefined && ret.error.message !== undefined) {
+            this._snackBar.open(ret.error.message, 'OK', {
+                duration: 3000,
+                panelClass: ['error-snackbar'],
+            });
+        } else {
             this._snackBar.open('Place has been reserved succesfully!', 'OK', {
                 duration: 3000,
                 panelClass: ['success-snackbar'],
             });
-        } else {
-            this._snackBar.open('An error has occured during the reservation!', 'OK', {
-                duration: 3000,
-                panelClass: ['error-snackbar'],
-            });
         }
+
+        // Reload place to get reservation information
+        const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
+        this._ps.getPlace(currentRoute).then((data: Place) => {
+            // Check if the specified place exists
+            if (Array.isArray(data) && data.length > 0) {
+                this.place = data[0];
+                this.readPlaceState();
+                this.table.renderRows();
+
+                if (this.place.reservation !== undefined && this.place.reservation !== null) {
+                    this.loadReservation(this.place.reservation);
+                }
+            } else {
+                this.router.navigate(['error']);
+            }
+        });
     }
 
     public async resetPlace() {
