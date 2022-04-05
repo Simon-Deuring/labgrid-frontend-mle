@@ -45,7 +45,8 @@ class LabbyClient(Session):
         super().__init__(config=config)
 
     def onConnect(self):
-        self.log.info(f"Connected to Coordinator, joining realm '{self.config.realm}'")
+        self.log.info(
+            f"Connected to Coordinator, joining realm '{self.config.realm}'")
         # TODO load from config or get from frontend
         self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
 
@@ -92,9 +93,11 @@ class LabbyClient(Session):
         if self.resources is None:
             self.resources = {}
         if exporter not in self.resources:
-            self.resources[exporter] = {group_name: {resource_name:resource_data}}
+            self.resources[exporter] = {
+                group_name: {resource_name: resource_data}}
         else:
-            self.resources[exporter][group_name].update({resource_name:resource_data})
+            self.resources[exporter][group_name].update(
+                {resource_name: resource_data})
 
         if resource_name not in self.resources[exporter][group_name]:
             self.log.info(
@@ -107,6 +110,9 @@ class LabbyClient(Session):
                 f"Resource {exporter}/{group_name}/{resource_name} deleted")
 
         self.power_states = None  # Invalidate power state cache
+        if frontend := get_frontend_callback():
+            frontend.publish("localhost.onResourceChanged",
+                             self.resources[exporter][group_name][resource_name])
 
     @invalidates_cache('power_states')
     async def on_place_changed(self, name: PlaceName, place_data: Optional[Dict] = None):
@@ -128,13 +134,15 @@ class LabbyClient(Session):
             place = self.places[name]
             place.update(place_data)
             self.log.info(f"Place {name} changed.")
-        if (# add place to acquired places, if we have acquired it previously
+        if (  # add place to acquired places, if we have acquired it previously
             place_data
             and place_data['acquired'] is not None
             and place_data['acquired'] == self.user_name
             and name not in self.acquired_places
         ):
             self.acquired_places.add(name)
+        if frontend := get_frontend_callback():
+            frontend.publish("localhost.onPlaceChanged", place_data)
 
 
 class RouterInterface(ApplicationSession):
