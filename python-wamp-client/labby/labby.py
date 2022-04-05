@@ -10,10 +10,10 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import (cancel_reservation, create_place, create_resource,
-                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache,
-                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, resource, power_state,
-                  acquire, release, info, resource_by_name, resource_overview)
+from .rpc import (acquire_resource, add_match, cancel_reservation, create_place, create_resource, del_match,
+                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places,
+                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, release_resource, resource, power_state,
+                  acquire, release, info, resource_by_name, resource_names, resource_overview)
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
 
@@ -96,7 +96,7 @@ class LabbyClient(Session):
             self.resources[exporter] = {
                 group_name: {resource_name: resource_data}}
         else:
-            self.resources[exporter][group_name].update(
+            self.resources[exporter].get(group_name, {}).update(
                 {resource_name: resource_data})
 
         if resource_name not in self.resources[exporter][group_name]:
@@ -141,8 +141,16 @@ class LabbyClient(Session):
             and name not in self.acquired_places
         ):
             self.acquired_places.add(name)
+        if (
+            place_data
+            and name in self.acquired_places
+            and place_data['acquired'] != self.user_name
+        ):
+            self.acquired_places.remove(name)
+
         if frontend := get_frontend_callback():
             frontend.publish("localhost.onPlaceChanged", place_data)
+
 
 
 class RouterInterface(ApplicationSession):
@@ -181,6 +189,7 @@ class RouterInterface(ApplicationSession):
         self.log.info("Joined Frontend Session.")
 
         self.register("places", places)
+        self.register("list_places", list_places)
         self.register("resource", resource)
         self.register("power_state", power_state)
         self.register("acquire", acquire)
@@ -200,6 +209,12 @@ class RouterInterface(ApplicationSession):
         self.register("place_names", places_names)
         self.register("get_alias", get_alias)
         self.register("get_exporters", get_exporters)
+        self.register("acquire_resource", acquire_resource)
+        self.register("release_resource", release_resource)
+        self.register("resource_names", resource_names)
+        self.register("add_match", add_match)
+        self.register("del_match", del_match)
+
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")

@@ -304,7 +304,9 @@ class TestLabby(unittest.TestCase):
         assert user == client.places[place_name]['acquired']
 
     @async_test
-    async def test_on_resource_changed(self) -> None:
+    @patch("labby.get_frontend_callback")
+    @patch.object(ApplicationSession, 'publish')
+    async def test_on_resource_changed(self, obj, c) -> None:
         """
         Test onResourceChanged callback function, mock ApplicationSession Super class
         """
