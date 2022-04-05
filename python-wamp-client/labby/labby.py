@@ -110,6 +110,9 @@ class LabbyClient(Session):
                 f"Resource {exporter}/{group_name}/{resource_name} deleted")
 
         self.power_states = None  # Invalidate power state cache
+        if frontend := get_frontend_callback():
+            frontend.publish("localhost.onResourceChanged",
+                             self.resources[exporter][group_name][resource_name])
 
     @invalidates_cache('power_states')
     async def on_place_changed(self, name: PlaceName, place_data: Optional[Dict] = None):
@@ -144,6 +147,10 @@ class LabbyClient(Session):
             and place_data['acquired'] != self.user_name
         ):
             self.acquired_places.remove(name)
+
+        if frontend := get_frontend_callback():
+            frontend.publish("localhost.onPlaceChanged", place_data)
+
 
 
 class RouterInterface(ApplicationSession):
