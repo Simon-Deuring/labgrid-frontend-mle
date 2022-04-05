@@ -23,7 +23,6 @@ export class ResourceSelectorComponent implements OnInit {
   assignedResources: string[] = [];
   availableResources: string[] = [];
 
-
   constructor(
     private _ps: PlaceService,
     private _rs: ResourceService,
@@ -123,7 +122,7 @@ export class ResourceSelectorComponent implements OnInit {
     console.log('removed: ', removedResources)
     console.log('added: ', addedResources)
 
-    this._rs.
+    
   }
 
 cancel() {

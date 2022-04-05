@@ -94,4 +94,48 @@ export class ResourceService {
             return result[0];
         }
     }
+
+    public async deleteResource(resourceName: string, placeName: string): Promise<Resource> {
+        // If the session is already set the data can immediately be read.
+        // Otherwise we wait 1 second.
+        if (this.session) {
+            const result = (await this.session.call('localhost.delete_resource', [, placeName, resourceName])) as Resource[];
+            if (!result) {
+                throw new Error('No such resource');
+            }
+            return result[0];
+        } else {
+            await new Promise((resolve, reject) => {
+                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+                setTimeout(resolve, 1000);
+            });
+            const result = (await this.session.call('localhost.delete_resource', [placeName, resourceName])) as Resource[];
+            if (!result) {
+                throw new Error('No such resource');
+            }
+            return result[0];
+        }
+    }
+
+    public async createResource(resourceName: string, placeName: string): Promise<Resource> {
+        // If the session is already set the data can immediately be read.
+        // Otherwise we wait 1 second.
+        if (this.session) {
+            const result = (await this.session.call('localhost.create_resource', [placeName, resourceName])) as Resource[];
+            if (!result) {
+                throw new Error('No such resource');
+            }
+            return result[0];
+        } else {
+            await new Promise((resolve, reject) => {
+                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+                setTimeout(resolve, 1000);
+            });
+            const result = (await this.session.call('localhost.create_resource', [placeName, resourceName])) as Resource[];
+            if (!result) {
+                throw new Error('No such resource');
+            }
+            return result[0];
+        }
+    }
 }
