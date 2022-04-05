@@ -23,6 +23,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
+import { ConsoleComponent } from './console/console.component';
 import { ErrorComponent } from './error/error.component';
 import { LoginComponent } from './login/login.component';
 import { PlaceComponent } from './place/place.component';
@@ -40,6 +41,7 @@ import { ResourceService } from './_services/resource.service';
 @NgModule({
     declarations: [
         AppComponent,
+        ConsoleComponent,
         ErrorComponent,
         LoginComponent,
         PlaceComponent,

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { Place } from '../../models/place';
@@ -249,6 +249,6 @@ export class PlaceComponent {
     }
 
     public startSerialConsole(): void {
-        //
+        this.router.navigate(['console/', this.place.name]);
     }
 }

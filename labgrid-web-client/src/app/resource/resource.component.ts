@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
@@ -12,6 +12,7 @@ import { Resource } from 'src/models/resource';
 })
 export class ResourceComponent {
     resource: Resource = new Resource('', '', '', '', false, '', {});
+    private placeName: string = '';
 
     isAcquiredByUser: boolean = false;
 
@@ -20,9 +21,14 @@ export class ResourceComponent {
 
     dataReady: boolean = false;
 
-    constructor(private _ps: PlaceService, private _rs: ResourceService, private route: ActivatedRoute) {
+    constructor(
+        private _ps: PlaceService,
+        private _rs: ResourceService,
+        private route: ActivatedRoute,
+        private router: Router
+    ) {
         route.params.subscribe(() => {
-            const resourceName = route.snapshot.url[route.snapshot.url.length - 1].path;
+            const resourceName = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
             // const placeName = this.route.snapshot.paramMap.get('placeName');
             // if (!placeName) {
             //     throw new Error('No place name provided')
@@ -101,12 +107,16 @@ export class ResourceComponent {
     private async readAcquiringUser(): Promise<void> {
         const place = await this._ps.getPlace(this.resource.place);
 
-        if (place.acquired === 'labby/dummy') {
-            this.isAcquiredByUser = true;
+        if (place !== undefined) {
+            this.placeName = place.name;
+
+            if (place.acquired === 'labby/dummy') {
+                this.isAcquiredByUser = true;
+            }
         }
     }
 
     public startSerialConsole(): void {
-        //
+        this.router.navigate(['console/', this.placeName]);
     }
 }
