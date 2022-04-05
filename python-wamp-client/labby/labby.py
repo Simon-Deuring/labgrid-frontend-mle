@@ -10,10 +10,10 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import (cancel_reservation, create_place, create_resource,
-                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache,
-                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, resource, power_state,
-                  acquire, release, info, resource_by_name, resource_overview)
+from .rpc import (acquire_resource, add_match, cancel_reservation, create_place, create_resource, del_match,
+                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places,
+                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, release_resource, resource, power_state,
+                  acquire, release, info, resource_by_name, resource_names, resource_overview)
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
 
@@ -45,7 +45,8 @@ class LabbyClient(Session):
         super().__init__(config=config)
 
     def onConnect(self):
-        self.log.info(f"Connected to Coordinator, joining realm '{self.config.realm}'")
+        self.log.info(
+            f"Connected to Coordinator, joining realm '{self.config.realm}'")
         # TODO load from config or get from frontend
         self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
 
@@ -92,9 +93,11 @@ class LabbyClient(Session):
         if self.resources is None:
             self.resources = {}
         if exporter not in self.resources:
-            self.resources[exporter] = {group_name: {resource_name:resource_data}}
+            self.resources[exporter] = {
+                group_name: {resource_name: resource_data}}
         else:
-            self.resources[exporter][group_name].update({resource_name:resource_data})
+            self.resources[exporter].get(group_name, {}).update(
+                {resource_name: resource_data})
 
         if resource_name not in self.resources[exporter][group_name]:
             self.log.info(
@@ -128,13 +131,19 @@ class LabbyClient(Session):
             place = self.places[name]
             place.update(place_data)
             self.log.info(f"Place {name} changed.")
-        if (# add place to acquired places, if we have acquired it previously
+        if (  # add place to acquired places, if we have acquired it previously
             place_data
             and place_data['acquired'] is not None
             and place_data['acquired'] == self.user_name
             and name not in self.acquired_places
         ):
             self.acquired_places.add(name)
+        if (
+            place_data
+            and name in self.acquired_places
+            and place_data['acquired'] != self.user_name
+        ):
+            self.acquired_places.remove(name)
 
 
 class RouterInterface(ApplicationSession):
@@ -173,6 +182,7 @@ class RouterInterface(ApplicationSession):
         self.log.info("Joined Frontend Session.")
 
         self.register("places", places)
+        self.register("list_places", list_places)
         self.register("resource", resource)
         self.register("power_state", power_state)
         self.register("acquire", acquire)
@@ -192,6 +202,12 @@ class RouterInterface(ApplicationSession):
         self.register("place_names", places_names)
         self.register("get_alias", get_alias)
         self.register("get_exporters", get_exporters)
+        self.register("acquire_resource", acquire_resource)
+        self.register("release_resource", release_resource)
+        self.register("resource_names", resource_names)
+        self.register("add_match", add_match)
+        self.register("del_match", del_match)
+
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")

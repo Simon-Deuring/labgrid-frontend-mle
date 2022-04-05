@@ -16,7 +16,11 @@ from .labby_error import (LabbyError, failed, invalid_parameter,
                           not_found)
 from .labby_types import (ExporterName, GroupName, LabbyPlace, PlaceName, PowerState, Resource,
                           ResourceName, Session)
-from .labby_util import flatten, prepare_place
+from .labby_util import flatten
+
+
+def _check_not_none(*args, **kwargs) -> Optional[LabbyError]:
+    return next((invalid_parameter(f"Missing required parameter: {name}.") for name, val in vars().items() if val is None), None)
 
 
 @attrs()
@@ -241,15 +245,15 @@ async def places(context: Session,
         return power_states
     await get_reservations(context)
 
-    def token_from_place(name): 
+    def token_from_place(name):
         return next((token for token, x in context.reservations.items()
-         if x['filters']['main']['name'] == name), None)
+                     if x['filters']['main']['name'] == name), None)
     place_res = []
     for place_name, place_data in data.items():
         # append the place to acquired places if
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
-                    and place_name not in context.acquired_places
+                and place_name not in context.acquired_places
                 ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
@@ -268,6 +272,15 @@ async def places(context: Session,
         })
         place_res.append(place_data)
     return place_res
+
+
+@labby_serialized
+async def list_places(context: Session) -> List[PlaceName]:
+    """
+    Return all place names
+    """
+    await fetch_places(context, None)
+    return list(context.places.keys()) if context.places else []
 
 
 @labby_serialized
@@ -361,6 +374,21 @@ async def resource_by_name(context: Session,
 
 
 @labby_serialized
+async def resource_names(context: Session) -> List[Dict[str, str]]:
+    await fetch_resources(context, None, None)
+    data = context.resources or {}
+    def it(x): return x.items()
+    return [
+        {'exporter': exporter,
+         'group': grp_name,
+         'class': x.get('cls'),
+         'name': name,
+         }
+        for exporter, group in it(data) for grp_name, res in it(group) for name, x in it(res)
+    ]
+
+
+@labby_serialized
 async def acquire(context: Session,
                   place: PlaceName) -> Union[bool, LabbyError]:
     """
@@ -402,7 +430,8 @@ async def release(context: Session,
     context.log.info(f"Releasing place {place}.")
     try:
         release_successful = await context.call('org.labgrid.coordinator.release_place', place)
-        context.acquired_places.remove(place)
+        if place in context.acquired_places:  # place update was quicker
+            context.acquired_places.remove(place)
     except ApplicationError as err:
         return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}")
     return release_successful
@@ -607,3 +636,59 @@ async def get_alias(context: Session, place: PlaceName) -> Union[List[str], Labb
     if len(data) == 0:
         return []
     return [a for x in data.values() for a in x['aliases']]
+
+
+@labby_serialized
+async def add_match(context: Session,
+                    place: PlaceName,
+                    exporter: ExporterName,
+                    group: GroupName,
+                    cls: ResourceName,
+                    name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        return await context.call("org.labgrid.coordinator.add_place_match", place, f"{exporter}/{group}/{cls}/{name}")
+    except:
+        return failed(f"Failed to add match {exporter}/{group}/{cls}/{name} to place {place}.")
+
+
+@labby_serialized
+async def del_match(context: Session,
+                    place: PlaceName,
+                    exporter: ExporterName,
+                    group: GroupName,
+                    cls: ResourceName,
+                    name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        return await context.call("org.labgrid.coordinator.del_place_match", place, f"{exporter}/{group}/{cls}/{name}")
+    except:
+        return failed(f"Failed to add match {exporter}/{group}/{cls}/{name} to place {place}.")
+
+
+@labby_serialized
+async def acquire_resource(context: Session,
+                           place_name: PlaceName,
+                           exporter: ExporterName,
+                           group_name: GroupName,
+                           resource_name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        procedure = f"org.labgrid.exporter.{exporter}.acquire"
+        return await context.call(procedure, group_name, resource_name, place_name)
+    except:
+        return failed(f"Failed to acquire resource {exporter}/{place_name}/{resource_name}.")
+
+
+@labby_serialized
+async def release_resource(context: Session,
+                           place_name: PlaceName,
+                           exporter: ExporterName,
+                           group_name: GroupName,
+                           resource_name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        procedure = f"org.labgrid.exporter.{exporter}.release"
+        return await context.call(procedure, group_name, resource_name, place_name)
+    except:
+        return failed(f"Failed to release resource {exporter}/{place_name}/{resource_name}.")
