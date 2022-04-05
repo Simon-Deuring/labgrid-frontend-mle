@@ -305,7 +305,8 @@ class TestLabby(unittest.TestCase):
 
     @async_test
     @patch("labby.get_frontend_callback")
-    async def test_on_resource_changed(self, callback) -> None:
+    @patch.object(ApplicationSession, 'publish')
+    async def test_on_resource_changed(self, obj, c) -> None:
         """
         Test onResourceChanged callback function, mock ApplicationSession Super class
         """
