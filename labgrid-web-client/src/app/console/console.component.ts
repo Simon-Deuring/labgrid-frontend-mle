@@ -30,18 +30,18 @@ export class ConsoleComponent {
                     this.place = data;
 
                     let resourceName: string = '';
-                    for (let i = 0; i < this.place.acquired_resources.length; i++) {
-                        if (this.place.acquired_resources[i][2] === 'NetworkSerialPort') {
-                            resourceName = this.place.acquired_resources[i][3];
+                    this.place.acquired_resources.forEach((resource) => {
+                        if (resource[2] === 'NetworkSerialPort') {
+                            resourceName = resource[3];
                             return;
                         }
-                    }
+                    });
 
                     if (resourceName !== '') {
                         this._rs.getResourceByName(resourceName, placeName).then((resource) => {
                             if (resource !== undefined) {
                                 this.networkSerialPort = resource;
-                                this.setInitialText;
+                                this.setInitialText();
                             }
                         });
                     } else {
@@ -65,7 +65,7 @@ export class ConsoleComponent {
                 "', state=<BindingState.bound: 1>, avail=" +
                 (this.networkSerialPort.avail === true ? 'True' : 'False') +
                 ", host='" +
-                this.place.exporter +
+                this.networkSerialPort.params.host +
                 "', port=" +
                 this.networkSerialPort.params.port +
                 ', speed=' +
@@ -73,12 +73,12 @@ export class ConsoleComponent {
                 ", protocol='rfc2217') calling microcom -s " +
                 this.networkSerialPort.params.speed +
                 ' -t ' +
-                this.networkSerialPort.target +
+                this.networkSerialPort.params.host +
                 ':' +
-                this.networkSerialPort.target +
+                this.networkSerialPort.params.port +
                 '\nconnected to 127.0.0.1 (port ' +
                 this.networkSerialPort.params.port +
-                ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit';
+                ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit\n';
         }
     }
 }
