@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Place } from 'src/models/place';
 import { Resource } from 'src/models/resource';
 
+import { ConsoleService } from '../_services/console.service';
 import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
 
@@ -17,6 +18,7 @@ export class ConsoleComponent {
     private networkSerialPort: Resource = new Resource('', '', '', '', false, '', {});
 
     constructor(
+        private _cs: ConsoleService,
         private _ps: PlaceService,
         private _rs: ResourceService,
         private route: ActivatedRoute,
@@ -41,7 +43,7 @@ export class ConsoleComponent {
                         this._rs.getResourceByName(resourceName, placeName).then((resource) => {
                             if (resource !== undefined) {
                                 this.networkSerialPort = resource;
-                                this.setInitialText();
+                                this.openConsole();
                             }
                         });
                     } else {
@@ -52,6 +54,18 @@ export class ConsoleComponent {
                 }
             })
             .catch(() => this.router.navigate(['error']));
+    }
+
+    private async openConsole(): Promise<void> {
+        // Connect to the serial console
+        let connectionStatus = await this._cs.openConsole(this.place.name);
+
+        if (connectionStatus === true) {
+            // Set the initial text in the console
+            this.setInitialText();
+        } else {
+            this.router.navigate(['error']);
+        }
     }
 
     private setInitialText(): void {

@@ -34,6 +34,7 @@ import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 
+import { ConsoleService } from './_services/console.service';
 import { LoginService } from './auth/login.service';
 import { PlaceService } from './_services/place.service';
 import { ResourceService } from './_services/resource.service';
@@ -73,7 +74,7 @@ import { ResourceService } from './_services/resource.service';
         MatTooltipModule,
         RouterModule.forRoot([{ path: 'place', component: PlaceComponent }]),
     ],
-    providers: [LoginService, PlaceService, ResourceService],
+    providers: [ConsoleService, LoginService, PlaceService, ResourceService],
     bootstrap: [AppComponent],
 })
 export class AppModule {}
