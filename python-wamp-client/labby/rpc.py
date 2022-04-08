@@ -12,8 +12,6 @@ import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 
-from labby.resource import LabbyResource, NetworkSerialPort
-
 from .labby_error import (LabbyError, failed, invalid_parameter,
                           not_found)
 from .labby_types import (ExporterName, GroupName, LabbyPlace, PlaceName, PowerState, Resource,
@@ -255,7 +253,7 @@ async def places(context: Session,
         # append the place to acquired places if
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
-                    and place_name not in context.acquired_places
+                and place_name not in context.acquired_places
                 ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
@@ -554,79 +552,8 @@ async def reset(context: Session, place: PlaceName) -> bool:
     return False
 
 
-@labby_serialized
-async def console(context: Session, place: PlaceName):
-    # TODO allow selection of resource to connect console to
-    if place is None:
-        return invalid_parameter("Missing required parameter: place.")
-    if place not in context.acquired_places:
-        ret = await acquire(context, place)
-        if isinstance(ret, LabbyError):
-            return ret
-        if not ret:
-            return failed("Failed to acquire Place (It may already have been acquired).")
-    if place in context.open_consoles:
-        return failed(f"There is already a console open for {place}.")
-    # check that place has a console
-    _resources = await fetch_resources(context, place, resource_key=None)
-    if isinstance(_resources, LabbyError):
-        return _resources
-    if len(_resources) == 0:
-        return failed(f"No resources on {place}.")
-    _resources = flatten(_resources, depth=2)  # remove exporter and place
-    _resource: Optional[LabbyResource] = next(
-        (
-            NetworkSerialPort(
-                cls=data['cls'],
-                port=data['params']['port'],
-                host=data['params']['host'],
-                speed=data['params']['speed'],
-                protocol=data['params'].get('protocol', 'rfc2217'),
-            )
-            for _, data in _resources.items()
-            if 'cls' in data and data['cls'] == 'NetworkSerialPort'
-        ),
-        None,
-    )
-    if _resource is None:
-        return failed(f"No network serial port on {place}.")
-    assert isinstance(_resource, NetworkSerialPort)
-
-    context.open_consoles[place] = True  # mock data
-    return True
-
-
-@labby_serialized
-async def console_write(context: Session, place: PlaceName, data: str) -> Union[bool, LabbyError]:
-    # TODO implement
-    if place not in context.acquired_places:
-        return failed(f"Place {place} is not acquired.")
-    if not context.open_consoles.get(place):
-        return failed(f"Place {place} has no open consoles.")
-    #
-    # do stuff
-    #
-    context.log.info(f"Console on {place} received: {data}.")
-    return True
-
-
-@labby_serialized
-async def console_close(context: Session, place: PlaceName) -> Optional[LabbyError]:
-    if place not in context.acquired_places:
-        return failed(f"Place {place} is not acquired.")
-    if not context.open_consoles.get(place):
-        return failed(f"Place {place} has no open consoles.")
-    del context.open_consoles[place]
-
-
-async def mock_console(context: Session, frontend):
-    from random import random, choice
-    phrases = ["Hello", "lorem ipsum ...", "Dies ist ein test!", "Mock Mock"]
-    while True:
-        await asyncio.sleep(2. + random() * 2)
-        for place in context.open_consoles:
-            frontend.publish(f"localhost.consoles.{place}",
-                             f"{context.user_name}@{place}> {choice(phrases)}")
+async def console(context: Session, *args):
+    pass
 
 
 async def video(context: Session, *args):

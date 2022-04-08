@@ -2,8 +2,7 @@
 Handle resources to be sent via the router
 """
 from enum import Enum
-from typing import Dict, Optional
-from attr import attrs, attrib
+from typing import Dict
 
 
 class ResourceType(Enum):
@@ -13,24 +12,53 @@ class ResourceType(Enum):
     POWERPORTS = "PowerPorts"
 
 
-@attrs
-class LabbyResource:
-    cls: Optional[str] = attrib()
-    avail: bool = attrib(default=True)
-    params: Dict = attrib(default=None)
-    acquired: bool = attrib(default=False)
+def set_exporter_url(url: str):
+    #TODO (Kevin)
+    raise NotImplementedError
+
+
+def get_exporter_url(url: str):
+    #TODO (Kevin)
+    raise NotImplementedError
+
+
+class Resource:
+    """
+    Binds RPC for a resource
+    """
 
     def __init__(self, **kwargs):
-        self.props = kwargs["params"]
+        self.raw_params = kwargs["params"]
 
     @property
     def name(self):
-        return self.props["name"]
+        return self.raw_params["name"]
+
+    def publish(self, place: str, router):
+        """
+        publish a resource and its rpc to a router and place
+        """
+        raise NotImplementedError
+
+    def is_available(self) -> bool:
+        """
+        Is the backed resource available to be used
+        """
+        raise NotImplementedError
 
 
-@attrs
-class NetworkSerialPort(LabbyResource):
-    port: int = attrib(default=12345)
-    speed: int = attrib(default=115200)
-    protocol: str = attrib(default='rfc2217')
-    host: Optional[str] = attrib(default=None)
+def resource_from_ws(payload: Dict) -> Resource:
+    assert "params" in payload
+    return Resource()
+
+
+if __name__ == "__main__":
+
+    payload = {
+        "name": "name",
+        "matches": "",
+        "acquired": False,
+        "cls": ""
+    }
+
+    resource_from_ws(payload)

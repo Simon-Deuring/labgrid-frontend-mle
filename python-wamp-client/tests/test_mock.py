@@ -267,17 +267,15 @@ class TestLabby(unittest.TestCase):
     """
     mock test labby
     """
-    @async_test
-    @patch("asyncio.create_task")
-    @patch.object(ApplicationSession, "call", make_async(MagicMock()))
-    async def test_on_join(self, ct) -> None:
+
+    def test_on_join(self) -> None:
         """
         Test onJoin callback function, mock ApplicationSession Super class
         """
         # TODO test criteria
         client = LabbyClient()
         client.subscribe = mock.MagicMock()
-        await client.onJoin(details=None)
+        client.onJoin(details=None)
 
     def test_on_leave(self) -> None:
         """
@@ -370,9 +368,7 @@ class TestFrontendRouter(unittest.TestCase):
         client.disconnect = mock.MagicMock()
         client.onLeave(details=None)
 
-    @patch("asyncio.create_task")
-    @patch.object(ApplicationSession, "call", make_async(MagicMock()))
-    def test_on_join(self, ct) -> None:
+    def test_on_join(self) -> None:
         client = RouterInterface()
         client.register = MagicMock()
         client.onJoin(details=None)

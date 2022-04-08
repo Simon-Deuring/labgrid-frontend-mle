@@ -34,8 +34,7 @@ class Session(ApplicationSession):
         self.power_states: Optional[List] = None
         self.reservations: Dict = {}
         self.to_refresh: Set = set()
-        self.user_name: str
-        self.open_consoles: Dict = {}
+        self.user_name : str
         super().__init__(*args, **kwargs)
 
 
@@ -63,8 +62,6 @@ class LabbyPlace(LabbyType):
         }
 
 # pylint: disable=invalid-name
-
-
 class _ReservationState(Enum):
     waiting = 0
     allocated = 1
@@ -72,20 +69,20 @@ class _ReservationState(Enum):
     expired = 3
     invalid = 4
 
-
 @attrs
 class LabbyReservation(LabbyType):
-    owner: str = attrib(default=None,)
-    token: str = attrib(default=None,)
-    state: _ReservationState = attrib(default=None,)
-    prio: float = attrib(default=None,)
-    filters: Dict[str, Dict[str, str]] = attrib(default=None,)
-    allocations: Dict[str, str] = attrib(default=None,)
-    created: float = attrib(default=None,)
-    timeout: float = attrib(default=None,)
+    owner : str = attrib(default=None,)
+    token : str = attrib(default=None,)
+    state : _ReservationState = attrib(default=None,)
+    prio : float = attrib(default=None,)
+    filters : Dict[str, Dict[str, str]]= attrib(default=None,)
+    allocations : Dict[str, str] = attrib(default=None,)
+    created : float = attrib(default=None,)
+    timeout : float = attrib(default=None,)
 
     def place(self):
         return self.filters['main'].get('name', None)
+
 
     def to_json(self):
         return {
