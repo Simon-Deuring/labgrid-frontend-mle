@@ -2,5 +2,5 @@
 
 <div *ngIf="!connectionError; else errorBlock" id="console"></div>
 <ng-template #errorBlock>
-    <p>There is already a console open for {{ place.name }}.</p>
+    <p>There is already a console open for this place.</p>
 </ng-template>

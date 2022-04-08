@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { Place } from 'src/models/place';
@@ -13,7 +13,7 @@ import { ResourceService } from '../_services/resource.service';
     templateUrl: './console.component.html',
     styleUrls: ['./console.component.css'],
 })
-export class ConsoleComponent {
+export class ConsoleComponent implements OnDestroy {
     place: Place = new Place('', [], '', false, [], '', null);
     private networkSerialPort: Resource = new Resource('', '', '', '', false, '', {});
 
@@ -95,6 +95,13 @@ export class ConsoleComponent {
                 '\nconnected to 127.0.0.1 (port ' +
                 this.networkSerialPort.params.port +
                 ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit\n';
+        }
+    }
+
+    // Called when the component is destroyed
+    ngOnDestroy(): void {
+        if (this.place != undefined && this.place.name !== undefined && this.place.name !== '') {
+            this._cs.closeConsole(this.place.name);
         }
     }
 }

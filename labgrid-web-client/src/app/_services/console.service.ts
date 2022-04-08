@@ -35,4 +35,8 @@ export class ConsoleService {
             return result;
         }
     }
+
+    public async closeConsole(placeName: string): Promise<void> {
+        await this.session.call('localhost.console_close', [placeName]);
+    }
 }
