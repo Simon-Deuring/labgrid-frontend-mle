@@ -10,8 +10,8 @@ import asyncio.log
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
-from .rpc import (acquire_resource, add_match, cancel_reservation, create_place, create_resource, del_match,
-                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places,
+from .rpc import (acquire_resource, add_match, cancel_reservation, console, console_write, create_place, create_resource, del_match,
+                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places, mock_console,
                   places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, release_resource, resource, power_state,
                   acquire, release, info, resource_by_name, resource_names, resource_overview)
 from .router import Router
@@ -152,7 +152,6 @@ class LabbyClient(Session):
             frontend.publish("localhost.onPlaceChanged", place_data)
 
 
-
 class RouterInterface(ApplicationSession):
     """
     Wamp router, for communicaion with frontend
@@ -214,7 +213,9 @@ class RouterInterface(ApplicationSession):
         self.register("resource_names", resource_names)
         self.register("add_match", add_match)
         self.register("del_match", del_match)
-
+        self.register("console", console)
+        self.register("console_write", console_write)
+        asyncio.create_task(mock_console(get_context_callback(), self))
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
@@ -257,5 +258,4 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
     finally:
         frontend_coro.close()
         labby_coro.close()
-        asyncio.get_event_loop().close()
         router.stop()
