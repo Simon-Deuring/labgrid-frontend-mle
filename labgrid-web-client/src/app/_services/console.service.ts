@@ -22,7 +22,17 @@ export class ConsoleService {
     }
 
     public async openConsole(placeName: string): Promise<boolean> {
-        const result = await this.session.call('localhost.console', [placeName]);
-        return result;
+        if (this.session) {
+            const result = await this.session.call('localhost.console', [placeName]);
+            return result;
+        } else {
+            await new Promise((resolve, reject) => {
+                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+                setTimeout(resolve, 1000);
+            });
+
+            const result = await this.session.call('localhost.console', [placeName]);
+            return result;
+        }
     }
 }

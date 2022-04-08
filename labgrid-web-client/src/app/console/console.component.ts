@@ -17,6 +17,8 @@ export class ConsoleComponent {
     place: Place = new Place('', [], '', false, [], '', null);
     private networkSerialPort: Resource = new Resource('', '', '', '', false, '', {});
 
+    connectionError: boolean = false;
+
     constructor(
         private _cs: ConsoleService,
         private _ps: PlaceService,
@@ -64,7 +66,7 @@ export class ConsoleComponent {
             // Set the initial text in the console
             this.setInitialText();
         } else {
-            this.router.navigate(['error']);
+            this.connectionError = true;
         }
     }
 

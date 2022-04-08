@@ -1,3 +1,6 @@
 <h1>Serial console: {{ place.name }}</h1>
 
-<div id="console"></div>
+<div *ngIf="!connectionError; else errorBlock" id="console"></div>
+<ng-template #errorBlock>
+    <p>There is already a console open for {{ place.name }}.</p>
+</ng-template>
