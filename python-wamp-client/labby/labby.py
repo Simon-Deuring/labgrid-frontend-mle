@@ -119,19 +119,19 @@ class LabbyClient(Session):
         """
         Listen on place changes on coordinator and update cache on changes
         """
-        if self.places is not None and not place_data:
+        if self.places.get_soft() is not None and not place_data:
             del self.places[name]
             self.log.info(f"Place {name} deleted")
             return
 
-        if self.places is None:
-            self.places = {}
+        if self.places.get_soft() is None:
+            self.places._data = {}
 
-        if name not in self.places:
-            self.places[name] = place_data
+        if name not in self.places.get_soft():
+            self.places.get_soft()[name] = place_data
             self.log.info(f"Place {name} created.")
         else:
-            place = self.places[name]
+            place = self.places.get_soft()[name]
             place.update(place_data)
             self.log.info(f"Place {name} changed.")
         if (  # add place to acquired places, if we have acquired it previously
@@ -216,7 +216,8 @@ class RouterInterface(ApplicationSession):
         self.register("console", console)
         self.register("console_write", console_write)
         self.register("console_close", console_close)
-        asyncio.create_task(mock_console(get_context_callback(), self))
+        if callback := get_context_callback():
+            asyncio.create_task(mock_console(callback, self))
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")

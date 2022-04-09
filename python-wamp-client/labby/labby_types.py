@@ -8,6 +8,8 @@ from typing import Dict, List, Optional, Set, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
 
+from .cache import Cache, CounterStrategy, PeriodicRefreshStrategy
+
 
 TargetName = str
 ExporterName = str
@@ -22,6 +24,10 @@ Place = Dict
 PowerState = Dict
 
 
+
+async def get_places(context: "Session"):
+    return await context.call("org.labgrid.coordinator.get_places")
+
 class Session(ApplicationSession):
     """
     Forward declaration for Labby session
@@ -29,7 +35,7 @@ class Session(ApplicationSession):
 
     def __init__(self, *args, **kwargs) -> None:
         self.resources: Optional[Dict] = None
-        self.places: Optional[Dict] = None
+        self.places: Cache[Dict] = Cache(data=None, refresh_data=get_places, strategies=[CounterStrategy(25), PeriodicRefreshStrategy(20)])  # type: ignore
         self.acquired_places: Set[PlaceName] = set()
         self.power_states: Optional[List] = None
         self.reservations: Dict = {}

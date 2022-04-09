@@ -125,23 +125,24 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     return data
 
 
-@cached('places')
+# @cached('places')
 async def fetch_places(context: Session,
                        place: Optional[PlaceName]) -> Union[Dict, LabbyError]:
     """
     Fetch places from coordinator, update if missing and handle possible errors
     """
     assert context is not None
-    data = await context.call("org.labgrid.coordinator.get_places")
-    if data is None:
+    
+    _data = await context.places.get(context)  # type: ignore
+    if _data is None:
         if place is None:
             return not_found("Could not find any places.")
         return not_found(f"Could not find place with name {place}.")
     if place is not None:
-        if place in data.keys():
-            return {place: data[place]}
+        if place in _data.keys():
+            return {place: _data[place]}
         return not_found(f"Could not find place with name {place}.")
-    return data
+    return _data
 
 
 async def fetch_resources(context: Session,
@@ -282,7 +283,7 @@ async def list_places(context: Session) -> List[PlaceName]:
     Return all place names
     """
     await fetch_places(context, None)
-    return list(context.places.keys()) if context.places else []
+    return list(context.places.get_soft().keys()) if context.places else []
 
 
 @labby_serialized
@@ -653,8 +654,7 @@ async def create_place(context: Session, place: PlaceName) -> Union[bool, LabbyE
         return _places
     if place in _places:
         return failed(f"Place {place} already exists.")
-    res = await context.call("org.labgrid.coordinator.add_place", place)
-    return res
+    return await context.call("org.labgrid.coordinator.add_place", place)
 
 
 @labby_serialized
@@ -663,10 +663,9 @@ async def delete_place(context: Session, place: PlaceName) -> Union[bool, LabbyE
         return invalid_parameter("Missing required parameter: place.")
     _places = await fetch_places(context, place)
     assert context.places  # should have been set with fetch_places
-    if place not in context.places:
-        return not_found(f"Place {place} not found on Coordinator")
-    res = await context.call("org.labgrid.coordinator.del_place", place)
-    return res
+    if isinstance(_places, LabbyError):
+        return _places
+    return await context.call("org.labgrid.coordinator.del_place", place)
 
 
 @labby_serialized

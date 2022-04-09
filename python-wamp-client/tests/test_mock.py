@@ -301,9 +301,9 @@ class TestLabby(unittest.TestCase):
         place['acquired'] = user
         await client.on_place_changed(name=place_name, place_data=place)
         assert client.places
-        assert client.places[place_name]
-        assert client.places[place_name]['acquired']
-        assert user == client.places[place_name]['acquired']
+        assert client.places._data[place_name]
+        assert client.places._data[place_name]['acquired']
+        assert user == client.places._data[place_name]['acquired']
 
     @async_test
     @patch("labby.get_frontend_callback")
