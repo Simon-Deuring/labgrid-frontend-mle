@@ -20,6 +20,9 @@ export class ConsoleComponent implements OnDestroy {
     connectionError: boolean = false;
     private session: any;
 
+    private consoleElement: HTMLElement | null = null;
+    private completeText: string = '';
+
     constructor(
         private _ps: PlaceService,
         private _rs: ResourceService,
@@ -45,6 +48,8 @@ export class ConsoleComponent implements OnDestroy {
                         this._rs.getResourceByName(resourceName, placeName).then((resource) => {
                             if (resource !== undefined) {
                                 this.networkSerialPort = resource;
+
+                                this.setInitialText();
                                 this.openConsole();
                             }
                         });
@@ -78,22 +83,25 @@ export class ConsoleComponent implements OnDestroy {
             // Connect to the serial console and subscribe to events
             const result = await session.call('localhost.console', [component.place.name]);
             if (result === true) {
-                session.subscribe('localhost.consoles.' + component.place.name, component.onMessageReceived);
+                session.subscribe('localhost.consoles.' + component.place.name, (args: string[]) => {
+                    if (component.consoleElement !== null) {
+                        component.completeText += '\n' + args[0];
+                        component.consoleElement.innerText = component.completeText;
+                    }
+                });
+            } else {
+                component.connectionError = true;
             }
         };
+
         connection.open();
-
-        this.setInitialText();
-    }
-
-    private onMessageReceived(args: string[]) {
-        console.log(args[0]);
     }
 
     private setInitialText(): void {
-        const consoleElement = document.getElementById('console');
-        if (consoleElement !== null) {
-            consoleElement.innerText =
+        this.consoleElement = document.getElementById('console');
+
+        if (this.consoleElement !== null) {
+            this.completeText =
                 "connecting to NetworkSerialPort(target=Target(name='" +
                 this.place.name +
                 "', env=Environment(config_file='/etc/labgrid/client.yaml')), name='" +
@@ -115,6 +123,8 @@ export class ConsoleComponent implements OnDestroy {
                 '\nconnected to 127.0.0.1 (port ' +
                 this.networkSerialPort.params.port +
                 ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit\n';
+
+            this.consoleElement.innerText = this.completeText;
         }
     }
 
