@@ -621,7 +621,7 @@ async def console_close(context: Session, place: PlaceName) -> Optional[LabbyErr
 
 async def mock_console(context: Session, frontend):
     from random import random, choice
-    phrases = ["Hello", "lorem ipsum ...", "Dies ist ein test!", "Mock Mock"]
+    phrases = ["LED=211", "LED=214", "LED=217", "LED=218"]
     while True:
         await asyncio.sleep(2. + random() * 2)
         for place in context.open_consoles:

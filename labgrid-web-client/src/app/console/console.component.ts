@@ -123,7 +123,7 @@ export class ConsoleComponent implements OnDestroy {
                 this.networkSerialPort.params.port +
                 '\nconnected to 127.0.0.1 (port ' +
                 this.networkSerialPort.params.port +
-                ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit\n';
+                ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit';
 
             this.consoleElement.innerText = this.completeText;
         }
