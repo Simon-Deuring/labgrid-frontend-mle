@@ -87,6 +87,7 @@ export class ConsoleComponent implements OnDestroy {
                     if (component.consoleElement !== null) {
                         component.completeText += '\n' + args[0];
                         component.consoleElement.innerText = component.completeText;
+                        component.consoleElement.scrollTop = component.consoleElement.scrollHeight;
                     }
                 });
             } else {
