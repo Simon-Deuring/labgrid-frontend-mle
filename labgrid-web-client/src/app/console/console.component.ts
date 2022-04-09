@@ -1,10 +1,10 @@
 import { Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import * as autobahn from 'autobahn-browser';
 
 import { Place } from 'src/models/place';
 import { Resource } from 'src/models/resource';
 
-import { ConsoleService } from '../_services/console.service';
 import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
 
@@ -18,9 +18,9 @@ export class ConsoleComponent implements OnDestroy {
     private networkSerialPort: Resource = new Resource('', '', '', '', false, '', {});
 
     connectionError: boolean = false;
+    private session: any;
 
     constructor(
-        private _cs: ConsoleService,
         private _ps: PlaceService,
         private _rs: ResourceService,
         private route: ActivatedRoute,
@@ -59,15 +59,35 @@ export class ConsoleComponent implements OnDestroy {
     }
 
     private async openConsole(): Promise<void> {
-        // Connect to the serial console
-        let connectionStatus = await this._cs.openConsole(this.place.name);
+        const connection = new autobahn.Connection({
+            url: 'ws://localhost:8083/ws',
+            realm: 'frontend',
+        });
+        let component = this;
 
-        if (connectionStatus === true) {
-            // Set the initial text in the console
-            this.setInitialText();
-        } else {
-            this.connectionError = true;
-        }
+        connection.onopen = async function (session: any, details: any) {
+            // Save the session to close it afterwards
+            component.session = session;
+
+            if (!session) {
+                await new Promise((resolve, reject) => {
+                    // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+                    setTimeout(resolve, 1000);
+                });
+            }
+            // Connect to the serial console and subscribe to events
+            const result = await session.call('localhost.console', [component.place.name]);
+            if (result === true) {
+                session.subscribe('localhost.consoles.' + component.place.name, component.onMessageReceived);
+            }
+        };
+        connection.open();
+
+        this.setInitialText();
+    }
+
+    private onMessageReceived(args: string[]) {
+        console.log(args[0]);
     }
 
     private setInitialText(): void {
@@ -99,9 +119,14 @@ export class ConsoleComponent implements OnDestroy {
     }
 
     // Called when the component is destroyed
-    ngOnDestroy(): void {
-        if (this.place != undefined && this.place.name !== undefined && this.place.name !== '') {
-            this._cs.closeConsole(this.place.name);
+    async ngOnDestroy(): Promise<void> {
+        if (
+            this.session != undefined &&
+            this.place != undefined &&
+            this.place.name !== undefined &&
+            this.place.name !== ''
+        ) {
+            await this.session.call('localhost.console_close', [this.place.name]);
         }
     }
 }

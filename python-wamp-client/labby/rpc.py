@@ -626,7 +626,7 @@ async def mock_console(context: Session, frontend):
         await asyncio.sleep(2. + random() * 2)
         for place in context.open_consoles:
             frontend.publish(f"localhost.consoles.{place}",
-                             {choice(phrases)})
+                             f"{choice(phrases)}")
 
 
 async def video(context: Session, *args):
