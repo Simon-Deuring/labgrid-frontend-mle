@@ -3,6 +3,7 @@ import { Resource } from '../../models/resource';
 
 import * as autobahn from 'autobahn-browser';
 import { HttpClient } from '@angular/common/http';
+import { Place } from 'src/models/place';
 
 @Injectable({
     providedIn: 'root',
@@ -136,6 +137,67 @@ export class ResourceService {
                 throw new Error('No such resource');
             }
             return result[0];
+        }
+    }
+
+
+    public async acquireResource(resourceName: string, place: Place): Promise<{ successful: boolean; errorMessage: string }> {
+        // If the session is already set the data can immediately be read.
+        // Otherwise we wait 1 second.
+        if (this.session) {
+            const result = (await this.session.call('localhost.acquire_resource', [place.name, place.exporter, resourceName]));
+            if (!result) {
+                throw new Error('No such resource');
+            }
+            if (result === true) {
+                return { successful: true, errorMessage: '' };
+            } else {
+                return { successful: false, errorMessage: result.error.message };
+            }
+        } else {
+            await new Promise((resolve, reject) => {
+                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+                setTimeout(resolve, 1000);
+            });
+            const result = (await this.session.call('localhost.acquire_resource', [place.name, place.exporter, resourceName]));
+            if (!result) {
+                throw new Error('No such resource');
+            }
+            if (result === true) {
+                return { successful: true, errorMessage: '' };
+            } else {
+                return { successful: false, errorMessage: result.error.message };
+            }
+        }
+    }
+
+    public async releaseResource(resourceName: string, place: Place): Promise<{ successful: boolean; errorMessage: string }> {
+        // If the session is already set the data can immediately be read.
+        // Otherwise we wait 1 second.
+        if (this.session) {
+            const result = (await this.session.call('localhost.release_resource', [place.name, 'cup', place.name, resourceName]));
+            if (!result) {
+                throw new Error('Failed to release resource');
+            }
+            if (result === true) {
+                return { successful: true, errorMessage: '' };
+            } else {
+                return { successful: false, errorMessage: result.error.message };
+            }
+        } else {
+            await new Promise((resolve, reject) => {
+                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
+                setTimeout(resolve, 1000);
+            });
+            const result = (await this.session.call('localhost.release_resource', [place.name, 'cup', place.name, resourceName]));
+            if (!result) {
+                throw new Error('Failed to release resource');
+            }
+            if (result === true) {
+                return { successful: true, errorMessage: '' };
+            } else {
+                return { successful: false, errorMessage: result.error.message };
+            }
         }
     }
 }

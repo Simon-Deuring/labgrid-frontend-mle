@@ -81,6 +81,7 @@ export class PlaceComponent {
 
         
     }
+
     navigateToResourceSelector(placeName: string) {
         this.router.navigate(['place/resource_selector/', placeName]);
     }

@@ -8,6 +8,7 @@ import { ResourceService } from '../_services/resource.service';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { MatDialog } from '@angular/material/dialog';
 import { CancelDialogComponent } from '../dialogs/cancel-dialog/cancel-dialog.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-resource-selector',
@@ -28,6 +29,7 @@ export class ResourceSelectorComponent implements OnInit {
     private _rs: ResourceService,
     private route: ActivatedRoute,
     private _router: Router,
+    private _snackBar: MatSnackBar,
     private _dialog: MatDialog) {
     this.getPlaceData()
   }
@@ -46,7 +48,7 @@ export class ResourceSelectorComponent implements OnInit {
           this.availableResources.push(x.name);
         }
       })
-    }).then(()=> this.loading = false);
+    }).then(() => this.loading = false);
 
     /*this._rs.getResourcesForPlace(this.place.name).then((resources) => {
       this.resources = resources;
@@ -71,8 +73,8 @@ export class ResourceSelectorComponent implements OnInit {
       const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
       this._ps.getPlace(currentRoute).then((data) => {
         // Check if the specified place exists
-        if (Array.isArray(data) && data.length > 0) {
-          this.place = data[0];
+        if (data !== undefined) {
+          this.place = data;
           this.getResources();
         } else {
           this._router.navigate(['error']);
@@ -98,46 +100,57 @@ export class ResourceSelectorComponent implements OnInit {
     const removedResources: string[] = []
     const addedResources: string[] = []
 
-    // get deleted ressources
+    // get deleted resources
     this.resources.forEach(x => {
       if (!this.assignedResources.includes(x.name)) {
-        console.log('this ressource is not in the assigned List. It has to be removed.');
+        // this resource is not in the assigned List. It has to be removed.
         removedResources.push(x.name);
       }
     })
 
-    // get added ressources
+    // get added resources
     this.assignedResources.forEach(x => {
       if (!this.resources.find(y => y.name === x)) {
-        console.log('this ressource was added');
+        // this resource was added
         addedResources.push(x);
       }
-      /*if (this.resources.includes(x)) {
-        console.log('this ressource is not in the assigned List. It has to be removed.');
-        addedRessources.push(x);
-      }*/
     })
 
-    console.log('--------results--------')
-    console.log('removed: ', removedResources)
-    console.log('added: ', addedResources)
+    // console.log('--------results--------')
+    // console.log('removed: ', removedResources)
+    // console.log('added: ', addedResources)
 
-    
+    let response = {successful: false, errorMessage: ''};
+    removedResources.forEach(async r => {
+      response = await this._rs.releaseResource(r, this.place)
+      if (response.successful) {
+        this._snackBar.open('Resources were acquired and released successfully.', 'OK', {
+          duration: 3000,
+          panelClass: ['success-snackbar'],
+        });
+      } else {
+        this._snackBar.open(response.errorMessage, 'OK', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+        });
+      }
+    })
+
+    this._router.navigate(['place/', this.place.name]);
   }
 
-cancel() {
-  const dialogRef = this._dialog.open(CancelDialogComponent, {
-    autoFocus: false,
-  });
+  cancel() {
+    const dialogRef = this._dialog.open(CancelDialogComponent, {
+      autoFocus: false,
+    });
 
-  dialogRef.afterClosed().subscribe((result) => {
-    console.log('dialog result: ', result)
-    if (result !== undefined) {
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result !== undefined) {
 
-      this._router.navigate(['place/', this.place.name]
-      )
-    };
-  });
+        this._router.navigate(['place/', this.place.name]
+        )
+      };
+    });
 
-}
+  }
 }
