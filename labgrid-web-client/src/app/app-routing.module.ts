@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginGuard } from './auth/login.guard';
 
+import { ConsoleComponent } from './console/console.component';
 import { ErrorComponent } from './error/error.component';
 import { LoginComponent } from './login/login.component';
 import { PlaceComponent } from './place/place.component';
@@ -15,6 +16,7 @@ const routes: Routes = [
     { path: 'resourceOverview', component: ResourceOverviewComponent, canActivate: [LoginGuard] },
     { path: 'resource/:resourceName', component: ResourceComponent, canActivate: [LoginGuard] },
     { path: 'login', component: LoginComponent },
+    { path: 'console/:placeName', component: ConsoleComponent, canActivate: [LoginGuard] },
     { path: '**', component: ErrorComponent, canActivate: [LoginGuard] },
 ];
 

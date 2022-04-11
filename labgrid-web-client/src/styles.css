@@ -10,6 +10,11 @@ body {
     font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
+.action-bar > button {
+    margin-top: 20px;
+    margin-right: 16px;
+}
+
 .spacer {
     flex: 1 1 auto;
 }
