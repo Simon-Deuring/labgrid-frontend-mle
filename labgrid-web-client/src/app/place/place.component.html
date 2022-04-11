@@ -66,4 +66,16 @@
             Delete place
         </button>
     </div>
+
+    <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="resetPlace()">Reset place</button>
+    <button mat-raised-button color="warn" class="mat-elevation-z2" style="margin-right: 0px"
+        (click)="openDeletePlaceDialog()">
+        Delete place
+    </button>
+
+<div class="action-bar" *ngIf="isAcquiredByUser && hasNetworkSerialPort">
+    <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="startSerialConsole()">
+        Serial console
+    </button>
+</div>
 </div>

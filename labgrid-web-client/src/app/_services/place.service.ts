@@ -64,7 +64,7 @@ export class PlaceService {
         // If the session is already set the places can immediately be read.
         // Otherwise we wait 1 second.
         if (this.session) {
-            const place = (await this.session.call('localhost.places', [placeName])) as Place;
+            const place = (await this.session.call('localhost.places', [placeName]))[0] as Place;
             return place;
         } else {
             await new Promise((resolve, reject) => {
@@ -72,7 +72,7 @@ export class PlaceService {
                 setTimeout(resolve, 1000);
             });
 
-            const place = (await this.session.call('localhost.places', [placeName])) as Place;
+            const place = (await this.session.call('localhost.places', [placeName]))[0] as Place;
             return place;
         }
     }

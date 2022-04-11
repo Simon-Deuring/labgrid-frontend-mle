@@ -17,8 +17,6 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatListModule } from '@angular/material/list'
 
-import { AppComponent } from './app.component';
-import { ErrorComponent } from './error/error.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -29,6 +27,9 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
 
+import { AppComponent } from './app.component';
+import { ConsoleComponent } from './console/console.component';
+import { ErrorComponent } from './error/error.component';
 import { LoginComponent } from './login/login.component';
 import { PlaceComponent } from './place/place.component';
 import { PlaceCreationDialogComponent } from './dialogs/place-creation-dialog/place-creation-dialog.component';
@@ -48,6 +49,7 @@ import { ResourceService } from './_services/resource.service';
 @NgModule({
     declarations: [
         AppComponent,
+        ConsoleComponent,
         ErrorComponent,
         LoginComponent,
         PlaceComponent,

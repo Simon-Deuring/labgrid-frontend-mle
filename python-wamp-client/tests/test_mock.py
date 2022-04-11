@@ -95,7 +95,7 @@ class MockSession(Session):
         if func_str == "org.labgrid.coordinator.cancel_reservation":
             return True
         if func_str == "org.labgrid.coordinator.poll_reservation":
-            token=args[0]
+            token = args[0]
             return {token: {'owner': 'labby/test', 'state': 'waiting', 'prio': 0.0, 'filters': {'main': {'name': token}}, 'allocations': {}, 'created': 1.0, 'timeout': 2.0}}
 
 
@@ -267,15 +267,17 @@ class TestLabby(unittest.TestCase):
     """
     mock test labby
     """
-
-    def test_on_join(self) -> None:
+    @async_test
+    @patch("asyncio.create_task")
+    @patch.object(ApplicationSession, "call", make_async(MagicMock()))
+    async def test_on_join(self, ct) -> None:
         """
         Test onJoin callback function, mock ApplicationSession Super class
         """
         # TODO test criteria
         client = LabbyClient()
         client.subscribe = mock.MagicMock()
-        client.onJoin(details=None)
+        await client.onJoin(details=None)
 
     def test_on_leave(self) -> None:
         """
@@ -286,7 +288,9 @@ class TestLabby(unittest.TestCase):
         client.disconnect = mock.MagicMock()
         client.onLeave(details=None)
 
-    def test_on_place_changed_changed(self) -> None:
+    @async_test
+    @patch.object(ApplicationSession, "publish")
+    async def test_on_place_changed(self, publish) -> None:
         """
         Test onPlaceChanged callback function, mock ApplicationSession Super class
         """
@@ -295,14 +299,16 @@ class TestLabby(unittest.TestCase):
         place_name, place = list(PLACES.items())[0]
         user = f"test{datetime.now()}"
         place['acquired'] = user
-        asyncio.run(client.on_place_changed(name=place_name, place_data=place))
+        await client.on_place_changed(name=place_name, place_data=place)
         assert client.places
         assert client.places[place_name]
         assert client.places[place_name]['acquired']
         assert user == client.places[place_name]['acquired']
 
     @async_test
-    async def test_on_resource_changed_changed(self) -> None:
+    @patch("labby.get_frontend_callback")
+    @patch.object(ApplicationSession, 'publish')
+    async def test_on_resource_changed(self, obj, c) -> None:
         """
         Test onResourceChanged callback function, mock ApplicationSession Super class
         """
@@ -364,7 +370,9 @@ class TestFrontendRouter(unittest.TestCase):
         client.disconnect = mock.MagicMock()
         client.onLeave(details=None)
 
-    def test_on_join(self) -> None:
+    @patch("asyncio.create_task")
+    @patch.object(ApplicationSession, "call", make_async(MagicMock()))
+    def test_on_join(self, ct) -> None:
         client = RouterInterface()
         client.register = MagicMock()
         client.onJoin(details=None)
@@ -405,7 +413,8 @@ class TestReservation(unittest.TestCase):
         registration = await rpc.create_reservation(context, "place2")
         assert registration
         assert isinstance(registration, Dict)
-        assert next(iter(registration.values()))['filters']['main']['name'] == 'place2'
+        assert next(iter(registration.values()))[
+            'filters']['main']['name'] == 'place2'
 
     @async_test
     async def test_create_already_exists(self):
@@ -423,7 +432,8 @@ class TestReservation(unittest.TestCase):
     @async_test
     async def test_get_reservation(self):
         context = MockSession()
-        ret = await rpc.create_reservation(context, "place2") #!notice mock session will add a 'place1' on get_reservations
+        # !notice mock session will add a 'place1' on get_reservations
+        ret = await rpc.create_reservation(context, "place2")
         assert ret
         assert isinstance(ret, Dict)
         reservations = await rpc.get_reservations(context)
@@ -443,7 +453,6 @@ class TestReservation(unittest.TestCase):
         cancel = await rpc.cancel_reservation(context, "place2")
         assert isinstance(cancel, SerLabbyError)
         assert cancel['error']['kind'] == ErrorKind.FAILED.value
-
 
     @async_test
     async def test_poll_reservation(self):

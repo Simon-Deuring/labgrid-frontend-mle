@@ -12,11 +12,17 @@ import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 
+from labby.resource import LabbyResource, NetworkSerialPort
+
 from .labby_error import (LabbyError, failed, invalid_parameter,
                           not_found)
 from .labby_types import (ExporterName, GroupName, LabbyPlace, PlaceName, PowerState, Resource,
                           ResourceName, Session)
-from .labby_util import flatten, prepare_place
+from .labby_util import flatten
+
+
+def _check_not_none(*args, **kwargs) -> Optional[LabbyError]:
+    return next((invalid_parameter(f"Missing required parameter: {name}.") for name, val in vars().items() if val is None), None)
 
 
 @attrs()
@@ -241,9 +247,9 @@ async def places(context: Session,
         return power_states
     await get_reservations(context)
 
-    def token_from_place(name): 
+    def token_from_place(name):
         return next((token for token, x in context.reservations.items()
-         if x['filters']['main']['name'] == name), None)
+                     if x['filters']['main']['name'] == name), None)
     place_res = []
     for place_name, place_data in data.items():
         # append the place to acquired places if
@@ -268,6 +274,15 @@ async def places(context: Session,
         })
         place_res.append(place_data)
     return place_res
+
+
+@labby_serialized
+async def list_places(context: Session) -> List[PlaceName]:
+    """
+    Return all place names
+    """
+    await fetch_places(context, None)
+    return list(context.places.keys()) if context.places else []
 
 
 @labby_serialized
@@ -361,6 +376,21 @@ async def resource_by_name(context: Session,
 
 
 @labby_serialized
+async def resource_names(context: Session) -> List[Dict[str, str]]:
+    await fetch_resources(context, None, None)
+    data = context.resources or {}
+    def it(x): return x.items()
+    return [
+        {'exporter': exporter,
+         'group': grp_name,
+         'class': x.get('cls'),
+         'name': name,
+         }
+        for exporter, group in it(data) for grp_name, res in it(group) for name, x in it(res)
+    ]
+
+
+@labby_serialized
 async def acquire(context: Session,
                   place: PlaceName) -> Union[bool, LabbyError]:
     """
@@ -402,7 +432,8 @@ async def release(context: Session,
     context.log.info(f"Releasing place {place}.")
     try:
         release_successful = await context.call('org.labgrid.coordinator.release_place', place)
-        context.acquired_places.remove(place)
+        if place in context.acquired_places:  # place update was quicker
+            context.acquired_places.remove(place)
     except ApplicationError as err:
         return failed(f"Got exception while trying to call org.labgrid.coordinator.release_place. {err}")
     return release_successful
@@ -523,8 +554,78 @@ async def reset(context: Session, place: PlaceName) -> bool:
     return False
 
 
-async def console(context: Session, *args):
-    pass
+@labby_serialized
+async def console(context: Session, place: PlaceName):
+    # TODO allow selection of resource to connect console to
+    if place is None:
+        return invalid_parameter("Missing required parameter: place.")
+    if place not in context.acquired_places:
+        ret = await acquire(context, place)
+        if isinstance(ret, LabbyError):
+            return ret
+        if not ret:
+            return failed("Failed to acquire Place (It may already have been acquired).")
+    if place in context.open_consoles:
+        return failed(f"There is already a console open for {place}.")
+    # check that place has a console
+    _resources = await fetch_resources(context, place, resource_key=None)
+    if isinstance(_resources, LabbyError):
+        return _resources
+    if len(_resources) == 0:
+        return failed(f"No resources on {place}.")
+    _resources = flatten(_resources, depth=2)  # remove exporter and place
+    _resource: Optional[LabbyResource] = next(
+        (
+            NetworkSerialPort(
+                cls=data['cls'],
+                port=data['params']['port'],
+                host=data['params']['host'],
+                speed=data['params']['speed'],
+                protocol=data['params'].get('protocol', 'rfc2217'),
+            )
+            for _, data in _resources.items()
+            if 'cls' in data and data['cls'] == 'NetworkSerialPort'
+        ),
+        None,
+    )
+    if _resource is None:
+        return failed(f"No network serial port on {place}.")
+    assert isinstance(_resource, NetworkSerialPort)
+
+    context.open_consoles[place] = True  # mock data
+    return True
+
+
+@labby_serialized
+async def console_write(context: Session, place: PlaceName, data: str) -> Union[bool, LabbyError]:
+    # TODO implement
+    if place not in context.acquired_places:
+        return failed(f"Place {place} is not acquired.")
+    if not context.open_consoles.get(place):
+        return failed(f"Place {place} has no open consoles.")
+    #
+    # do stuff
+    #
+    context.log.info(f"Console on {place} received: {data}.")
+    return True
+
+
+@labby_serialized
+async def console_close(context: Session, place: PlaceName) -> Optional[LabbyError]:
+    if place not in context.acquired_places:
+        return failed(f"Place {place} is not acquired.")
+    if not context.open_consoles.get(place):
+        return failed(f"Place {place} has no open consoles.")
+    del context.open_consoles[place]
+
+
+async def mock_console(context: Session, frontend):
+    from random import random, choice
+    phrases = ["LED=211", "LED=214", "LED=217", "LED=218"]
+    while True:
+        await asyncio.sleep(2. + random() * 2)
+        for place in context.open_consoles:
+            frontend.publish(f"localhost.consoles.{place}", choice(phrases))
 
 
 async def video(context: Session, *args):
@@ -607,3 +708,59 @@ async def get_alias(context: Session, place: PlaceName) -> Union[List[str], Labb
     if len(data) == 0:
         return []
     return [a for x in data.values() for a in x['aliases']]
+
+
+@labby_serialized
+async def add_match(context: Session,
+                    place: PlaceName,
+                    exporter: ExporterName,
+                    group: GroupName,
+                    cls: ResourceName,
+                    name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        return await context.call("org.labgrid.coordinator.add_place_match", place, f"{exporter}/{group}/{cls}/{name}")
+    except:
+        return failed(f"Failed to add match {exporter}/{group}/{cls}/{name} to place {place}.")
+
+
+@labby_serialized
+async def del_match(context: Session,
+                    place: PlaceName,
+                    exporter: ExporterName,
+                    group: GroupName,
+                    cls: ResourceName,
+                    name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        return await context.call("org.labgrid.coordinator.del_place_match", place, f"{exporter}/{group}/{cls}/{name}")
+    except:
+        return failed(f"Failed to add match {exporter}/{group}/{cls}/{name} to place {place}.")
+
+
+@labby_serialized
+async def acquire_resource(context: Session,
+                           place_name: PlaceName,
+                           exporter: ExporterName,
+                           group_name: GroupName,
+                           resource_name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        procedure = f"org.labgrid.exporter.{exporter}.acquire"
+        return await context.call(procedure, group_name, resource_name, place_name)
+    except:
+        return failed(f"Failed to acquire resource {exporter}/{place_name}/{resource_name}.")
+
+
+@labby_serialized
+async def release_resource(context: Session,
+                           place_name: PlaceName,
+                           exporter: ExporterName,
+                           group_name: GroupName,
+                           resource_name: ResourceName) -> Union[bool, LabbyError]:
+    _check_not_none(**vars())
+    try:
+        procedure = f"org.labgrid.exporter.{exporter}.release"
+        return await context.call(procedure, group_name, resource_name, place_name)
+    except:
+        return failed(f"Failed to release resource {exporter}/{place_name}/{resource_name}.")
