@@ -1,7 +1,7 @@
 import asyncio
+import contextlib
 import sys
-import labby
-from labby.labby import get_frontend_callback, run_router
+from labby.labby import frontend_sessions, run_router
 
 
 async def ainput(string: str) -> str:
@@ -25,12 +25,12 @@ def _parse(command: str):
 async def prompty():
     count = 0
     while True:
-        while labby.get_frontend_callback() is None:
+        while len(frontend_sessions) == 0:
             print(f'Waiting for labby... {count}', end='\r')
             count += 1
             await asyncio.sleep(delay=1)
         command = await ainput('command: ')
-        callback = get_frontend_callback()
+        callback = frontend_sessions[0]
         try:
             if command and callback is not None:
                 ret = await callback.call(*_parse(command))
@@ -39,11 +39,9 @@ async def prompty():
             pass
 
 
-def run(backend_url, backend_realm, frontend_url, frontend_realm, exporter):
-    try:
+def run(backend_url, backend_realm, frontend_url, frontend_realm, keyfile_path, remote_url):
+    with contextlib.suppress(KeyboardInterrupt):
         loop = asyncio.get_event_loop()
         asyncio.run_coroutine_threadsafe(prompty(), loop)
         run_router(backend_url, backend_realm,
-                   frontend_url, frontend_realm, exporter)
-    except KeyboardInterrupt:
-        pass
+                   frontend_url, frontend_realm, keyfile_path, remote_url)

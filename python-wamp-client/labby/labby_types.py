@@ -4,7 +4,7 @@ Types used throughout labby
 
 from abc import abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
 
@@ -16,7 +16,7 @@ ResourceName = str
 GroupName = str
 PlaceKey = Tuple[TargetName, PlaceName]
 # Serializable labby arrer (LabbyError converted to json string)
-SerLabbyError = Dict
+SerLabbyError = Dict[str, Any]
 Resource = Dict
 Place = Dict
 PowerState = Dict

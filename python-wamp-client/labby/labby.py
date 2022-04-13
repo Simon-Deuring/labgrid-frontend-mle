@@ -1,7 +1,9 @@
 """
 A wamp client which registers a rpc function
 """
-from typing import Callable, Dict, Optional
+import getpass
+from os import getenv
+from typing import Callable, Dict, List, Optional
 from time import sleep
 
 import logging
@@ -16,20 +18,26 @@ from .rpc import (acquire_resource, add_match, cancel_reservation, console, cons
                   acquire, release, info, resource_by_name, resource_names, resource_overview)
 from .router import Router
 from .labby_types import GroupName, PlaceName, ResourceName, Session
+from .labby_ssh import parse_hostport, Session as SSHSession
 
 
-def get_context_callback() -> Optional['LabbyClient']:
-    """
-    If context takes longer to create, prevent Context to be None in Crossbar router context
-    """
-    return globals().get("CALLBACK_REF", None)
+ssh_sess: Optional[SSHSession] = None
+labby_sessions: List["LabbyClient"] = []
+frontend_sessions: List["RouterInterface"] = []
 
 
-def get_frontend_callback() -> Optional['RouterInterface']:
-    """
-    If context takes longer to create, prevent Context to be None in Crossbar router context
-    """
-    return globals().get("FRONTEND_REF", None)
+# def get_context_callback() -> Optional['LabbyClient']:
+#     """
+#     If context takes longer to create, prevent Context to be None in Crossbar router context
+#     """
+#     return globals().get("CALLBACK_REF", None)
+
+
+# def get_frontend_callback() -> Optional['RouterInterface']:
+#     """
+#     If context takes longer to create, prevent Context to be None in Crossbar router context
+#     """
+#     return globals().get("FRONTEND_REF", None)
 
 
 class LabbyClient(Session):
@@ -38,11 +46,14 @@ class LabbyClient(Session):
     specifically with the labgrid-frontend and the labgrid coordinator
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config):
         # make sure only one active labby client exists
         globals()["CALLBACK_REF"] = self
         self.user_name = "labby/dummy"
+        self.frontend = config.extra.get('frontend')
+        self.frontend.labby = self
         super().__init__(config=config)
+        labby_sessions.append(self)
 
     def onConnect(self):
         self.log.info(
@@ -59,27 +70,18 @@ class LabbyClient(Session):
         raise NotImplementedError(
             "Only Ticket authentication enabled, atm")
 
-    async def onJoin(self, details):
+    def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
-        res = await self.call("wamp.registration.list")
-        for proc in res['exact']:
-            p = await self.call("wamp.registration.get", proc)
-            print(p['uri'])
-        res = await self.call("wamp.subscription.list")
-        for proc in res['exact']:
-            p = await self.call("wamp.subscription.get", proc)
-            print(p['uri'])
-
         self.subscribe(self.on_place_changed,
                        "org.labgrid.coordinator.place_changed")
         self.subscribe(self.on_resource_changed,
                        "org.labgrid.coordinator.resource_changed")
         asyncio.create_task(refresh_reservations(self))
-        # asyncio.run_coroutine_threadsafe(refresh_reservations(self), asyncio.get_event_loop())
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
+        labby_sessions.remove(self)
 
     @invalidates_cache('power_states')
     async def on_resource_changed(self,
@@ -110,9 +112,9 @@ class LabbyClient(Session):
                 f"Resource {exporter}/{group_name}/{resource_name} deleted")
 
         self.power_states = None  # Invalidate power state cache
-        if frontend := get_frontend_callback():
-            frontend.publish("localhost.onResourceChanged",
-                             self.resources[exporter][group_name][resource_name])
+        if self.frontend:
+            self.frontend.publish("localhost.onResourceChanged",
+                                  self.resources[exporter][group_name][resource_name])
 
     @invalidates_cache('power_states')
     async def on_place_changed(self, name: PlaceName, place_data: Optional[Dict] = None):
@@ -148,8 +150,8 @@ class LabbyClient(Session):
         ):
             self.acquired_places.remove(name)
 
-        if frontend := get_frontend_callback():
-            frontend.publish("localhost.onPlaceChanged", place_data)
+        if self.frontend:
+            self.frontend.publish("localhost.onPlaceChanged", place_data)
 
 
 class RouterInterface(ApplicationSession):
@@ -157,16 +159,23 @@ class RouterInterface(ApplicationSession):
     Wamp router, for communicaion with frontend
     """
 
-    def __init__(self, config=None):
-        if config is not None and 'exporter' in config.extra:
-            self.exporter = config.extra['exporter']
+    def _labby_callback(self):
+        return self.labby
+
+    def __init__(self, config):
         globals()["FRONTEND_REF"] = self
+        self.backend_url = config.extra.get("backend_url")
+        self.backend_realm = config.extra.get("backend_realm")
+        self.labby_coro = None
+        self.labby = None
         super().__init__(config=config)
+        frontend_sessions.append(self)
 
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
         self.join(self.config.realm)
+        self._start_labby(self.backend_url, self.backend_realm)
 
     def register(self, func_key: str, procedure: Callable, *args):
         """
@@ -175,7 +184,7 @@ class RouterInterface(ApplicationSession):
         endpoint = f"localhost.{func_key}"
 
         async def bind(*o_args):
-            return await procedure(get_context_callback(), *args, *o_args)
+            return await procedure(self._labby_callback(), *args, *o_args)
         func = bind
         self.log.info(f"Registered function for endpoint {endpoint}.")
         try:
@@ -216,40 +225,50 @@ class RouterInterface(ApplicationSession):
         self.register("console", console)
         self.register("console_write", console_write)
         self.register("console_close", console_close)
-        asyncio.create_task(mock_console(get_context_callback(), self))
+        asyncio.create_task(mock_console(self._labby_callback, self))
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
+        if self.labby_coro:
+            self.labby_coro.close()
         self.disconnect()
+        frontend_sessions.remove(self)
+
+    def _start_labby(self, backend_url, backend_realm):
+        labby_runner = ApplicationRunner(
+            url=backend_url, realm=backend_realm, extra={'frontend': self})
+        labby_coro = labby_runner.run(LabbyClient, start_loop=False)
+        assert labby_coro is not None
+        asyncio.get_event_loop().create_task(labby_coro)
 
 
-def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend_realm: str, exporter: str):
+def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend_realm: str, keyfile_path: str, remote_url: str):
     """
     Connect to labgrid coordinator and start local crossbar router
     """
-
-    globals()["LOADED_RPC_FUNCTIONS"] = {}
+    loop = asyncio.get_event_loop()
     logging.basicConfig(
         level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
-    labby_runner = ApplicationRunner(
-        url=backend_url, realm=backend_realm, extra=None)
-    labby_coro = labby_runner.run(LabbyClient, start_loop=False)
     frontend_runner = ApplicationRunner(
-        url=frontend_url, realm=frontend_realm, extra={"exporter": exporter})
+        url=frontend_url, realm=frontend_realm,
+        extra={"backend_url": backend_url, "backend_realm": backend_realm})
     frontend_coro = frontend_runner.run(RouterInterface, start_loop=False)
+
+    # start ssh session
+    if (password := getenv('LABBY_SSH_PASSWORD', None)) is None:
+        password = getpass.getpass(f"Password for: {remote_url}:\n")
+    loop.run_in_executor(None, _start_ssh_session,
+                         backend_url, keyfile_path, remote_url, password)
 
     asyncio.log.logger.info(
         "Starting Frontend Router on url %s and realm %s", frontend_url, frontend_realm)
     router = Router("labby/router/.crossbar")
     sleep(4)
-    loop = asyncio.get_event_loop()
-    assert labby_coro is not None
     assert frontend_coro is not None
     try:
         asyncio.log.logger.info(
             "Connecting to %s on realm '%s'", backend_url, backend_realm)
-        loop.run_until_complete(labby_coro)
         loop.run_until_complete(frontend_coro)
         loop.run_forever()
     except ConnectionRefusedError as err:
@@ -258,5 +277,15 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
         pass
     finally:
         frontend_coro.close()
-        labby_coro.close()
         router.stop()
+
+
+def _start_ssh_session(backend_url, keyfile_path, remote_url, password):
+    global ssh_sess
+    remote_host, remote_port, user = parse_hostport(remote_url)
+    local_port = parse_hostport(backend_url)[1]
+    assert remote_host and remote_port and user
+    ssh_sess = SSHSession(host=remote_host, port=remote_port,
+                          username=user, keyfile_path=keyfile_path)
+    ssh_sess.open(password)
+    ssh_sess.forward(local_port or 22, remote_host, remote_port)
