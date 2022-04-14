@@ -13,7 +13,7 @@ from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 import autobahn.wamp.exception as wexception
 
 from .rpc import (acquire_resource, add_match, cancel_reservation, console, console_close, console_write, create_place, create_resource, del_match,
-                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places, mock_console,
+                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places,
                   places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, release_resource, resource, power_state,
                   acquire, release, info, resource_by_name, resource_names, resource_overview)
 from .router import Router
@@ -21,7 +21,6 @@ from .labby_types import GroupName, PlaceName, ResourceName, Session
 from .labby_ssh import parse_hostport, Session as SSHSession
 
 
-ssh_sess: Optional[SSHSession] = None
 labby_sessions: List["LabbyClient"] = []
 frontend_sessions: List["RouterInterface"] = []
 
@@ -48,10 +47,11 @@ class LabbyClient(Session):
 
     def __init__(self, config):
         # make sure only one active labby client exists
-        globals()["CALLBACK_REF"] = self
         self.user_name = "labby/dummy"
         self.frontend = config.extra.get('frontend')
         self.frontend.labby = self
+        self.ssh_session = config.extra.get('ssh_session')
+
         super().__init__(config=config)
         labby_sessions.append(self)
 
@@ -166,7 +166,8 @@ class RouterInterface(ApplicationSession):
         globals()["FRONTEND_REF"] = self
         self.backend_url = config.extra.get("backend_url")
         self.backend_realm = config.extra.get("backend_realm")
-        self.labby_coro = None
+        self.keyfile_path = config.extra.get("keyfile_path")
+        self.remote_url = config.extra.get("remote_url")
         self.labby = None
         super().__init__(config=config)
         frontend_sessions.append(self)
@@ -175,7 +176,6 @@ class RouterInterface(ApplicationSession):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
         self.join(self.config.realm)
-        self._start_labby(self.backend_url, self.backend_realm)
 
     def register(self, func_key: str, procedure: Callable, *args):
         """
@@ -193,8 +193,15 @@ class RouterInterface(ApplicationSession):
             self.log.error(
                 f"Could not register procedure: {err}.\n{err.with_traceback(None)}")
 
-    def onJoin(self, details):
+    async def onJoin(self, details):
         self.log.info("Joined Frontend Session.")
+        # asyncio.get_event_loop().call_soon(self._start_labby)
+        asyncio.get_event_loop().run_in_executor(None, _start_labby, self.remote_url,
+                                                 self.backend_url, self.backend_realm, self.keyfile_path, self)
+
+        # wait unitl labby startup is done
+        while self.labby is None:
+            await asyncio.sleep(.5)
 
         self.register("places", places)
         self.register("list_places", list_places)
@@ -225,24 +232,59 @@ class RouterInterface(ApplicationSession):
         self.register("console", console)
         self.register("console_write", console_write)
         self.register("console_close", console_close)
-        asyncio.create_task(mock_console(self._labby_callback, self))
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
-        if self.labby_coro:
-            self.labby_coro.close()
         self.disconnect()
         frontend_sessions.remove(self)
 
-    def _start_labby(self, backend_url, backend_realm):
-        labby_runner = ApplicationRunner(
-            url=backend_url, realm=backend_realm, extra={'frontend': self})
+
+def _start_labby(remote_url, backend_url, backend_realm, keyfile_path, frontend_client):
+    """
+    run labby and ssh session manager. wait for password if not provided in
+    """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    remote_host, remote_port, user = parse_hostport(remote_url)
+    assert remote_host and remote_port and user
+    ssh_session = SSHSession(host=remote_host,
+                             port=remote_port,
+                             username=user,
+                             keyfile_path=keyfile_path)
+    if (password := getenv('LABBY_SSH_PASSWORD', None)) is None:
+        password = getpass.getpass(
+            f"Password for: {remote_url}:\n")
+    ssh_session.open(password)
+    # local_port = parse_hostport(backend_url)[1]
+    asyncio.get_event_loop().run_in_executor(
+        None, ssh_session.forward, 20408, 'localhost', 20408)
+
+    def start():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        asyncio.log.logger.info(
+            "Connecting to %s on realm '%s'", backend_url, backend_realm)
+        # start ssh session
+        labby_runner = ApplicationRunner(backend_url,
+                                         realm=backend_realm,
+                                         extra={'frontend': frontend_client,
+                                                'ssh_session': ssh_session})
         labby_coro = labby_runner.run(LabbyClient, start_loop=False)
         assert labby_coro is not None
-        asyncio.get_event_loop().create_task(labby_coro)
+        loop.run_until_complete(labby_coro)
+        loop.run_forever()
+
+    # Thread(target=start, name=f'{remote_url}-labby').start()
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, start)
 
 
-def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend_realm: str, keyfile_path: str, remote_url: str):
+def run_router(backend_url: str,
+               backend_realm: str,
+               frontend_url: str,
+               frontend_realm: str,
+               keyfile_path: str,
+               remote_url: str):
     """
     Connect to labgrid coordinator and start local crossbar router
     """
@@ -252,14 +294,8 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
 
     frontend_runner = ApplicationRunner(
         url=frontend_url, realm=frontend_realm,
-        extra={"backend_url": backend_url, "backend_realm": backend_realm})
+        extra={"backend_url": backend_url, "backend_realm": backend_realm, "keyfile_path": keyfile_path, "remote_url": remote_url})
     frontend_coro = frontend_runner.run(RouterInterface, start_loop=False)
-
-    # start ssh session
-    if (password := getenv('LABBY_SSH_PASSWORD', None)) is None:
-        password = getpass.getpass(f"Password for: {remote_url}:\n")
-    loop.run_in_executor(None, _start_ssh_session,
-                         backend_url, keyfile_path, remote_url, password)
 
     asyncio.log.logger.info(
         "Starting Frontend Router on url %s and realm %s", frontend_url, frontend_realm)
@@ -267,8 +303,6 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
     sleep(4)
     assert frontend_coro is not None
     try:
-        asyncio.log.logger.info(
-            "Connecting to %s on realm '%s'", backend_url, backend_realm)
         loop.run_until_complete(frontend_coro)
         loop.run_forever()
     except ConnectionRefusedError as err:
@@ -278,14 +312,3 @@ def run_router(backend_url: str, backend_realm: str, frontend_url: str, frontend
     finally:
         frontend_coro.close()
         router.stop()
-
-
-def _start_ssh_session(backend_url, keyfile_path, remote_url, password):
-    global ssh_sess
-    remote_host, remote_port, user = parse_hostport(remote_url)
-    local_port = parse_hostport(backend_url)[1]
-    assert remote_host and remote_port and user
-    ssh_sess = SSHSession(host=remote_host, port=remote_port,
-                          username=user, keyfile_path=keyfile_path)
-    ssh_sess.open(password)
-    ssh_sess.forward(local_port or 22, remote_host, remote_port)

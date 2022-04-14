@@ -8,6 +8,9 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
 
+from labby.console import Console
+from labby.labby_ssh import Session as SSHSession
+
 
 TargetName = str
 ExporterName = str
@@ -35,7 +38,8 @@ class Session(ApplicationSession):
         self.reservations: Dict = {}
         self.to_refresh: Set = set()
         self.user_name: str
-        self.open_consoles: Dict = {}
+        self.open_consoles: Dict[PlaceName, Console] = {}
+        self.ssh_session: SSHSession
         super().__init__(*args, **kwargs)
 
 

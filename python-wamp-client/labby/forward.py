@@ -98,5 +98,5 @@ def forward_tunnel(local_port, remote_host, remote_port, transport):
     ForwardServer(("", local_port), SubHander).serve_forever()
 
 
-def log(s):
-    logging.info(s)
+def log(text):
+    logging.info(f"[forward]{text}")

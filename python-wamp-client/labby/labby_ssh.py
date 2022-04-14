@@ -104,62 +104,64 @@ class Session:
     port: int = attrib(default=22, validator=[_validate_port])
     opened_channels: List[Channel] = []
     forwarded_channels: List[Tunnel] = []
-    _client: Optional[SSHClient] = None
+    client: Optional[SSHClient] = None
+    _channel: Optional[paramiko.Channel] = None
 
     def _connect_with_keys(self, password=None):
-        assert self._client
+        assert self.client
         try:
-            self._client.connect(hostname=self.host,
-                                 port=self.port,
-                                 banner_timeout=60,
-                                 timeout=60,
-                                 auth_timeout=60,
-                                 username=self.username,
-                                 gss_auth=UseGSSAPI,
-                                 gss_kex=DoGSSAPIKeyExchange,
-                                 #  key_filename=path.join(
-                                 #      path.expanduser("~"), ".ssh/id_rsa")
-                                 )
+            self.client.connect(hostname=self.host,
+                                port=self.port,
+                                banner_timeout=60,
+                                timeout=60,
+                                auth_timeout=60,
+                                username=self.username,
+                                gss_auth=UseGSSAPI,
+                                gss_kex=DoGSSAPIKeyExchange,
+                                #  key_filename=path.join(
+                                #      path.expanduser("~"), ".ssh/id_rsa")
+                                )
         except (AuthenticationException, SSHException):
             # yield to get password from higher context
-            self._client.connect(hostname=self.host,
-                                 port=self.port,
-                                 banner_timeout=60,
-                                 timeout=60,
-                                 auth_timeout=60,
-                                 username=self.username,
-                                 password=password,
-                                 key_filename=self.keyfile_path)
+            self.client.connect(hostname=self.host,
+                                port=self.port,
+                                banner_timeout=60,
+                                timeout=60,
+                                auth_timeout=60,
+                                username=self.username,
+                                password=password,
+                                key_filename=self.keyfile_path)
 
     def open(self, password=None):
-        if self._client:
-            self._client.close()  # close if there was an open session
-        self._client = SSHClient()
-        self._client.load_system_host_keys()
-        self._client.set_missing_host_key_policy(WarningPolicy())
+        if self.client:
+            self.client.close()  # close if there was an open session
+        self.client = SSHClient()
+        self.client.load_system_host_keys()
+        self.client.set_missing_host_key_policy(WarningPolicy())
         if UseGSSAPI or DoGSSAPIKeyExchange:
             self._connect_with_keys(password=password)
         else:
-            self._client.connect(hostname=self.host,
-                                 port=self.port,
-                                 banner_timeout=100,
-                                 auth_timeout=60,
-                                 timeout=60,
-                                 username=self.username,
-                                 password=password)
+            self.client.connect(hostname=self.host,
+                                port=self.port,
+                                banner_timeout=100,
+                                auth_timeout=60,
+                                timeout=60,
+                                username=self.username,
+                                password=password)
+        # self._channel = self._client.invoke_shell()
 
     def close(self) -> None:
         self.forwarded_channels.clear()
         for channel in self.opened_channels:
             channel.close()
         self.opened_channels.clear()
-        if self._client:
-            self._client.close()
+        if self.client:
+            self.client.close()
 
     def create_channel(self, shell_options: Optional[_ShellOptions] = None) -> Channel:
-        assert self._client
-        _channel = self._client.invoke_shell(
-        ) if shell_options is None else self._client.invoke_shell(**shell_options)
+        assert self.client
+        _channel = self.client.invoke_shell(
+        ) if shell_options is None else self.client.invoke_shell(**shell_options)
         channel = Channel(_channel)
         self.opened_channels.append(channel)
         return channel
@@ -168,11 +170,11 @@ class Session:
         """
         Create and register a forwarded tcp channel over the ssh transport
         """
-        assert self._client
+        assert self.client
         if (tunnel := Tunnel(local_port=local_port, remote_host=remote_host, remote_port=remote_port)) not in self.forwarded_channels:
             self.forwarded_channels.append(tunnel)
             forward_tunnel(local_port=local_port, remote_host=remote_host, remote_port=remote_port,
-                           transport=self._client.get_transport())
+                           transport=self.client.get_transport())
         else:
             logging.info("Channel already forwarded")
 

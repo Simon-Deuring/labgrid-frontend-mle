@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
+from labby.console import Console
 
 from labby.resource import LabbyResource, NetworkSerialPort
 
@@ -257,8 +258,8 @@ async def places(context: Session,
         # append the place to acquired places if
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
-                and place_name not in context.acquired_places
-                ):
+            and place_name not in context.acquired_places
+            ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
@@ -593,8 +594,17 @@ async def console(context: Session, place: PlaceName):
     if _resource is None:
         return failed(f"No network serial port on {place}.")
     assert isinstance(_resource, NetworkSerialPort)
+    assert context.ssh_session.client
+    context.open_consoles[place] = (_con := Console(host=_resource.host or 'localhost',
+                                                    speed=_resource.speed,
+                                                    port=_resource.port,
+                                                    ssh_session=context.ssh_session.client))
 
-    context.open_consoles[place] = True  # mock data
+    async def _read(read_fn,):
+        while True:
+            await context.publish(f"localhost.consoles.{place}", await read_fn())
+    asyncio.create_task(_read(_con.read_stdout))
+    asyncio.create_task(_read(_con.read_stderr))
     return True
 
 
@@ -603,8 +613,13 @@ async def console_write(context: Session, place: PlaceName, data: str) -> Union[
     # TODO implement
     if place not in context.acquired_places:
         return failed(f"Place {place} is not acquired.")
-    if not context.open_consoles.get(place):
+    if not (_console := context.open_consoles.get(place)):
         return failed(f"Place {place} has no open consoles.")
+
+    try:
+        await _console.write_to_stdin(data)
+    except:
+        return failed(f"Failed to write to Console {place}.")
     #
     # do stuff
     #
@@ -619,17 +634,6 @@ async def console_close(context: Session, place: PlaceName) -> Optional[LabbyErr
     if not context.open_consoles.get(place):
         return failed(f"Place {place} has no open consoles.")
     del context.open_consoles[place]
-
-
-async def mock_console(get_context: Callable[[], Optional[Session]], frontend):
-    from random import random, choice
-    phrases = ["LED=211", "LED=214", "LED=217", "LED=218"]
-    while (context := get_context()) is None:
-        await asyncio.sleep(.5)
-    while True:
-        await asyncio.sleep(2. + random() * 2)
-        for place in context.open_consoles:
-            frontend.publish(f"localhost.consoles.{place}", choice(phrases))
 
 
 async def video(context: Session, *args):
