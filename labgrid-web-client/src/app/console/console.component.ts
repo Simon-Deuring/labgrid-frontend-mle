@@ -31,11 +31,19 @@ export class ConsoleComponent implements OnDestroy {
                 this.consoleElement.innerText = this.completeText;
                 this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
                 this.allowInput = true;
+
+                if (this.inputElement !== null) {
+                    // This workaround is needed for focus() to work
+                    window.setTimeout(() => {
+                        this.inputElement?.focus();
+                    }, 0);
+                }
             }
         }
     };
 
     private consoleElement: HTMLElement | null = null;
+    private inputElement: HTMLElement | null = null;
     private completeText: string = '';
 
     constructor(
@@ -116,6 +124,7 @@ export class ConsoleComponent implements OnDestroy {
 
     private setInitialText(): void {
         this.consoleElement = document.getElementById('output-area');
+        this.inputElement = document.getElementById('input-area');
 
         // If the user types ctrl + c the console stops displaying new messages
         document.addEventListener('keydown', this.unsubscribe);

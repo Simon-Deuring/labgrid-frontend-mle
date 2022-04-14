@@ -2,7 +2,7 @@
 
 <div *ngIf="!connectionError; else errorBlock" id="console">
     <span id="output-area"></span>
-    <span id="input-area" *ngIf="allowInput" contenteditable spellcheck="false"></span>
+    <span id="input-area" [ngClass]="{ hidden: allowInput === false }" contenteditable spellcheck="false"></span>
 </div>
 <ng-template #errorBlock>
     <p>There is already a console open for this place.</p>
