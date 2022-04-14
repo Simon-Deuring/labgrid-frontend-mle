@@ -22,8 +22,9 @@ export class ConsoleComponent implements OnDestroy {
 
     private session: any;
     private subscribe: boolean = true;
-    private unsubscribe = (event: KeyboardEvent): void => {
-        if (event.ctrlKey && event.key === 'c') {
+    private unsubscribe = async (event: KeyboardEvent): Promise<void> => {
+        // Called when a user types Ctrl + c
+        if (this.subscribe === true && event.ctrlKey && event.key === 'c') {
             this.subscribe = false;
 
             if (this.consoleElement !== null) {
@@ -38,6 +39,27 @@ export class ConsoleComponent implements OnDestroy {
                         this.inputElement?.focus();
                     }, 0);
                 }
+            }
+        }
+        // Called when the user types Enter
+        else if (this.subscribe === false && event.key === 'Enter') {
+            event.preventDefault();
+
+            if (this.consoleElement != null && this.inputElement !== null) {
+                let userCommand = this.inputElement.textContent;
+                this.inputElement.textContent = '';
+
+                this.completeText += userCommand + '\n';
+                this.consoleElement.innerText = this.completeText;
+
+                if (userCommand === 'exit') {
+                    this.completeText += '\n' + '----------------------' + '\n';
+                    this.consoleElement.innerText = this.completeText;
+                } else {
+                    // Send user command to labby and display the result
+                }
+
+                console.log(userCommand);
             }
         }
     };
