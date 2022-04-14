@@ -18,11 +18,20 @@ export class ConsoleComponent implements OnDestroy {
     private networkSerialPort: Resource = new Resource('', '', '', '', false, '', {});
 
     connectionError: boolean = false;
+    allowInput: boolean = false;
+
     private session: any;
     private subscribe: boolean = true;
     private unsubscribe = (event: KeyboardEvent): void => {
         if (event.ctrlKey && event.key === 'c') {
             this.subscribe = false;
+
+            if (this.consoleElement !== null) {
+                this.completeText += "\n\nEnter command. Try 'help' for a list of builtin commands\n-> ";
+                this.consoleElement.innerText = this.completeText;
+                this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+                this.allowInput = true;
+            }
         }
     };
 
@@ -90,6 +99,7 @@ export class ConsoleComponent implements OnDestroy {
             const result = await session.call('localhost.console', [component.place.name]);
             if (result === true) {
                 session.subscribe('localhost.consoles.' + component.place.name, (args: string[]) => {
+                    // Called when a new message is received
                     if (component.subscribe === true && component.consoleElement !== null) {
                         component.completeText += '\n' + args[0];
                         component.consoleElement.innerText = component.completeText;
@@ -105,7 +115,7 @@ export class ConsoleComponent implements OnDestroy {
     }
 
     private setInitialText(): void {
-        this.consoleElement = document.getElementById('console');
+        this.consoleElement = document.getElementById('output-area');
 
         // If the user types ctrl + c the console stops displaying new messages
         document.addEventListener('keydown', this.unsubscribe);
