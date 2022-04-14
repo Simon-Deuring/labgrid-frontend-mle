@@ -19,6 +19,12 @@ export class ConsoleComponent implements OnDestroy {
 
     connectionError: boolean = false;
     private session: any;
+    private subscribe: boolean = true;
+    private unsubscribe = (event: KeyboardEvent): void => {
+        if (event.ctrlKey && event.key === 'c') {
+            this.subscribe = false;
+        }
+    };
 
     private consoleElement: HTMLElement | null = null;
     private completeText: string = '';
@@ -84,7 +90,7 @@ export class ConsoleComponent implements OnDestroy {
             const result = await session.call('localhost.console', [component.place.name]);
             if (result === true) {
                 session.subscribe('localhost.consoles.' + component.place.name, (args: string[]) => {
-                    if (component.consoleElement !== null) {
+                    if (component.subscribe === true && component.consoleElement !== null) {
                         component.completeText += '\n' + args[0];
                         component.consoleElement.innerText = component.completeText;
                         component.consoleElement.scrollTop = component.consoleElement.scrollHeight;
@@ -100,6 +106,9 @@ export class ConsoleComponent implements OnDestroy {
 
     private setInitialText(): void {
         this.consoleElement = document.getElementById('console');
+
+        // If the user types ctrl + c the console stops displaying new messages
+        document.addEventListener('keydown', this.unsubscribe);
 
         if (this.consoleElement !== null) {
             this.completeText =
@@ -123,7 +132,7 @@ export class ConsoleComponent implements OnDestroy {
                 this.networkSerialPort.params.port +
                 '\nconnected to 127.0.0.1 (port ' +
                 this.networkSerialPort.params.port +
-                ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit';
+                ')\nType Ctrl + c to get to the menu';
 
             this.consoleElement.innerText = this.completeText;
         }
@@ -131,6 +140,8 @@ export class ConsoleComponent implements OnDestroy {
 
     // Called when the component is destroyed
     async ngOnDestroy(): Promise<void> {
+        document.removeEventListener('keydown', this.unsubscribe);
+
         if (
             this.session != undefined &&
             this.place != undefined &&
