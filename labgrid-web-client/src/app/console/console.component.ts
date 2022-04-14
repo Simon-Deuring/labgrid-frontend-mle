@@ -47,19 +47,31 @@ export class ConsoleComponent implements OnDestroy {
 
             if (this.consoleElement != null && this.inputElement !== null) {
                 let userCommand = this.inputElement.textContent;
-                this.inputElement.textContent = '';
+                if (userCommand !== null) {
+                    this.inputElement.textContent = '';
 
-                this.completeText += userCommand + '\n';
-                this.consoleElement.innerText = this.completeText;
-
-                if (userCommand === 'exit') {
-                    this.completeText += '\n' + '----------------------' + '\n';
+                    this.completeText += userCommand + '\n';
                     this.consoleElement.innerText = this.completeText;
-                } else {
-                    // Send user command to labby and display the result
-                }
+                    this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
 
-                console.log(userCommand);
+                    // If the user types 'exit' the command can directly be processed
+                    if (userCommand === 'exit') {
+                        this.completeText += '\n----------------------\n';
+                        this.consoleElement.innerText = this.completeText;
+                    }
+                    // All other commands are sent to the backend
+                    else {
+                        let response = await this._rs.sendConsoleCommand(this.place.name, userCommand);
+                        this.completeText += response + '\n-> ';
+                        this.consoleElement.innerText = this.completeText;
+                        this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+
+                        // This workaround is needed for focus() to work
+                        window.setTimeout(() => {
+                            this.inputElement?.focus();
+                        }, 0);
+                    }
+                }
             }
         }
     };

@@ -94,4 +94,9 @@ export class ResourceService {
             return result[0];
         }
     }
+
+    public async sendConsoleCommand(placeName: string, data: string): Promise<string> {
+        const response = (await this.session.call('localhost.console_write', [placeName, data])) as string;
+        return response;
+    }
 }
