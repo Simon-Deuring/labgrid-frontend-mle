@@ -61,7 +61,10 @@ export class ConsoleComponent implements OnDestroy {
                     }
                     // All other commands are sent to the backend
                     else {
-                        let response = await this._rs.sendConsoleCommand(this.place.name, userCommand);
+                        let response = (await this.session.call('localhost.console_write', [
+                            this.place.name,
+                            userCommand,
+                        ])) as string;
                         this.completeText += response + '\n-> ';
                         this.consoleElement.innerText = this.completeText;
                         this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
