@@ -5,11 +5,15 @@ name = "pypi"
 
 [packages]
 # crossbar = ">=21.0.0"
-autobahn = {version = "*", extras = ["asyncio", "encryption", "serialization"]}
-pywin32 = {version="*", markers="sys_platform == 'win32'"}
+autobahn = { version = "*", extras = [
+   "asyncio",
+   "encryption",
+   "serialization",
+] }
+pywin32 = { version = "*", markers = "sys_platform == 'win32'" }
 PyYaml = "*"
 attrs = "*"
-labby = {editable = true, path = "."}
+paramiko = "*"
 
 [dev-packages]
 pylint = "*"
