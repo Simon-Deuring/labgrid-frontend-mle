@@ -25,7 +25,6 @@ connection to a destination reachable from the SSH server machine.
 """
 import logging
 import select
-logging.basicConfig(level=logging.ERROR)
 
 try:
     import SocketServer

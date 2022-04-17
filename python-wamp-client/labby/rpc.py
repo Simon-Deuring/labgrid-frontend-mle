@@ -258,8 +258,8 @@ async def places(context: Session,
         # append the place to acquired places if
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
-            and place_name not in context.acquired_places
-            ):
+                and place_name not in context.acquired_places
+                ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
@@ -601,8 +601,17 @@ async def console(context: Session, place: PlaceName):
                                                     ssh_session=context.ssh_session.client))
 
     async def _read(read_fn,):
-        while True:
-            await context.publish(f"localhost.consoles.{place}", await read_fn())
+        while place in context.open_consoles:
+            try:
+                await context.publish(f"localhost.consoles.{place}", await read_fn())
+            except:
+                context.log.error(f"Console on {place} read failed")
+                _con.close()
+                if place in context.open_consoles:
+                    del context.open_consoles[place]
+
+    # async def _watchdog():
+
     asyncio.create_task(_read(_con.read_stdout))
     asyncio.create_task(_read(_con.read_stderr))
     return True

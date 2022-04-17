@@ -16,8 +16,6 @@ from paramiko import (AuthenticationException, SSHClient, SSHException,
 
 from labby.forward import forward_tunnel
 
-logging.basicConfig(level=logging.ERROR)
-
 
 @attrs
 class _ShellOptions(Mapping):

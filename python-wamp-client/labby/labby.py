@@ -1,42 +1,43 @@
 """
 A wamp client which registers a rpc function
 """
-import getpass
-from os import getenv
-from typing import Callable, Dict, List, Optional
-from time import sleep
-
-import logging
 import asyncio
 import asyncio.log
-from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
+import getpass
+import logging
+import os
+from getpass import getuser as _getuser
+from os import getenv
+from socket import gethostname as _gethostname
+from time import sleep
+from typing import Callable, Dict, List, Optional
+
 import autobahn.wamp.exception as wexception
+from autobahn.asyncio.wamp import ApplicationRunner, ApplicationSession
 
-from .rpc import (acquire_resource, add_match, cancel_reservation, console, console_close, console_write, create_place, create_resource, del_match,
-                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places,
-                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, release_resource, resource, power_state,
-                  acquire, release, info, resource_by_name, resource_names, resource_overview)
-from .router import Router
+from .labby_ssh import Session as SSHSession
+from .labby_ssh import parse_hostport
 from .labby_types import GroupName, PlaceName, ResourceName, Session
-from .labby_ssh import parse_hostport, Session as SSHSession
-
+from .router import Router
+from .rpc import (acquire, acquire_resource, add_match, cancel_reservation,
+                  console, console_close, console_write, create_place,
+                  create_reservation, create_resource, del_match, delete_place,
+                  delete_resource, forward, get_alias, get_exporters,
+                  get_reservations, info, invalidates_cache, list_places,
+                  places, places_names, poll_reservation, power_state,
+                  refresh_reservations, release, release_resource, resource,
+                  resource_by_name, resource_names, resource_overview)
 
 labby_sessions: List["LabbyClient"] = []
 frontend_sessions: List["RouterInterface"] = []
 
 
-# def get_context_callback() -> Optional['LabbyClient']:
-#     """
-#     If context takes longer to create, prevent Context to be None in Crossbar router context
-#     """
-#     return globals().get("CALLBACK_REF", None)
+def gethostname():
+    return os.environ.get('LABBY_HOSTNAME', _gethostname())
 
 
-# def get_frontend_callback() -> Optional['RouterInterface']:
-#     """
-#     If context takes longer to create, prevent Context to be None in Crossbar router context
-#     """
-#     return globals().get("FRONTEND_REF", None)
+def getuser():
+    return os.environ.get('LABBY_USERNAME', _getuser())
 
 
 class LabbyClient(Session):
@@ -47,7 +48,7 @@ class LabbyClient(Session):
 
     def __init__(self, config):
         # make sure only one active labby client exists
-        self.user_name = "labby/dummy"
+        self.user_name = f"{gethostname()}/{getuser()}"
         self.frontend = config.extra.get('frontend')
         self.frontend.labby = self
         self.ssh_session = config.extra.get('ssh_session')
@@ -290,7 +291,7 @@ def run_router(backend_url: str,
     """
     loop = asyncio.get_event_loop()
     logging.basicConfig(
-        level="DEBUG", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
+        level="INFO", format="%(asctime)s [%(name)s][%(levelname)s] %(message)s")
 
     frontend_runner = ApplicationRunner(
         url=frontend_url, realm=frontend_realm,
