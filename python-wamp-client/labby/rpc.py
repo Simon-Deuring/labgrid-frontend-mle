@@ -11,13 +11,14 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
+from labby.console import Console
 
 from labby.resource import LabbyResource, NetworkSerialPort
 
 from .labby_error import (LabbyError, failed, invalid_parameter,
                           not_found)
 from .labby_types import (ExporterName, GroupName, LabbyPlace, PlaceName, PowerState, Resource,
-                          ResourceName, Session)
+                          ResourceName, Session, Place)
 from .labby_util import flatten
 
 
@@ -94,7 +95,7 @@ def labby_serialized(func):
     Custom serializer decorator for labby rpc functions
     to make sure returned values are cbor/json serializable
     """
-    async def wrapped(*args, **kwargs):
+    async def wrapped(*args, **kwargs) -> Union[None, List, Dict, int, float, str, bool]:
         ret = await func(*args, **kwargs)
         if ret is None:
             return None
@@ -127,7 +128,7 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
 
 # @cached('places')
 async def fetch_places(context: Session,
-                       place: Optional[PlaceName]) -> Union[Dict, LabbyError]:
+                       place: Optional[PlaceName]) -> Union[Dict[PlaceName, Place], LabbyError]:
     """
     Fetch places from coordinator, update if missing and handle possible errors
     """
@@ -219,6 +220,7 @@ async def fetch_power_state(context: Session,
     if isinstance(_places, LabbyError):
         return _places
     power_states = {}
+    assert _places
     for place_name, place_data in _places.items():
         if 'acquired_resources' in place_data:
             if len(place_data['acquired_resources']) == 0 or place_name not in _resources:
@@ -252,12 +254,13 @@ async def places(context: Session,
         return next((token for token, x in context.reservations.items()
                      if x['filters']['main']['name'] == name), None)
     place_res = []
+    assert data
     for place_name, place_data in data.items():
         # append the place to acquired places if
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
-                    and place_name not in context.acquired_places
-                ):
+            and place_name not in context.acquired_places
+            ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
@@ -592,8 +595,17 @@ async def console(context: Session, place: PlaceName):
     if _resource is None:
         return failed(f"No network serial port on {place}.")
     assert isinstance(_resource, NetworkSerialPort)
+    assert context.ssh_session.client
+    context.open_consoles[place] = (_con := Console(host=_resource.host or 'localhost',
+                                                    speed=_resource.speed,
+                                                    port=_resource.port,
+                                                    ssh_session=context.ssh_session.client))
 
-    context.open_consoles[place] = True  # mock data
+    async def _read(read_fn,):
+        while True:
+            await context.publish(f"localhost.consoles.{place}", await read_fn())
+    asyncio.create_task(_read(_con.read_stdout))
+    asyncio.create_task(_read(_con.read_stderr))
     return True
 
 
@@ -602,8 +614,13 @@ async def console_write(context: Session, place: PlaceName, data: str) -> Union[
     # TODO implement
     if place not in context.acquired_places:
         return failed(f"Place {place} is not acquired.")
-    if not context.open_consoles.get(place):
+    if not (_console := context.open_consoles.get(place)):
         return failed(f"Place {place} has no open consoles.")
+
+    try:
+        await _console.write_to_stdin(data)
+    except:
+        return failed(f"Failed to write to Console {place}.")
     #
     # do stuff
     #
@@ -618,16 +635,6 @@ async def console_close(context: Session, place: PlaceName) -> Optional[LabbyErr
     if not context.open_consoles.get(place):
         return failed(f"Place {place} has no open consoles.")
     del context.open_consoles[place]
-
-
-async def mock_console(context: Session, frontend):
-    from random import random, choice
-    phrases = ["Hello", "lorem ipsum ...", "Dies ist ein test!", "Mock Mock"]
-    while True:
-        await asyncio.sleep(2. + random() * 2)
-        for place in context.open_consoles:
-            frontend.publish(f"localhost.consoles.{place}",
-                             {choice(phrases)})
 
 
 async def video(context: Session, *args):
@@ -652,6 +659,7 @@ async def create_place(context: Session, place: PlaceName) -> Union[bool, LabbyE
     _places = await fetch_places(context, place=None)
     if isinstance(_places, LabbyError):
         return _places
+    assert _places
     if place in _places:
         return failed(f"Place {place} already exists.")
     return await context.call("org.labgrid.coordinator.add_place", place)
@@ -695,6 +703,7 @@ async def places_names(context: Session) -> Union[List[PlaceName], LabbyError]:
     _places = await fetch_places(context, None)
     if isinstance(_places, LabbyError):
         return _places
+    assert _places
     return list(_places.keys())
 
 
@@ -705,6 +714,7 @@ async def get_alias(context: Session, place: PlaceName) -> Union[List[str], Labb
     data = await fetch_places(context, place)
     if isinstance(data, LabbyError):
         return data
+    assert data
     if len(data) == 0:
         return []
     return [a for x in data.values() for a in x['aliases']]

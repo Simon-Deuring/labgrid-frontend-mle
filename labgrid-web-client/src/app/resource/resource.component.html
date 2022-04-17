@@ -15,3 +15,9 @@
 
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 </table>
+
+<div class="action-bar" *ngIf="resource.cls === 'NetworkSerialPort' && isAcquiredByUser">
+    <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="startSerialConsole()">
+        Serial console
+    </button>
+</div>

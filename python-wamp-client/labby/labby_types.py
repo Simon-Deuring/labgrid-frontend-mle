@@ -4,11 +4,13 @@ Types used throughout labby
 
 from abc import abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from autobahn.asyncio.wamp import ApplicationSession
 from attr import attrs, attrib
 
-from .cache import Cache, CounterStrategy, PeriodicRefreshStrategy
+from labby.cache import Cache, CounterStrategy, PeriodicRefreshStrategy
+from labby.console import Console
+from labby.labby_ssh import Session as SSHSession
 
 
 TargetName = str
@@ -18,15 +20,15 @@ ResourceName = str
 GroupName = str
 PlaceKey = Tuple[TargetName, PlaceName]
 # Serializable labby arrer (LabbyError converted to json string)
-SerLabbyError = Dict
+SerLabbyError = Dict[str, Any]
 Resource = Dict
 Place = Dict
 PowerState = Dict
 
 
-
 async def get_places(context: "Session"):
     return await context.call("org.labgrid.coordinator.get_places")
+
 
 class Session(ApplicationSession):
     """
@@ -35,13 +37,15 @@ class Session(ApplicationSession):
 
     def __init__(self, *args, **kwargs) -> None:
         self.resources: Optional[Dict] = None
-        self.places: Cache[Dict] = Cache(data=None, refresh_data=get_places, strategies=[CounterStrategy(25), PeriodicRefreshStrategy(20)])  # type: ignore
+        self.places: Cache[Dict] = Cache(data=None, refresh_data=get_places, strategies=[
+                                         CounterStrategy(25), PeriodicRefreshStrategy(20)])  # type: ignore
         self.acquired_places: Set[PlaceName] = set()
         self.power_states: Optional[List] = None
         self.reservations: Dict = {}
         self.to_refresh: Set = set()
         self.user_name: str
-        self.open_consoles: Dict = {}
+        self.open_consoles: Dict[PlaceName, Console] = {}
+        self.ssh_session: SSHSession
         super().__init__(*args, **kwargs)
 
 
