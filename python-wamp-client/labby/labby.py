@@ -15,14 +15,19 @@ from typing import Callable, Dict, List, Optional
 import autobahn.wamp.exception as wexception
 from autobahn.asyncio.wamp import ApplicationRunner, ApplicationSession
 
-from .rpc import (acquire_resource, add_match, cancel_reservation, console, console_close, console_write, create_place, create_resource, del_match,
-                  delete_place, delete_resource, forward, get_alias, get_exporters, invalidates_cache, list_places,
-                  places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, release_resource, resource, power_state,
-                  acquire, release, info, resource_by_name, resource_names, resource_overview)
+from .labby_ssh import Session as SSHSession
+from .labby_ssh import parse_hostport
+from .labby_types import (ExporterName, GroupName, PlaceName, ResourceName,
+                          Session)
 from .router import Router
-from .labby_types import ExporterName, GroupName, PlaceName, ResourceName, Session
-from .labby_ssh import parse_hostport, Session as SSHSession
-
+from .rpc import (acquire, acquire_resource, add_match, cancel_reservation,
+                  console, console_close, console_write, create_place,
+                  create_reservation, create_resource, del_match, delete_place,
+                  delete_resource, forward, get_alias, get_exporters,
+                  get_reservations, info, invalidates_cache, list_places,
+                  places, places_names, poll_reservation, power_state,
+                  refresh_reservations, release, release_resource, resource,
+                  resource_by_name, resource_names, resource_overview)
 
 labby_sessions: List["LabbyClient"] = []
 frontend_sessions: List["RouterInterface"] = []
