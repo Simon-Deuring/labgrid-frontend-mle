@@ -17,7 +17,7 @@ from .rpc import (acquire_resource, add_match, cancel_reservation, console, cons
                   places, places_names, get_reservations, create_reservation, poll_reservation, refresh_reservations, release_resource, resource, power_state,
                   acquire, release, info, resource_by_name, resource_names, resource_overview)
 from .router import Router
-from .labby_types import GroupName, PlaceName, ResourceName, Session
+from .labby_types import ExporterName, GroupName, PlaceName, ResourceName, Session
 from .labby_ssh import parse_hostport, Session as SSHSession
 
 
@@ -85,23 +85,25 @@ class LabbyClient(Session):
 
     @invalidates_cache('power_states')
     async def on_resource_changed(self,
-                                  exporter: str,
+                                  exporter: ExporterName,
                                   group_name: GroupName,
                                   resource_name: ResourceName,
                                   resource_data: Dict):
         """
         Listen on resource changes on coordinator and update cache on changes
         """
-        if self.resources is None:
-            self.resources = {}
-        if exporter not in self.resources:
-            self.resources[exporter] = {
+        res = {exporter: {group_name: {resource_name: resource_data}}}
+        if self.resources.get_soft() is None:
+            self.resources._data = res
+
+        if exporter not in self.resources.get_soft():
+            self.resources.get_soft()[exporter] = {
                 group_name: {resource_name: resource_data}}
         else:
-            self.resources[exporter].get(group_name, {}).update(
+            self.resources.get_soft()[exporter].get(group_name, {}).update(
                 {resource_name: resource_data})
 
-        if resource_name not in self.resources[exporter][group_name]:
+        if resource_name not in self.resources.get_soft()[exporter][group_name]:
             self.log.info(
                 f"Resource {exporter}/{group_name}/{resource_name} created.")
         elif resource_data:
@@ -114,7 +116,7 @@ class LabbyClient(Session):
         self.power_states = None  # Invalidate power state cache
         if self.frontend:
             self.frontend.publish("localhost.onResourceChanged",
-                                  self.resources[exporter][group_name][resource_name])
+                                  self.resources.get_soft()[exporter][group_name][resource_name])
 
     @invalidates_cache('power_states')
     async def on_place_changed(self, name: PlaceName, place_data: Optional[Dict] = None):

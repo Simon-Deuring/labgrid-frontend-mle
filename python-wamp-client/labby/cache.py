@@ -3,11 +3,8 @@ import asyncio
 import contextlib
 from asyncio import CancelledError
 from inspect import iscoroutinefunction
-from mimetypes import init
-from time import sleep
-from types import CoroutineType
-from typing import Any, Awaitable, Callable, Coroutine, Generic, List, TypeVar, Union
-from attr import attrib, attrs, field
+from typing import Any, Awaitable, Callable, Generic, List, TypeVar, Union
+from attr import attrib, attrs
 
 
 class CacheStrategy:
@@ -59,14 +56,15 @@ class PeriodicRefreshStrategy(CacheStrategy, TimingStrategy):
 
 @attrs
 class CounterStrategy(CacheStrategy, GetStrategy):
-    _counter_default: int = field()
+    counter_default: int = attrib()
+    _counter: int = 0
 
     def __attrs_pre_init__(self):
         CacheStrategy.__init__(self)
         GetStrategy.__init__(self)
 
     def __attrs_post_init__(self):
-        self._counter = self._counter_default
+        self._counter = self.counter_default
 
     def get_action(self):
         self._counter -= 1
@@ -75,49 +73,7 @@ class CounterStrategy(CacheStrategy, GetStrategy):
 
     def reset(self):
         self._expired = False
-        self._counter = self._counter_default
-
-
-def make_get(self, isasync: bool):
-    def get(*args):
-        # TODO could we optimize this?
-        for strat in self.strategies:
-            if isinstance(strat, GetStrategy):
-                strat.get_action()
-        reset_strats = False
-        if self._data is None:
-            self._data = self.refresh_data(*args)
-        else:
-            for strat in self.strategies:
-                if strat.should_refresh():
-                    self._data = self.refresh_data(*args)
-                    reset_strats = True
-                    break
-            if reset_strats:
-                for strat in self.strategies:
-                    strat.reset()
-        return self._data  # type: ignore
-
-    async def get_async(*args):
-        # TODO could we optimize this?
-        for strat in self.strategies:
-            if isinstance(strat, GetStrategy):
-                strat.get_action()
-        reset_strats = False
-        if self._data is None:
-            self._data = await self.refresh_data(*args)
-        else:
-            for strat in self.strategies:
-                if strat.should_refresh():
-                    self._data = await self.refresh_data(*args)
-                    reset_strats = True
-                    break
-            if reset_strats:
-                for strat in self.strategies:
-                    strat.reset()
-        return self._data  # type: ignore
-
-    return get_async if isasync else get
+        self._counter = self.counter_default
 
 
 T = TypeVar("T")
@@ -127,7 +83,8 @@ class Cache(Generic[T]):
     def __init__(
         self,
         data: T,
-        refresh_data: Union[Callable[[Any], T], Callable[[Any], Awaitable[T]]] = attrib(),
+        refresh_data: Union[Callable[[Any], T],
+                            Callable[[Any], Awaitable[T]]] = attrib(),
         strategies: List[CacheStrategy] = attrib(),
     ):
         self._data = data
@@ -135,11 +92,21 @@ class Cache(Generic[T]):
         self.strategies = strategies
         if hasattr(self._data, "__getitem__"):
 
-            def __getitem__(self, ind: Any):
+            def __getitem__(self, ind: Any) -> T:
                 return self.get()[ind]
 
             self.__getitem__ = __getitem__
-        self.get = make_get(self, iscoroutinefunction(refresh_data))
+        self.get = self.make_get(iscoroutinefunction(refresh_data))
+
+        if hasattr(self._data, "__contains__"):
+            def __contains__(self, key):
+                return key in self._data
+            self.__contains__ = __contains__
+
+        if hasattr(self._data, "__setitem__"):
+            def __setitem__(self, key, entry):
+                self._data[key] = entry
+            self.__setitem__ = __setitem__
 
     def stop(self):
         for strat in self.strategies:
@@ -155,25 +122,43 @@ class Cache(Generic[T]):
         # access data without refreshing cache
         return self._data
 
-if __name__ == "__main__":
+    def make_get(self, isasync: bool):
+        def get(*args) -> T:
+            # TODO could we optimize this?
+            for strat in self.strategies:
+                if isinstance(strat, GetStrategy):
+                    strat.get_action()
+            reset_strats = False
+            if self._data is None:
+                self._data = self.refresh_data(*args)
+            else:
+                for strat in self.strategies:
+                    if strat.should_refresh():
+                        self._data = self.refresh_data(*args)
+                        reset_strats = True
+                        break
+                if reset_strats:
+                    for strat in self.strategies:
+                        strat.reset()
+            return self._data  # type: ignore
 
-    loop = asyncio.get_event_loop()
+        async def get_async(*args) -> T:
+            # TODO could we optimize this?
+            for strat in self.strategies:
+                if isinstance(strat, GetStrategy):
+                    strat.get_action()
+            reset_strats = False
+            if self._data is None:
+                self._data = await self.refresh_data(*args)
+            else:
+                for strat in self.strategies:
+                    if strat.should_refresh():
+                        self._data = await self.refresh_data(*args)
+                        reset_strats = True
+                        break
+                if reset_strats:
+                    for strat in self.strategies:
+                        strat.reset()
+            return self._data  # type: ignore
 
-    async def get(a):
-        await asyncio.sleep(0.01)
-        return [a]
-
-    cache = Cache(
-        data=[],
-        refresh_data=get,
-        strategies=[PeriodicRefreshStrategy(5.0), CounterStrategy(10)],
-    )
-    async def run():
-        while True:
-            cache._data.extend((1, 2, 3, 4, 5))
-            print(f"data = {await cache.get(123)}")
-            await asyncio.sleep(2.0)
-
-    loop.create_task(run())
-
-    loop.run_forever()
+        return get_async if isasync else get

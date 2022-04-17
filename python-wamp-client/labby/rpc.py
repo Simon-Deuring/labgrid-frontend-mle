@@ -126,14 +126,13 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     return data
 
 
-# @cached('places')
 async def fetch_places(context: Session,
                        place: Optional[PlaceName]) -> Union[Dict[PlaceName, Place], LabbyError]:
     """
     Fetch places from coordinator, update if missing and handle possible errors
     """
     assert context is not None
-    
+
     _data = await context.places.get(context)  # type: ignore
     if _data is None:
         if place is None:
@@ -153,9 +152,7 @@ async def fetch_resources(context: Session,
     Fetch resources from coordinator, update if missing and handle possible errors
     """
     assert context is not None
-    data: Optional[Dict] = await fetch(context=context,
-                                       attribute="resources",
-                                       endpoint="org.labgrid.coordinator.get_resources")
+    data: Optional[Dict] = await context.resources.get(context)
     if data is None:
         if place is None:
             return not_found("Could not find any resources.")
@@ -176,7 +173,6 @@ async def fetch_resources(context: Session,
 
 @cached("peers")
 async def fetch_peers(context: Session) -> Union[Dict, LabbyError]:
-    # TODO (Kevin) Handle errors
     session_ids = await context.call("wamp.session.list")
     sessions = {}
     for sess in session_ids:  # ['exact']:
