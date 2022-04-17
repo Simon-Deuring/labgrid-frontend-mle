@@ -126,6 +126,7 @@ class TestResources(unittest.TestCase):
     """
     # @mock_labby(["fetch_resources"])
     @async_test
+    @patch('labby.labby_types.get_resources', make_async(lambda context: RESOURCES))
     async def test_resources_all(self):
         """
         test fetch all resources
@@ -301,9 +302,9 @@ class TestLabby(unittest.TestCase):
         place['acquired'] = user
         await client.on_place_changed(name=place_name, place_data=place)
         assert client.places
-        assert client.places._data[place_name]
-        assert client.places._data[place_name]['acquired']
-        assert user == client.places._data[place_name]['acquired']
+        assert client.places.get_soft()[place_name]
+        assert client.places.get_soft()[place_name]['acquired']
+        assert user == client.places.get_soft()[place_name]['acquired']
 
     @async_test
     @patch.object(ApplicationSession, 'publish')
@@ -316,7 +317,7 @@ class TestLabby(unittest.TestCase):
         exporter = 'exporter2'
         await client.on_resource_changed(exporter=exporter, group_name='NetworkService', resource_name='NetworkService', resource_data=RESOURCES['exporter1'])
         assert client.resources
-        assert client.resources['exporter2'] is not None
+        assert client.resources.get_soft()['exporter2'] is not None
         # TODO create
         # test once onResourceChanged is done
 
