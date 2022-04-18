@@ -12,8 +12,9 @@ import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 from labby.console import Console
+from labby.labby_ssh import Channel
 
-from labby.resource import LabbyResource, NetworkSerialPort
+from labby.resource import LabbyResource, NetworkSerialPort, PowerAction, power_resources, power_resource_from_name
 
 from .labby_error import (LabbyError, failed, invalid_parameter,
                           not_found)
@@ -546,12 +547,53 @@ async def poll_reservation(context: Session, place: PlaceName) -> Union[Dict, La
     return reservation
 
 
-async def reset(context: Session, place: PlaceName) -> bool:
+@labby_serialized
+async def reset(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
     """
     Send a reset request to a place matching a given place name
     Note
     """
-    return False
+    check = _check_not_none()
+    if isinstance(check, LabbyError):
+        return check
+    context.log.info(f"Resetting place {place}")
+    release_later = False
+    if place not in context.acquired_places:
+        release_later = True
+        acq = await acquire(context, place)
+        if isinstance(acquire, LabbyError):
+            return acq
+        if not acq:
+            return failed(f"Could not acquire place {place}.")
+
+    res = await fetch_resources(context, place, None)
+    if isinstance(res, LabbyError):
+        return failed(f"Failed to get resources for place {place}.")
+    res = flatten(res, 2)  # remove exporter and group from res
+    for resname, resdata in res.items():
+        if resname in power_resources:
+            try:
+                context.log.info(f"Resetting {place}/{resname}.")
+                power_resource = power_resource_from_name(resname, resdata)
+                url = power_resource.power(PowerAction.cycle)
+                assert (ssh_session := context.ssh_session) is not None
+                assert ssh_session.client
+                (_, _, serr) = ssh_session.client.exec_command(
+                    command=f"curl -Ss '{url}' > /dev/null"
+                )
+                if len(msg := serr.read()) > 0:
+                    context.log.error(
+                        f"Got error while resetting console. {msg}")
+            except ValueError:
+                pass  # not a valid powerresource after all ??
+            except Exception as e:
+                raise e  # other errors occured o.O
+
+    if release_later:
+        rel = await release(context, place)
+        if isinstance(rel, LabbyError) or not rel:
+            return failed(f"Failed to release place {place} after reset.")
+    return True
 
 
 @labby_serialized

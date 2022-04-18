@@ -56,6 +56,7 @@ async def prompty():
             print(f'Waiting for labby... {count}', end='\r')
             count += 1
             await asyncio.sleep(delay=1)
+        print()
         command = await ainput('command: ')
         callback = session
         try:
