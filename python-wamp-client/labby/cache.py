@@ -87,10 +87,10 @@ class Cache(Generic[T]):
                             Callable[[Any], Awaitable[T]]] = attrib(),
         strategies: List[CacheStrategy] = attrib(),
     ):
-        self._data = data
+        self.data = data
         self.refresh_data = refresh_data
         self.strategies = strategies
-        if hasattr(self._data, "__getitem__"):
+        if hasattr(self.data, "__getitem__"):
 
             def __getitem__(self, ind: Any) -> T:
                 return self.get()[ind]
@@ -98,12 +98,12 @@ class Cache(Generic[T]):
             self.__getitem__ = __getitem__
         self.get = self.make_get(iscoroutinefunction(refresh_data))
 
-        if hasattr(self._data, "__contains__"):
+        if hasattr(self.data, "__contains__"):
             def __contains__(self, key):
                 return key in self._data
             self.__contains__ = __contains__
 
-        if hasattr(self._data, "__setitem__"):
+        if hasattr(self.data, "__setitem__"):
             def __setitem__(self, key, entry):
                 self._data[key] = entry
             self.__setitem__ = __setitem__
@@ -112,15 +112,15 @@ class Cache(Generic[T]):
         for strat in self.strategies:
             if isinstance(strat, TimingStrategy):
                 strat.stop()
-        self.get = lambda: self._data  # type: ignore
+        self.get = lambda: self.data  # type: ignore
         self.strategies.clear()
 
     def __delitem__(self, index):
-        del self._data[index]  # type: ignore
+        del self.data[index]  # type: ignore
 
     def get_soft(self) -> T:
         # access data without refreshing cache
-        return self._data
+        return self.data
 
     def make_get(self, isasync: bool):
         def get(*args) -> T:
@@ -129,18 +129,18 @@ class Cache(Generic[T]):
                 if isinstance(strat, GetStrategy):
                     strat.get_action()
             reset_strats = False
-            if self._data is None:
-                self._data = self.refresh_data(*args)
+            if self.data is None:
+                self.data = self.refresh_data(*args)
             else:
                 for strat in self.strategies:
                     if strat.should_refresh():
-                        self._data = self.refresh_data(*args)
+                        self.data = self.refresh_data(*args)
                         reset_strats = True
                         break
                 if reset_strats:
                     for strat in self.strategies:
                         strat.reset()
-            return self._data  # type: ignore
+            return self.data  # type: ignore
 
         async def get_async(*args) -> T:
             # TODO could we optimize this?
@@ -148,17 +148,17 @@ class Cache(Generic[T]):
                 if isinstance(strat, GetStrategy):
                     strat.get_action()
             reset_strats = False
-            if self._data is None:
-                self._data = await self.refresh_data(*args)
+            if self.data is None:
+                self.data = await self.refresh_data(*args)
             else:
                 for strat in self.strategies:
                     if strat.should_refresh():
-                        self._data = await self.refresh_data(*args)
+                        self.data = await self.refresh_data(*args)
                         reset_strats = True
                         break
                 if reset_strats:
                     for strat in self.strategies:
                         strat.reset()
-            return self._data  # type: ignore
+            return self.data  # type: ignore
 
         return get_async if isasync else get
