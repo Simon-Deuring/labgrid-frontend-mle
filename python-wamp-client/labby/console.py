@@ -1,8 +1,15 @@
 import asyncio
+from typing import Union
 
 import paramiko
 from attr import attrs, field
 from paramiko.channel import ChannelFile, ChannelStderrFile, ChannelStdinFile
+
+
+def _read_flush(channel: Union[ChannelFile, ChannelStderrFile], nbytes):
+    data = channel.read(nbytes)
+    channel.flush()
+    return data
 
 
 @attrs
@@ -22,17 +29,20 @@ class Console:
 
     async def write_to_stdin(self, data: str):
         assert self._sin
+        print(data)
         data_bytes: bytes = bytes(data, encoding='utf-8')
         await asyncio.get_event_loop().run_in_executor(None, self._sin.write, data_bytes)
 
     async def read_stdout(self, nbytes=1024) -> str:
         assert self._sout
-        data = await asyncio.get_event_loop().run_in_executor(None, self._sout.read, nbytes)
+        data = await asyncio.get_event_loop().run_in_executor(None, _read_flush, self._sout, nbytes)
+        print(data)
         return data.decode('utf-8')
 
     async def read_stderr(self, nbytes=1024) -> str:
         assert self._serr
-        data = await asyncio.get_event_loop().run_in_executor(None, self._serr.read, nbytes)
+        data = await asyncio.get_event_loop().run_in_executor(None, _read_flush, self._serr, nbytes)
+        print(data)
         return data.decode('utf-8')
 
     def close(self):
