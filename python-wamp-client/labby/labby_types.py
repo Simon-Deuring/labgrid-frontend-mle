@@ -53,7 +53,13 @@ class Session(ApplicationSession):
         self.user_name: str
         self.open_consoles: Dict[PlaceName, Console] = {}
         self.ssh_session: SSHSession
+        self.backend_url: str
+        self.backend_realm: str
+        self.keyfile_path: str
+        self.remote_url: str
         super().__init__(*args, **kwargs)
+
+
 
 
 class LabbyType:
