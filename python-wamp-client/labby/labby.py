@@ -26,7 +26,7 @@ from .rpc import (acquire, acquire_resource, add_match, cancel_reservation,
                   delete_resource, forward, get_alias, get_exporters,
                   get_reservations, info, invalidates_cache, list_places,
                   places, places_names, poll_reservation, power_state,
-                  refresh_reservations, release, release_resource, resource,
+                  refresh_reservations, release, release_resource, reset, resource,
                   resource_by_name, resource_names, resource_overview)
 
 labby_sessions: List["LabbyClient"] = []
@@ -61,7 +61,7 @@ class LabbyClient(Session):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
         # TODO load from config or get from frontend
-        self.join(self.config.realm, ['ticket'], authid='client/labby/dummy')
+        self.join(self.config.realm, ['ticket'], authid=f'client/{self.user_name}')
 
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
@@ -72,12 +72,14 @@ class LabbyClient(Session):
         raise NotImplementedError(
             "Only Ticket authentication enabled, atm")
 
-    def onJoin(self, details):
+    async def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
         self.subscribe(self.on_place_changed,
                        "org.labgrid.coordinator.place_changed")
         self.subscribe(self.on_resource_changed,
                        "org.labgrid.coordinator.resource_changed")
+        await places(self)
+        await resource(self)
         asyncio.create_task(refresh_reservations(self))
 
     def onLeave(self, details):
@@ -172,6 +174,7 @@ class RouterInterface(ApplicationSession):
         self.backend_realm = config.extra.get("backend_realm")
         self.keyfile_path = config.extra.get("keyfile_path")
         self.remote_url = config.extra.get("remote_url")
+        self.ssh_session = config.extra.get("ssh_session")
         self.labby = None
         super().__init__(config=config)
         frontend_sessions.append(self)
@@ -236,6 +239,7 @@ class RouterInterface(ApplicationSession):
         self.register("console", console)
         self.register("console_write", console_write)
         self.register("console_close", console_close)
+        self.register("reset", reset)
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")

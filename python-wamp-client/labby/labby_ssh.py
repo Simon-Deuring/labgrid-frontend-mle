@@ -7,7 +7,7 @@ to be created for remote communication with resources
 import logging
 import urllib.parse
 from collections.abc import Mapping
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import paramiko
 from attr import attrib, attrs, field
@@ -70,17 +70,20 @@ def _validate_port(instance, attribute, value):
 
 @attrs
 class Channel:
-    _channel: paramiko.Channel
+    channel: paramiko.Channel = attrib()
 
     def microcom(self, host: str, port: int, speed: int):
         """
         Open a serial console over microcom from an existing ssh channel
         """
-        assert not self._channel.closed
-        return self._channel.exec_command(f"microcom -s {speed} -t {host}:{port}")
+        assert not self.channel.closed
+        return self.channel.exec_command(f"microcom -s {speed} -t {host}:{port}")
 
     def close(self):
-        self._channel.close()
+        self.channel.close()
+
+    def exec_command(self, command: Union[str, bytes]):
+        return self.channel.exec_command(command=command)
 
 
 @attrs
