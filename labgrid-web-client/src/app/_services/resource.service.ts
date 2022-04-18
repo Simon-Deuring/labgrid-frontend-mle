@@ -100,7 +100,7 @@ export class ResourceService {
         // If the session is already set the data can immediately be read.
         // Otherwise we wait 1 second.
         if (this.session) {
-            const result = (await this.session.call('localhost.delete_resource', [, placeName, resourceName])) as Resource[];
+            const result = (await this.session.call('localhost.delete_resource', [placeName, resourceName])) as Resource[];
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -145,7 +145,7 @@ export class ResourceService {
         // If the session is already set the data can immediately be read.
         // Otherwise we wait 1 second.
         if (this.session) {
-            const result = (await this.session.call('localhost.acquire_resource', [place.name, place.exporter, resourceName]));
+            const result = (await this.session.call('localhost.acquire_resource', [place.name, 'cup', place.name, resourceName]));
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -159,7 +159,7 @@ export class ResourceService {
                 // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const result = (await this.session.call('localhost.acquire_resource', [place.name, place.exporter, resourceName]));
+            const result = (await this.session.call('localhost.acquire_resource', [place.name, 'cup', place.name, resourceName]));
             if (!result) {
                 throw new Error('No such resource');
             }
