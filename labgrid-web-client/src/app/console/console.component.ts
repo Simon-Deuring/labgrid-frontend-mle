@@ -18,9 +18,75 @@ export class ConsoleComponent implements OnDestroy {
     private networkSerialPort: Resource = new Resource('', '', '', '', false, '', {});
 
     connectionError: boolean = false;
+    allowInput: boolean = false;
+
     private session: any;
+    private subscribe: boolean = true;
+    private unsubscribe = async (event: KeyboardEvent): Promise<void> => {
+        // Called when a user types Ctrl + c
+        if (this.subscribe === true && event.ctrlKey && event.key === 'c') {
+            this.subscribe = false;
+
+            if (this.consoleElement !== null) {
+                this.completeText += "\n\nEnter command. Try 'help' for a list of builtin commands\n-> ";
+                this.consoleElement.innerText = this.completeText;
+                this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+                this.allowInput = true;
+
+                if (this.inputElement !== null) {
+                    // This workaround is needed for focus() to work
+                    window.setTimeout(() => {
+                        this.inputElement?.focus();
+                    }, 0);
+                }
+            }
+        }
+        // Called when the user types Enter
+        else if (this.subscribe === false && event.key === 'Enter') {
+            event.preventDefault();
+
+            if (this.consoleElement != null && this.inputElement !== null) {
+                let userCommand = this.inputElement.textContent;
+                if (userCommand !== null) {
+                    this.inputElement.textContent = '';
+
+                    this.completeText += userCommand + '\n';
+                    this.consoleElement.innerText = this.completeText;
+                    this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+
+                    // If the user types 'exit' the command can directly be processed
+                    if (userCommand === 'exit') {
+                        this.completeText += '\n----------------------\n';
+                        this.consoleElement.innerText = this.completeText;
+                    }
+                    // All other commands are sent to the backend
+                    else {
+                        let response = await this.session.call('localhost.console_write', [
+                            this.place.name,
+                            userCommand,
+                        ]);
+
+                        if (response.error) {
+                            this.completeText += response.error.message + '\n';
+                        } else {
+                            this.completeText += response + '\n';
+                        }
+                        this.completeText += '-> ';
+                        this.consoleElement.innerText = this.completeText;
+                        this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+
+                        // This workaround is needed for focus() to work
+                        window.setTimeout(() => {
+                            this.inputElement?.focus();
+                        }, 0);
+                    }
+                }
+            }
+        }
+    };
 
     private consoleElement: HTMLElement | null = null;
+    private inputElement: HTMLElement | null = null;
     private completeText: string = '';
 
     constructor(
@@ -84,7 +150,8 @@ export class ConsoleComponent implements OnDestroy {
             const result = await session.call('localhost.console', [component.place.name]);
             if (result === true) {
                 session.subscribe('localhost.consoles.' + component.place.name, (args: string[]) => {
-                    if (component.consoleElement !== null) {
+                    // Called when a new message is received
+                    if (component.subscribe === true && component.consoleElement !== null) {
                         component.completeText += '\n' + args[0];
                         component.consoleElement.innerText = component.completeText;
                         component.consoleElement.scrollTop = component.consoleElement.scrollHeight;
@@ -99,7 +166,11 @@ export class ConsoleComponent implements OnDestroy {
     }
 
     private setInitialText(): void {
-        this.consoleElement = document.getElementById('console');
+        this.consoleElement = document.getElementById('output-area');
+        this.inputElement = document.getElementById('input-area');
+
+        // If the user types ctrl + c the console stops displaying new messages
+        document.addEventListener('keydown', this.unsubscribe);
 
         if (this.consoleElement !== null) {
             this.completeText =
@@ -123,7 +194,7 @@ export class ConsoleComponent implements OnDestroy {
                 this.networkSerialPort.params.port +
                 '\nconnected to 127.0.0.1 (port ' +
                 this.networkSerialPort.params.port +
-                ')\nEscape character: Ctrl-\\\nType the escape character followed by c to get to the menu or q to quit';
+                ')\nType Ctrl + c to get to the menu';
 
             this.consoleElement.innerText = this.completeText;
         }
@@ -131,6 +202,8 @@ export class ConsoleComponent implements OnDestroy {
 
     // Called when the component is destroyed
     async ngOnDestroy(): Promise<void> {
+        document.removeEventListener('keydown', this.unsubscribe);
+
         if (
             this.session != undefined &&
             this.place != undefined &&
