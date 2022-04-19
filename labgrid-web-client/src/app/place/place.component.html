@@ -70,18 +70,27 @@
             Reserve
         </button>
         <button
-            mat-raised-button
+            mat-stroked-button
             color="primary"
             class="mat-elevation-z2"
-            (click)="navigateToResourceSelector(place.name)"
-            style="float: right"
+            (click)="startSerialConsole()"
+            *ngIf="isAcquiredByUser && hasNetworkSerialPort"
         >
-            <mat-icon>add</mat-icon>
-            Assign resources
+            Serial console
         </button>
     </div>
 
     <div class="action-bar">
+        <button
+            mat-raised-button
+            color="primary"
+            class="mat-elevation-z2"
+            (click)="navigateToResourceSelector(place.name)"
+        >
+            <mat-icon>add</mat-icon>
+            Assign resources
+        </button>
+
         <span class="spacer"></span>
 
         <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="openResetPlaceDialog()">
@@ -95,12 +104,6 @@
             (click)="openDeletePlaceDialog()"
         >
             Delete place
-        </button>
-    </div>
-
-    <div class="action-bar" *ngIf="isAcquiredByUser && hasNetworkSerialPort">
-        <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="startSerialConsole()">
-            Serial console
         </button>
     </div>
 </div>
