@@ -30,12 +30,8 @@ export class PlaceService {
     }
 
     public async getPlaces(): Promise<Place[]> {
-        // If the python-wamp-client is not available the following lines can be used to load test data
-        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[];
-        // return mockPlaces;
-
         // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
             const places = await this.session.call('localhost.places');
             this.places.next(places);
@@ -53,16 +49,8 @@ export class PlaceService {
     }
 
     public async getPlace(placeName: string): Promise<Place> {
-        // If the python-wamp-client is not available the following lines can be used to load test data
-        // let mockPlaces = await this._http.get('../../assets/places.json').toPromise() as Place[];
-        // let mockPlace = mockPlaces.find(element => element.name === placeName);
-        // if (!mockPlace){
-        //     throw new Error('No such place');
-        // }
-        // return mockPlace;
-
         // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
             const place = (await this.session.call('localhost.places', [placeName]))[0] as Place;
             return place;
@@ -129,7 +117,7 @@ export class PlaceService {
             return { successful: false, errorMessage: response.error.message };
         }
     }
-    
+
     public async deletePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
         let response = await this.session.call('localhost.delete_place', [placeName]);
 

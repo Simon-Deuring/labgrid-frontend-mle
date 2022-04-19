@@ -26,11 +26,8 @@ export class ResourceService {
     }
 
     public async getResources(): Promise<Resource[]> {
-        // If the python-wamp-client is not available the following line can be used to load test data
-        // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-
         // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
             const resources = (await this.session.call('localhost.resource_overview')) as Resource[];
             return resources;
@@ -45,13 +42,8 @@ export class ResourceService {
     }
 
     public async getResourcesForPlace(placeName: string): Promise<Resource[]> {
-        // If the python-wamp-client is not available the following lines can be used to load test data
-        // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-        // const matchingResources = resources.filter(element => element.acquired === placeName);
-        // return matchingResources;
-
         // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
             const resources = (await this.session.call('localhost.resource_overview', [placeName])) as Resource[];
             return resources;
@@ -66,17 +58,8 @@ export class ResourceService {
     }
 
     public async getResourceByName(resourceName: string, placeName: string): Promise<Resource> {
-        // If the python-wamp-client is not available the following lines can be used to load test data
-        // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-        // const match = resources.find(element => element.name === resourceName && element.acquired === placeName.trim());
-        // if (!match){
-        //     throw new Error('No such match');
-        // }
-        // match.place = match.acquired;
-        // return match;
-
         // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
             const result = (await this.session.call('localhost.resource_by_name', [resourceName])) as Resource[];
             if (!result) {
@@ -98,9 +81,12 @@ export class ResourceService {
 
     public async deleteResource(resourceName: string, placeName: string): Promise<Resource> {
         // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
-            const result = (await this.session.call('localhost.delete_resource', [placeName, resourceName])) as Resource[];
+            const result = (await this.session.call('localhost.delete_resource', [
+                placeName,
+                resourceName,
+            ])) as Resource[];
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -110,7 +96,10 @@ export class ResourceService {
                 // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const result = (await this.session.call('localhost.delete_resource', [placeName, resourceName])) as Resource[];
+            const result = (await this.session.call('localhost.delete_resource', [
+                placeName,
+                resourceName,
+            ])) as Resource[];
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -120,9 +109,12 @@ export class ResourceService {
 
     public async createResource(resourceName: string, placeName: string): Promise<Resource> {
         // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
-            const result = (await this.session.call('localhost.create_resource', [placeName, resourceName])) as Resource[];
+            const result = (await this.session.call('localhost.create_resource', [
+                placeName,
+                resourceName,
+            ])) as Resource[];
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -132,7 +124,10 @@ export class ResourceService {
                 // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const result = (await this.session.call('localhost.create_resource', [placeName, resourceName])) as Resource[];
+            const result = (await this.session.call('localhost.create_resource', [
+                placeName,
+                resourceName,
+            ])) as Resource[];
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -140,12 +135,19 @@ export class ResourceService {
         }
     }
 
-
-    public async acquireResource(resourceName: string, place: Place): Promise<{ successful: boolean; errorMessage: string }> {
+    public async acquireResource(
+        resourceName: string,
+        place: Place
+    ): Promise<{ successful: boolean; errorMessage: string }> {
         // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
-            const result = (await this.session.call('localhost.acquire_resource', [place.name, 'cup', place.name, resourceName]));
+            const result = await this.session.call('localhost.acquire_resource', [
+                place.name,
+                'cup',
+                place.name,
+                resourceName,
+            ]);
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -159,7 +161,12 @@ export class ResourceService {
                 // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const result = (await this.session.call('localhost.acquire_resource', [place.name, 'cup', place.name, resourceName]));
+            const result = await this.session.call('localhost.acquire_resource', [
+                place.name,
+                'cup',
+                place.name,
+                resourceName,
+            ]);
             if (!result) {
                 throw new Error('No such resource');
             }
@@ -171,11 +178,19 @@ export class ResourceService {
         }
     }
 
-    public async releaseResource(resourceName: string, place: Place): Promise<{ successful: boolean; errorMessage: string }> {
+    public async releaseResource(
+        resourceName: string,
+        place: Place
+    ): Promise<{ successful: boolean; errorMessage: string }> {
         // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
+        // Otherwise the service waits for 1 second.
         if (this.session) {
-            const result = (await this.session.call('localhost.release_resource', [place.name, 'cup', place.name, resourceName]));
+            const result = await this.session.call('localhost.release_resource', [
+                place.name,
+                'cup',
+                place.name,
+                resourceName,
+            ]);
             if (!result) {
                 throw new Error('Failed to release resource');
             }
@@ -189,7 +204,12 @@ export class ResourceService {
                 // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const result = (await this.session.call('localhost.release_resource', [place.name, 'cup', place.name, resourceName]));
+            const result = await this.session.call('localhost.release_resource', [
+                place.name,
+                'cup',
+                place.name,
+                resourceName,
+            ]);
             if (!result) {
                 throw new Error('Failed to release resource');
             }
