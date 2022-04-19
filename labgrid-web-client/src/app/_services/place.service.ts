@@ -141,4 +141,14 @@ export class PlaceService {
             return { successful: false, errorMessage: response.error.message };
         }
     }
+
+    public async resetPlace(placeName: string): Promise<boolean> {
+        let response = await this.session.call('localhost.reset', [placeName]);
+
+        if (response === true) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

@@ -6,6 +6,7 @@ Easy labby launch script
 import argparse
 import json
 from os import getenv, path
+from os.path import expanduser
 from labby import run_router
 import labby.prompty as prompty
 
@@ -17,7 +18,6 @@ if __name__ == '__main__':
         "backend_realm": "realm1",
         "frontend_url": "ws://localhost:8083/ws",
         "frontend_realm": "frontend",
-        "exporter" : None
     }
 
     if path.exists(CONFIG_PATH):
@@ -37,7 +37,10 @@ if __name__ == '__main__':
             "LABBY_FRONTEND_URL",  config["frontend_url"])
         config["frontend_realm"] = getenv(
             "LABBY_FRONTEND_REALM", config["frontend_realm"])
-        config["exporter"] = getenv("LABBY_EXPORTER")
+        config["keyfile_path"] = getenv(
+            "LABBY_KEYFILE_PATH", "")
+        config["remote_url"] = getenv(
+            "LABBY_KEYFILE_PATH", "")
 
     parser = argparse.ArgumentParser(
         description='Launch Labgrid-frontend Router')
@@ -45,17 +48,29 @@ if __name__ == '__main__':
     parser.add_argument('--backend_realm', type=str, required=False)
     parser.add_argument('--frontend_url', type=str, required=False)
     parser.add_argument('--frontend_realm', type=str, required=False)
-    parser.add_argument('--exporter', type=str, required=False)
     parser.add_argument('--prompty', action='store_true', required=False)
+    parser.add_argument('--keyfile_path', type=str, required=False)
+    parser.add_argument('--remote_url', type=str, required=False)
     args = parser.parse_args()
-
-    if args.backend_url is not None:
-        config["backend_url"] = args.backend_url
-    if args.backend_realm is not None:
-        config["backend_realm"] = args.backend_realm
-    if args.exporter is not None:
-        config["exporter"] = args.exporter
+    if args.backend_url:
+        config['backend_url'] = args.backend_url
+    if args.backend_realm:
+        config['backend_realm'] = args.backend_realm
+    if args.frontend_url:
+        config['frontend_url'] = args.frontend_url
+    if args.frontend_realm:
+        config['frontend_realm'] = args.frontend_realm
     if args.prompty:
+        config['prompty'] = args.prompty
+    if args.remote_url:
+        config['remote_url'] = args.remote_url
+    if args.keyfile_path:
+        if "~" in args.keyfile_path:
+            args.keyfile_path = expanduser(args.keyfile_path)
+        config['keyfile_path'] = args.keyfile_path
+
+    if config.get('prompty', None):
+        del config['prompty']
         prompty.run(**config)
     else:
         run_router(**config)

@@ -5,6 +5,8 @@ import { Place } from '../../models/place';
 import { Resource } from '../../models/resource';
 
 import { PlaceDeletionDialogComponent } from '../dialogs/place-deletion-dialog/place-deletion-dialog.component';
+import { PlaceResetDialogComponent } from '../dialogs/place-reset-dialog/place-reset-dialog.component';
+
 import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
 
@@ -217,11 +219,21 @@ export class PlaceComponent {
         });
     }
 
-    public async resetPlace() {
-        // TODO: Call Reset RPC
-        const response = false;
+    openResetPlaceDialog(): void {
+        const dialogRef = this._dialog.open(PlaceResetDialogComponent, {
+            data: this.place.name,
+            autoFocus: false,
+        });
 
-        if (response === false) {
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result !== undefined) this.resetPlace(result);
+        });
+    }
+
+    public async resetPlace(placeName: string) {
+        const successful = await this._ps.resetPlace(placeName);
+
+        if (successful === false) {
             this._snackBar.open('During the reset an error has occured!', 'OK', {
                 duration: 3000,
                 panelClass: ['error-snackbar'],

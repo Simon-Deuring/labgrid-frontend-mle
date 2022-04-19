@@ -6,7 +6,7 @@ import asyncio
 import sys
 import unittest
 from datetime import datetime
-from random import choice, random
+from random import random
 from typing import Callable, Dict, List, Union
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -19,6 +19,7 @@ from labby.labby import LabbyClient, RouterInterface, run_router
 from labby.labby_error import ErrorKind, LabbyError
 from labby.labby_types import Place, PowerState, SerLabbyError, Session
 from labby import rpc
+
 
 PLACES = None
 with open("tests/places.yaml", 'r') as file:
@@ -125,6 +126,7 @@ class TestResources(unittest.TestCase):
     """
     # @mock_labby(["fetch_resources"])
     @async_test
+    @patch('labby.labby_types.get_resources', make_async(lambda context: RESOURCES))
     async def test_resources_all(self):
         """
         test fetch all resources
@@ -148,7 +150,7 @@ class TestPlaces(unittest.TestCase):
         context = MockSession()
         assert PLACES
         #############
-        ret: Union[List[Place], LabbyError] = await rpc.places(context)
+        ret: Union[List[Place], SerLabbyError] = await rpc.places(context)
         assert ret is not None
         assert isinstance(
             ret, list), "Returned Value has to be valid, which means of type list."
@@ -181,7 +183,7 @@ class TestPlaces(unittest.TestCase):
         ret = await rpc.places(context, "this place does not exist")
         assert ret is not None
         assert isinstance(
-            ret, SerLabbyError), "rpc.places's return object should have been LabbyError serialized"
+            ret, dict), "rpc.places's return object should have been LabbyError serialized"
         assert ret["error"] is not None, "Not an error object"
         assert ret["error"]["kind"] == ErrorKind.NOT_FOUND.value, "Not the right error object"
 
@@ -258,7 +260,7 @@ class TestPowerState(unittest.TestCase):
         ret = await rpc.power_state(context, "this place does not exist")
         assert ret, "rpc.power_state did not return a proper return object"
         assert isinstance(
-            ret, SerLabbyError), "rpc.powerstate's return object should have been LabbyError serialized"
+            ret, dict), "rpc.powerstate's return object should have been LabbyError serialized"
         assert ret["error"] is not None, "Not an error object"
         assert ret["error"]["kind"] == ErrorKind.NOT_FOUND.value, "Not the right error object"
 
@@ -267,24 +269,23 @@ class TestLabby(unittest.TestCase):
     """
     mock test labby
     """
-    @async_test
     @patch("asyncio.create_task")
     @patch.object(ApplicationSession, "call", make_async(MagicMock()))
-    async def test_on_join(self, ct) -> None:
+    def test_on_join(self, ct) -> None:
         """
         Test onJoin callback function, mock ApplicationSession Super class
         """
         # TODO test criteria
-        client = LabbyClient()
+        client = LabbyClient(config=MagicMock())
         client.subscribe = mock.MagicMock()
-        await client.onJoin(details=None)
+        client.onJoin(details=None)
 
     def test_on_leave(self) -> None:
         """
         Test onLeave callback function, mock ApplicationSession Super class
         """
         # TODO test criteria
-        client = LabbyClient()
+        client = LabbyClient(config=MagicMock())
         client.disconnect = mock.MagicMock()
         client.onLeave(details=None)
 
@@ -294,30 +295,29 @@ class TestLabby(unittest.TestCase):
         """
         Test onPlaceChanged callback function, mock ApplicationSession Super class
         """
-        client = LabbyClient()
+        client = LabbyClient(config=MagicMock())
         assert PLACES is not None
         place_name, place = list(PLACES.items())[0]
         user = f"test{datetime.now()}"
         place['acquired'] = user
         await client.on_place_changed(name=place_name, place_data=place)
         assert client.places
-        assert client.places[place_name]
-        assert client.places[place_name]['acquired']
-        assert user == client.places[place_name]['acquired']
+        assert client.places.get_soft()[place_name]
+        assert client.places.get_soft()[place_name]['acquired']
+        assert user == client.places.get_soft()[place_name]['acquired']
 
     @async_test
-    @patch("labby.get_frontend_callback")
     @patch.object(ApplicationSession, 'publish')
-    async def test_on_resource_changed(self, obj, c) -> None:
+    async def test_on_resource_changed(self, obj) -> None:
         """
         Test onResourceChanged callback function, mock ApplicationSession Super class
         """
-        client = LabbyClient()
+        client = LabbyClient(config=MagicMock())
         assert RESOURCES is not None
         exporter = 'exporter2'
         await client.on_resource_changed(exporter=exporter, group_name='NetworkService', resource_name='NetworkService', resource_data=RESOURCES['exporter1'])
         assert client.resources
-        assert client.resources['exporter2'] is not None
+        assert client.resources.get_soft()['exporter2'] is not None
         # TODO create
         # test once onResourceChanged is done
 
@@ -325,10 +325,10 @@ class TestLabby(unittest.TestCase):
         """
         Test onChallenge callback function, mock ApplicationSession Super class
         """
-        client = LabbyClient()
+        client = LabbyClient(config=MagicMock())
         challenge = MagicMock(method='ticket')
         response = client.onChallenge(challenge)
-        assert "" == response
+        assert response == ""
         try:
             challenge = MagicMock(method='anything else')
         except NotImplementedError:
@@ -339,7 +339,7 @@ class TestLabby(unittest.TestCase):
         """
         Test onConnect callback function, mock ApplicationSession Super class
         """
-        client = LabbyClient()
+        client = LabbyClient(config=MagicMock())
         client.join = MagicMock()
 
         client.onConnect()
@@ -356,8 +356,9 @@ class TestFrontendRouter(unittest.TestCase):
         """
         Test onConnect callback function, mock ApplicationSession Super class
         """
-        client = RouterInterface()
+        client = RouterInterface(MagicMock())
         client.join = MagicMock()
+        client._start_labby = MagicMock()
 
         client.onConnect()
 
@@ -366,21 +367,21 @@ class TestFrontendRouter(unittest.TestCase):
         Test onLeave callback function, mock ApplicationSession Super class
         """
         # TODO test criteria
-        client = RouterInterface()
+        client = RouterInterface(MagicMock())
         client.disconnect = mock.MagicMock()
         client.onLeave(details=None)
 
     @patch("asyncio.create_task")
     @patch.object(ApplicationSession, "call", make_async(MagicMock()))
     def test_on_join(self, ct) -> None:
-        client = RouterInterface()
+        client = RouterInterface(MagicMock())
         client.register = MagicMock()
         client.onJoin(details=None)
         # no exceptions
 
     @patch.object(ApplicationSession, 'register')
     def test_register(self, register: MagicMock):
-        client = RouterInterface()
+        client = RouterInterface(MagicMock())
         func_key = "test"
         procedure = MagicMock()
         client.register(func_key, procedure, 'arg1')
@@ -397,12 +398,13 @@ class TestStartRouter(unittest.TestCase):
         fut.set_result(MagicMock()(*args, kwargs))
         return fut
 
+    @patch('getpass.getpass')
     @patch('asyncio.get_event_loop')
     @patch('subprocess.run', _run)
     @patch.object(ApplicationRunner, 'run')
-    def test_start(self, run, loop):
+    def test_start(self, run, loop, passw):
         run_router(backend_url="ws://localhost:20408/ws",
-                   backend_realm="realm1", frontend_url="ws://localhost:8083/ws", frontend_realm="frontend", exporter="exporter")
+                   backend_realm="realm1", frontend_url="ws://localhost:8083/ws", frontend_realm="frontend", keyfile_path="~", remote_url="localhost")
 
 
 class TestReservation(unittest.TestCase):
@@ -426,7 +428,7 @@ class TestReservation(unittest.TestCase):
         assert registration['filters']['main']['name'] == 'place2'
         registration = await rpc.create_reservation(context, 'place2')
         assert registration
-        assert isinstance(registration, SerLabbyError)
+        assert isinstance(registration, dict)
         assert registration['error']['kind'] == ErrorKind.FAILED.value
 
     @async_test
@@ -451,7 +453,7 @@ class TestReservation(unittest.TestCase):
     async def test_cancel_reservation_fail(self):
         context = MockSession()
         cancel = await rpc.cancel_reservation(context, "place2")
-        assert isinstance(cancel, SerLabbyError)
+        assert isinstance(cancel, dict)
         assert cancel['error']['kind'] == ErrorKind.FAILED.value
 
     @async_test
@@ -470,7 +472,7 @@ class TestCreateDelete(unittest.TestCase):
 
         created = await rpc.create_place(context, f'test_place_create_{uuid4()}')
         assert not isinstance(
-            created, SerLabbyError), "Create place call failed"
+            created, dict), "Create place call failed"
 
 
 if __name__ == "__main__":
