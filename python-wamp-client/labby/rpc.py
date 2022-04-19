@@ -12,8 +12,9 @@ import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 from labby.console import Console
+from labby.labby_ssh import Channel
 
-from labby.resource import LabbyResource, NetworkSerialPort
+from labby.resource import LabbyResource, NetworkSerialPort, PowerAction, power_resources, power_resource_from_name
 
 from .labby_error import (LabbyError, failed, invalid_parameter,
                           not_found)
@@ -126,23 +127,23 @@ async def fetch(context: Session, attribute: str, endpoint: str, *args, **kwargs
     return data
 
 
-@cached('places')
 async def fetch_places(context: Session,
                        place: Optional[PlaceName]) -> Union[Dict[PlaceName, Place], LabbyError]:
     """
     Fetch places from coordinator, update if missing and handle possible errors
     """
     assert context is not None
-    data = await context.call("org.labgrid.coordinator.get_places")
-    if data is None:
+
+    _data = await context.places.get(context)  # type: ignore
+    if _data is None:
         if place is None:
             return not_found("Could not find any places.")
         return not_found(f"Could not find place with name {place}.")
     if place is not None:
-        if place in data.keys():
-            return {place: data[place]}
+        if place in _data.keys():
+            return {place: _data[place]}
         return not_found(f"Could not find place with name {place}.")
-    return data
+    return _data
 
 
 async def fetch_resources(context: Session,
@@ -152,9 +153,7 @@ async def fetch_resources(context: Session,
     Fetch resources from coordinator, update if missing and handle possible errors
     """
     assert context is not None
-    data: Optional[Dict] = await fetch(context=context,
-                                       attribute="resources",
-                                       endpoint="org.labgrid.coordinator.get_resources")
+    data: Optional[Dict] = await context.resources.get(context)
     if data is None:
         if place is None:
             return not_found("Could not find any resources.")
@@ -175,7 +174,6 @@ async def fetch_resources(context: Session,
 
 @cached("peers")
 async def fetch_peers(context: Session) -> Union[Dict, LabbyError]:
-    # TODO (Kevin) Handle errors
     session_ids = await context.call("wamp.session.list")
     sessions = {}
     for sess in session_ids:  # ['exact']:
@@ -258,7 +256,7 @@ async def places(context: Session,
         # append the place to acquired places if
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
-                    and place_name not in context.acquired_places
+                and place_name not in context.acquired_places
                 ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
@@ -285,7 +283,7 @@ async def list_places(context: Session) -> List[PlaceName]:
     Return all place names
     """
     await fetch_places(context, None)
-    return list(context.places.keys()) if context.places else []
+    return list(context.places.get_soft().keys()) if context.places else []
 
 
 @labby_serialized
@@ -549,12 +547,53 @@ async def poll_reservation(context: Session, place: PlaceName) -> Union[Dict, La
     return reservation
 
 
-async def reset(context: Session, place: PlaceName) -> bool:
+@labby_serialized
+async def reset(context: Session, place: PlaceName) -> Union[bool, LabbyError]:
     """
     Send a reset request to a place matching a given place name
     Note
     """
-    return False
+    check = _check_not_none()
+    if isinstance(check, LabbyError):
+        return check
+    context.log.info(f"Resetting place {place}")
+    release_later = False
+    if place not in context.acquired_places:
+        release_later = True
+        acq = await acquire(context, place)
+        if isinstance(acquire, LabbyError):
+            return acq
+        if not acq:
+            return failed(f"Could not acquire place {place}.")
+
+    res = await fetch_resources(context, place, None)
+    if isinstance(res, LabbyError):
+        return failed(f"Failed to get resources for place {place}.")
+    res = flatten(res, 2)  # remove exporter and group from res
+    for resname, resdata in res.items():
+        if resname in power_resources:
+            try:
+                context.log.info(f"Resetting {place}/{resname}.")
+                power_resource = power_resource_from_name(resname, resdata)
+                url = power_resource.power(PowerAction.cycle)
+                assert (ssh_session := context.ssh_session) is not None
+                assert ssh_session.client
+                (_, _, serr) = ssh_session.client.exec_command(
+                    command=f"curl -Ss '{url}' > /dev/null"
+                )
+                if len(msg := serr.read()) > 0:
+                    context.log.error(
+                        f"Got error while resetting console. {msg}")
+            except ValueError:
+                pass  # not a valid powerresource after all ??
+            except Exception as e:
+                raise e  # other errors occured o.O
+
+    if release_later:
+        rel = await release(context, place)
+        if isinstance(rel, LabbyError) or not rel:
+            return failed(f"Failed to release place {place} after reset.")
+    return True
 
 
 @labby_serialized
@@ -601,8 +640,17 @@ async def console(context: Session, place: PlaceName):
                                                     ssh_session=context.ssh_session.client))
 
     async def _read(read_fn,):
-        while True:
-            await context.publish(f"localhost.consoles.{place}", await read_fn())
+        while place in context.open_consoles:
+            try:
+                await context.publish(f"localhost.consoles.{place}", await read_fn())
+            except:
+                context.log.error(f"Console on {place} read failed")
+                _con.close()
+                if place in context.open_consoles:
+                    del context.open_consoles[place]
+
+    # async def _watchdog():
+
     asyncio.create_task(_read(_con.read_stdout))
     asyncio.create_task(_read(_con.read_stderr))
     return True
@@ -661,8 +709,7 @@ async def create_place(context: Session, place: PlaceName) -> Union[bool, LabbyE
     assert _places
     if place in _places:
         return failed(f"Place {place} already exists.")
-    res = await context.call("org.labgrid.coordinator.add_place", place)
-    return res
+    return await context.call("org.labgrid.coordinator.add_place", place)
 
 
 @labby_serialized
@@ -671,10 +718,9 @@ async def delete_place(context: Session, place: PlaceName) -> Union[bool, LabbyE
         return invalid_parameter("Missing required parameter: place.")
     _places = await fetch_places(context, place)
     assert context.places  # should have been set with fetch_places
-    if place not in context.places:
-        return not_found(f"Place {place} not found on Coordinator")
-    res = await context.call("org.labgrid.coordinator.del_place", place)
-    return res
+    if isinstance(_places, LabbyError):
+        return _places
+    return await context.call("org.labgrid.coordinator.del_place", place)
 
 
 @labby_serialized

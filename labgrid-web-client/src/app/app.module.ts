@@ -29,6 +29,7 @@ import { LoginComponent } from './login/login.component';
 import { PlaceComponent } from './place/place.component';
 import { PlaceCreationDialogComponent } from './dialogs/place-creation-dialog/place-creation-dialog.component';
 import { PlaceDeletionDialogComponent } from './dialogs/place-deletion-dialog/place-deletion-dialog.component';
+import { PlaceResetDialogComponent } from './dialogs/place-reset-dialog/place-reset-dialog.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
@@ -47,6 +48,7 @@ import { ResourceService } from './_services/resource.service';
         PlaceComponent,
         PlaceCreationDialogComponent,
         PlaceDeletionDialogComponent,
+        PlaceResetDialogComponent,
         PlaceOverviewComponent,
         ResourceComponent,
         ResourceOverviewComponent,
