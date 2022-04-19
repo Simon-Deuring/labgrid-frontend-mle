@@ -81,12 +81,11 @@
         </button>
     </div>
 
-
     <div class="action-bar">
         <span class="spacer"></span>
 
         <button mat-raised-button color="warn" class="mat-elevation-z2" (click)="openResetPlaceDialog()">
-          Reset place
+            Reset place
         </button>
         <button
             mat-raised-button
@@ -98,7 +97,6 @@
             Delete place
         </button>
     </div>
-
 
     <div class="action-bar" *ngIf="isAcquiredByUser && hasNetworkSerialPort">
         <button mat-stroked-button color="primary" class="mat-elevation-z2" (click)="startSerialConsole()">

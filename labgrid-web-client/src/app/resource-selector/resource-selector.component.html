@@ -1,28 +1,38 @@
 <app-loading *ngIf="loading"></app-loading>
 
 <div *ngIf="!loading">
-    <h1>Assign Resources for {{place.name}}</h1>
+    <h1>Assign Resources for {{ place.name }}</h1>
 
     <mat-divider></mat-divider>
 
-
     <div class="resource_selection_container">
         <div class="drag-container">
-            <h1> Assigned Resources </h1>
-            <div cdkDropList #assignedList="cdkDropList" [cdkDropListData]="assignedResources"
-                [cdkDropListConnectedTo]="[availableList]" class="drag-list" (cdkDropListDropped)="drop($event)">
-                <div class="drag-box" *ngFor="let res of assignedResources" cdkDrag>{{res}}</div>
+            <h1>Assigned Resources</h1>
+            <div
+                cdkDropList
+                #assignedList="cdkDropList"
+                [cdkDropListData]="assignedResources"
+                [cdkDropListConnectedTo]="[availableList]"
+                class="drag-list"
+                (cdkDropListDropped)="drop($event)"
+            >
+                <div class="drag-box" *ngFor="let res of assignedResources" cdkDrag>{{ res }}</div>
             </div>
         </div>
 
         <div class="drag-container">
-            <h1> Available Resources </h1>
-            <div cdkDropList #availableList="cdkDropList" [cdkDropListData]="availableResources"
-                [cdkDropListConnectedTo]="[assignedList]" class="drag-list" (cdkDropListDropped)="drop($event)">
-                <div class="drag-box" *ngFor="let res of availableResources" cdkDrag>{{res}}</div>
+            <h1>Available Resources</h1>
+            <div
+                cdkDropList
+                #availableList="cdkDropList"
+                [cdkDropListData]="availableResources"
+                [cdkDropListConnectedTo]="[assignedList]"
+                class="drag-list"
+                (cdkDropListDropped)="drop($event)"
+            >
+                <div class="drag-box" *ngFor="let res of availableResources" cdkDrag>{{ res }}</div>
             </div>
         </div>
-
     </div>
 
     <div class="action-bar">
@@ -35,5 +45,4 @@
             Save
         </button>
     </div>
-
 </div>

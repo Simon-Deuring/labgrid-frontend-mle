@@ -19,10 +19,13 @@ export class ResourceOverviewComponent implements OnInit {
     loading = true;
 
     constructor(private _rs: ResourceService, private router: Router) {
-        this._rs.getResources().then((data) => {
-            this.resources = data;
-            this.splitResources();
-        }).then(() => this.loading = false);
+        this._rs
+            .getResources()
+            .then((data) => {
+                this.resources = data;
+                this.splitResources();
+            })
+            .then(() => (this.loading = false));
     }
 
     ngOnInit(): void {}

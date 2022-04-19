@@ -12,17 +12,16 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatListModule } from '@angular/material/list'
-
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule }  from '@angular/material/progress-spinner';
 
-import {DragDropModule} from '@angular/cdk/drag-drop'; 
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
@@ -81,15 +80,15 @@ import { ResourceService } from './_services/resource.service';
         MatFormFieldModule,
         MatIconModule,
         MatInputModule,
+        MatListModule,
         MatPaginatorModule,
+        MatProgressSpinnerModule,
         MatSidenavModule,
         MatSnackBarModule,
-        MatListModule,
         DragDropModule,
         MatTableModule,
         MatToolbarModule,
         MatTooltipModule,
-        MatProgressSpinnerModule,
         RouterModule.forRoot([{ path: 'place', component: PlaceComponent }]),
     ],
     providers: [LoginService, PlaceService, ResourceService],

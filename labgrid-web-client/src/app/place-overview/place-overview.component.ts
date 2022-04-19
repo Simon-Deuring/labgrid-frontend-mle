@@ -43,11 +43,14 @@ export class PlaceOverviewComponent implements OnInit {
     }
 
     private loadPlaces(): void {
-        this._ps.getPlaces().then((data) => {
-            this.places = data;
-            this.dataSource = new MatTableDataSource(this.places);
-            this.dataSource.paginator = this.paginator;
-        }).then(() => this.loading = false);
+        this._ps
+            .getPlaces()
+            .then((data) => {
+                this.places = data;
+                this.dataSource = new MatTableDataSource(this.places);
+                this.dataSource.paginator = this.paginator;
+            })
+            .then(() => (this.loading = false));
     }
 
     getPowerStateIcon(isPowerStateOn: boolean): string {

@@ -11,46 +11,48 @@ import { CancelDialogComponent } from '../dialogs/cancel-dialog/cancel-dialog.co
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-resource-selector',
-  templateUrl: './resource-selector.component.html',
-  styleUrls: ['./resource-selector.component.css']
+    selector: 'app-resource-selector',
+    templateUrl: './resource-selector.component.html',
+    styleUrls: ['./resource-selector.component.css'],
 })
 export class ResourceSelectorComponent implements OnInit {
+    place: Place = new Place('', [], '', false, [], '', null);
+    loading = true;
+    resources: Resource[] = [];
 
-  place: Place = new Place('', [], '', false, [], '', null);
-  loading = true;
-  resources: Resource[] = [];
+    assignedResources: string[] = [];
+    availableResources: string[] = [];
 
-  assignedResources: string[] = [];
-  availableResources: string[] = [];
+    constructor(
+        private _ps: PlaceService,
+        private _rs: ResourceService,
+        private route: ActivatedRoute,
+        private _router: Router,
+        private _snackBar: MatSnackBar,
+        private _dialog: MatDialog
+    ) {
+        this.getPlaceData();
+    }
 
-  constructor(
-    private _ps: PlaceService,
-    private _rs: ResourceService,
-    private route: ActivatedRoute,
-    private _router: Router,
-    private _snackBar: MatSnackBar,
-    private _dialog: MatDialog) {
-    this.getPlaceData()
-  }
+    ngOnInit(): void {}
 
-  ngOnInit(): void {
-  }
+    private getResources(): void {
+        this._rs
+            .getResourcesForPlace(this.place.name)
+            .then((resources) => {
+                this.resources = resources;
+                // this.assignedResources = resources;
+                resources.forEach((x) => {
+                    if (x.acquired) {
+                        this.assignedResources.push(x.name);
+                    } else {
+                        this.availableResources.push(x.name);
+                    }
+                });
+            })
+            .then(() => (this.loading = false));
 
-  private getResources(): void {
-    this._rs.getResourcesForPlace(this.place.name).then((resources) => {
-      this.resources = resources;
-      // this.assignedResources = resources;
-      resources.forEach(x => {
-        if (x.acquired) {
-          this.assignedResources.push(x.name);
-        } else {
-          this.availableResources.push(x.name);
-        }
-      })
-    }).then(() => this.loading = false);
-
-    /*this._rs.getResourcesForPlace(this.place.name).then((resources) => {
+        /*this._rs.getResourcesForPlace(this.place.name).then((resources) => {
       this.resources = resources;
       // this.assignedResources = resources;
       resources.forEach(x => {
@@ -66,106 +68,103 @@ export class ResourceSelectorComponent implements OnInit {
         }
       })
     }).then(()=> this.loading = false);*/
-  }
-
-  private getPlaceData() {
-    this.route.params.subscribe((val) => {
-      const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
-      this._ps.getPlace(currentRoute).then((data) => {
-        // Check if the specified place exists
-        if (data !== undefined) {
-          this.place = data;
-          this.getResources();
-        } else {
-          this._router.navigate(['error']);
-        }
-      });
-    });
-  }
-
-  drop(event: CdkDragDrop<string[]>) {
-    if (event.previousContainer === event.container) {
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex,
-      );
     }
-  }
 
-  saveResources() {
-    const removedResources: string[] = []
-    const addedResources: string[] = []
-
-    // get deleted resources
-    this.resources.forEach(x => {
-      if (!this.assignedResources.includes(x.name)) {
-        // this resource is not in the assigned List. It has to be removed.
-        removedResources.push(x.name);
-      }
-    })
-
-    // get added resources
-    this.assignedResources.forEach(x => {
-      if (!this.resources.find(y => y.name === x)) {
-        // this resource was added
-        addedResources.push(x);
-      }
-    })
-
-    // console.log('--------results--------')
-    // console.log('removed: ', removedResources)
-    // console.log('added: ', addedResources)
-
-    let response = {successful: false, errorMessage: ''};
-    removedResources.forEach(async r => {
-      response = await this._rs.releaseResource(r, this.place)
-      if (response.successful) {
-        this._snackBar.open('Resources were released successfully.', 'OK', {
-          duration: 3000,
-          panelClass: ['success-snackbar'],
+    private getPlaceData() {
+        this.route.params.subscribe((val) => {
+            const currentRoute = this.route.snapshot.url[this.route.snapshot.url.length - 1].path;
+            this._ps.getPlace(currentRoute).then((data) => {
+                // Check if the specified place exists
+                if (data !== undefined) {
+                    this.place = data;
+                    this.getResources();
+                } else {
+                    this._router.navigate(['error']);
+                }
+            });
         });
-      } else {
-        this._snackBar.open(response.errorMessage, 'OK', {
-          duration: 3000,
-          panelClass: ['error-snackbar'],
+    }
+
+    drop(event: CdkDragDrop<string[]>) {
+        if (event.previousContainer === event.container) {
+            moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+        } else {
+            transferArrayItem(
+                event.previousContainer.data,
+                event.container.data,
+                event.previousIndex,
+                event.currentIndex
+            );
+        }
+    }
+
+    saveResources() {
+        const removedResources: string[] = [];
+        const addedResources: string[] = [];
+
+        // get deleted resources
+        this.resources.forEach((x) => {
+            if (!this.assignedResources.includes(x.name)) {
+                // this resource is not in the assigned List. It has to be removed.
+                removedResources.push(x.name);
+            }
         });
-      }
-    })
 
-    addedResources.forEach(async r => {
-      response = await this._rs.acquireResource(r, this.place)
-      if (response.successful) {
-        this._snackBar.open('Resources were acquired successfully.', 'OK', {
-          duration: 3000,
-          panelClass: ['success-snackbar'],
+        // get added resources
+        this.assignedResources.forEach((x) => {
+            if (!this.resources.find((y) => y.name === x)) {
+                // this resource was added
+                addedResources.push(x);
+            }
         });
-      } else {
-        this._snackBar.open(response.errorMessage, 'OK', {
-          duration: 3000,
-          panelClass: ['error-snackbar'],
+
+        // console.log('--------results--------')
+        // console.log('removed: ', removedResources)
+        // console.log('added: ', addedResources)
+
+        let response = { successful: false, errorMessage: '' };
+        removedResources.forEach(async (r) => {
+            response = await this._rs.releaseResource(r, this.place);
+            if (response.successful) {
+                this._snackBar.open('Resources were released successfully.', 'OK', {
+                    duration: 3000,
+                    panelClass: ['success-snackbar'],
+                });
+            } else {
+                this._snackBar.open(response.errorMessage, 'OK', {
+                    duration: 3000,
+                    panelClass: ['error-snackbar'],
+                });
+            }
         });
-      }
-    })
 
-    this._router.navigate(['place/', this.place.name]);
-  }
+        addedResources.forEach(async (r) => {
+            response = await this._rs.acquireResource(r, this.place);
+            if (response.successful) {
+                this._snackBar.open('Resources were acquired successfully.', 'OK', {
+                    duration: 3000,
+                    panelClass: ['success-snackbar'],
+                });
+            } else {
+                this._snackBar.open(response.errorMessage, 'OK', {
+                    duration: 3000,
+                    panelClass: ['error-snackbar'],
+                });
+            }
+        });
 
-  cancel() {
-    const dialogRef = this._dialog.open(CancelDialogComponent, {
-      autoFocus: false,
-    });
+        this._router.navigate(['place/', this.place.name]);
+    }
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result !== undefined) {
+    cancel() {
+        const dialogRef = this._dialog.open(CancelDialogComponent, {
+            autoFocus: false,
+        });
 
-        this._router.navigate(['place/', this.place.name]
-        )
-      };
-    });
-
-  }
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result !== undefined) {
+                this._router.navigate(['place/', this.place.name]);
+            }
+        });
+    }
 }
