@@ -4,7 +4,6 @@ import { Place } from '../../models/place';
 
 import * as autobahn from 'autobahn-browser';
 
-import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
@@ -15,7 +14,7 @@ export class PlaceService {
 
     public places = new BehaviorSubject<Place[]>([]);
 
-    constructor(private _http: HttpClient) {
+    constructor() {
         const connection = new autobahn.Connection({
             url: 'ws://localhost:8083/ws',
             realm: 'frontend',

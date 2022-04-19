@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Resource } from '../../models/resource';
 
 import * as autobahn from 'autobahn-browser';
-import { HttpClient } from '@angular/common/http';
+
 import { Place } from 'src/models/place';
+import { Resource } from 'src/models/resource';
 
 @Injectable({
     providedIn: 'root',
@@ -11,7 +11,7 @@ import { Place } from 'src/models/place';
 export class ResourceService {
     private session: any;
 
-    constructor(private _http: HttpClient) {
+    constructor() {
         const connection = new autobahn.Connection({
             url: 'ws://localhost:8083/ws',
             realm: 'frontend',

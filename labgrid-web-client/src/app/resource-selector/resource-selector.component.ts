@@ -1,21 +1,24 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+
 import { Place } from 'src/models/place';
 import { Resource } from 'src/models/resource';
-import { AllocationState } from '../_enums/allocation-state';
+
 import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
-import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+
 import { MatDialog } from '@angular/material/dialog';
-import { CancelDialogComponent } from '../dialogs/cancel-dialog/cancel-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
+
+import { CancelDialogComponent } from '../dialogs/cancel-dialog/cancel-dialog.component';
 
 @Component({
     selector: 'app-resource-selector',
     templateUrl: './resource-selector.component.html',
     styleUrls: ['./resource-selector.component.css'],
 })
-export class ResourceSelectorComponent implements OnInit {
+export class ResourceSelectorComponent {
     place: Place = new Place('', [], '', false, [], '', null);
     loading = true;
     resources: Resource[] = [];
@@ -33,8 +36,6 @@ export class ResourceSelectorComponent implements OnInit {
     ) {
         this.getPlaceData();
     }
-
-    ngOnInit(): void {}
 
     private getResources(): void {
         this._rs
