@@ -61,7 +61,8 @@ class LabbyClient(Session):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
         # TODO load from config or get from frontend
-        self.join(self.config.realm, ['ticket'], authid=f'client/{self.user_name}')
+        self.join(self.config.realm, ['ticket'],
+                  authid=f'client/{self.user_name}')
 
     def onChallenge(self, challenge):
         self.log.info("Authencticating.")
@@ -98,7 +99,7 @@ class LabbyClient(Session):
         """
         res = {exporter: {group_name: {resource_name: resource_data}}}
         if self.resources.get_soft() is None:
-            self.resources._data = res
+            self.resources.data = res
 
         if exporter not in self.resources.get_soft():
             self.resources.get_soft()[exporter] = {
@@ -133,14 +134,13 @@ class LabbyClient(Session):
             return
 
         if self.places.get_soft() is None:
-            self.places._data = {}
+            self.places.data = {}
 
         if name not in self.places.get_soft():
-            self.places.get_soft()[name] = place_data
+            self.places.data[name] = place_data
             self.log.info(f"Place {name} created.")
         else:
-            place = self.places.get_soft()[name]
-            place.update(place_data)
+            self.places.get_soft()[name].update(place_data)
             self.log.info(f"Place {name} changed.")
         if (  # add place to acquired places, if we have acquired it previously
             place_data
@@ -157,7 +157,7 @@ class LabbyClient(Session):
             self.acquired_places.remove(name)
 
         if self.frontend:
-            self.frontend.publish("localhost.onPlaceChanged", place_data)
+            self.frontend.publish("localhost.onPlaceChanged", {'name':name, **(place_data or {})})
 
 
 class RouterInterface(ApplicationSession):
