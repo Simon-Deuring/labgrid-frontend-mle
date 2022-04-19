@@ -20,8 +20,8 @@ import { CancelDialogComponent } from '../dialogs/cancel-dialog/cancel-dialog.co
 })
 export class ResourceSelectorComponent {
     place: Place = new Place('', [], '', false, [], '', null);
-    loading = true;
     resources: Resource[] = [];
+    loading = true;
 
     assignedResources: string[] = [];
     availableResources: string[] = [];
@@ -125,7 +125,7 @@ export class ResourceSelectorComponent {
 
         let response = { successful: false, errorMessage: '' };
         removedResources.forEach(async (r) => {
-            response = await this._rs.releaseResource(r, this.place);
+            response = await this._rs.releaseResource(r, this.place.name);
             if (response.successful) {
                 this._snackBar.open('Resources were released successfully.', 'OK', {
                     duration: 3000,
@@ -140,7 +140,7 @@ export class ResourceSelectorComponent {
         });
 
         addedResources.forEach(async (r) => {
-            response = await this._rs.acquireResource(r, this.place);
+            response = await this._rs.acquireResource(r, this.place.name);
             if (response.successful) {
                 this._snackBar.open('Resources were acquired successfully.', 'OK', {
                     duration: 3000,

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 
-import { Place } from '../../models/place';
-
 import * as autobahn from 'autobahn-browser';
 
 import { BehaviorSubject } from 'rxjs';
+
+import { Place } from '../../models/place';
 
 @Injectable({
     providedIn: 'root',
@@ -29,39 +29,30 @@ export class PlaceService {
     }
 
     public async getPlaces(): Promise<Place[]> {
-        // If the session is already set the places can immediately be read.
+        // If the session is already set, the places can immediately be read.
         // Otherwise the service waits for 1 second.
-        if (this.session) {
-            const places = await this.session.call('localhost.places');
-            this.places.next(places);
-            return places;
-        } else {
+        if (this.session === undefined) {
             await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-
-            const places = await this.session.call('localhost.places');
-            this.places.next(places);
-            return places;
         }
+
+        const places = await this.session.call('localhost.places');
+        this.places.next(places);
+        return places;
     }
 
     public async getPlace(placeName: string): Promise<Place> {
-        // If the session is already set the places can immediately be read.
+        // If the session is already set, the requested place can immediately be read.
         // Otherwise the service waits for 1 second.
-        if (this.session) {
-            const place = (await this.session.call('localhost.places', [placeName]))[0] as Place;
-            return place;
-        } else {
+        if (this.session === undefined) {
             await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-
-            const place = (await this.session.call('localhost.places', [placeName]))[0] as Place;
-            return place;
         }
+
+        const place = (await this.session.call('localhost.places', [placeName]))[0] as Place;
+        return place;
     }
 
     public async acquirePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
