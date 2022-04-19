@@ -819,5 +819,23 @@ async def release_resource(context: Session,
     try:
         procedure = f"org.labgrid.exporter.{exporter}.release"
         return await context.call(procedure, group_name, resource_name, place_name)
-    except:
+    except Exception:
         return failed(f"Failed to release resource {exporter}/{place_name}/{resource_name}.")
+
+
+@labby_serialized
+async def cli_command(context: Session, command: str) -> Union[str, LabbyError]:
+    if command is None or not command:
+        return failed("Command must not be empty.")
+    assert (ssh_session := context.ssh_session).client
+    context.log.info(
+        f"Issuing labgrid-client command: labgrid-client {command}")
+    try:
+        (_, sout, serr) = ssh_session.client.exec_command(
+            command=f"export LG_USERNAME={context.user_name}; labgrid-client {command}")
+        so = str(sout.read(), encoding='utf-8')
+        if se := str(serr.read(), encoding='utf-8'):
+            so += f"\n\n{se}"
+        return so
+    except Exception:
+        return failed("Failed to execute cli command.")

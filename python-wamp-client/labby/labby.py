@@ -19,9 +19,10 @@ from .labby_ssh import Session as SSHSession
 from .labby_ssh import parse_hostport
 from .labby_types import (ExporterName, GroupName, PlaceName, ResourceName,
                           Session)
+
 from .router import Router
 from .rpc import (acquire, acquire_resource, add_match, cancel_reservation,
-                  console, console_close, console_write, create_place,
+                  cli_command, console, console_close, console_write, create_place,
                   create_reservation, create_resource, del_match, delete_place,
                   delete_resource, forward, get_alias, get_exporters,
                   get_reservations, info, invalidates_cache, list_places,
@@ -239,7 +240,9 @@ class RouterInterface(ApplicationSession):
         self.register("console", console)
         self.register("console_write", console_write)
         self.register("console_close", console_close)
+        self.register("cli_command", cli_command)
         self.register("reset", reset)
+
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
