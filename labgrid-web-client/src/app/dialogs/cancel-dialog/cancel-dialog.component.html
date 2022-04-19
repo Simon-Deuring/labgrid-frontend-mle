@@ -1,0 +1,9 @@
+<h1 mat-dialog-title>Cancel resource assignment</h1>
+<div mat-dialog-content>
+    <p>Are you sure you want to cancel the resource assignment?</p>
+</div>
+<div mat-dialog-actions>
+    <button mat-button  (click)="onRevokeCancelClick()" >No</button>
+    <span class="spacer"></span>
+    <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Yes</button>
+</div>

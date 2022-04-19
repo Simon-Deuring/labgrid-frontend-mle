@@ -23,6 +23,16 @@
     width: 50% !important;
 }
 
+.action-bar {
+    width: 800px;
+    max-width: 100%;
+}
+
+.action-bar > * {
+    margin-top: 16px;
+    margin-right: 16px;
+}
+
 #invalidIcon {
     font-size: 15px;
     color: #ff595e;

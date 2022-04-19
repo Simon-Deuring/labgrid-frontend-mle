@@ -24,6 +24,7 @@ export class PlaceComponent {
 
     place: Place = new Place('', [], '', false, [], '', null);
     resources: Resource[] = [];
+    loading = true;
 
     placeStates: Array<{ name: string; value: string }> = [];
     displayedColumns: Array<string> = ['state-name', 'state-value'];
@@ -57,7 +58,9 @@ export class PlaceComponent {
                     this.place = data;
                     this.getResources();
                     this.readPlaceState();
-                    this.table.renderRows();
+                    if (this.table){
+                        this.table.renderRows();
+                    }
 
                     if (this.place.reservation !== undefined && this.place.reservation !== null) {
                         this.loadReservation(this.place.reservation);
@@ -74,7 +77,17 @@ export class PlaceComponent {
     private getResources(): void {
         this._rs.getResourcesForPlace(this.place.name).then((resources) => {
             this.resources = resources;
-        });
+        }).then(() => this.loading = false);
+    }
+
+    public navigateToResource(resourceName: string) {
+        this.router.navigate(['resource/', resourceName, { placeName: this.place.name }]);
+
+        
+    }
+
+    navigateToResourceSelector(placeName: string) {
+        this.router.navigate(['place/resource_selector/', placeName]);
     }
 
     private readPlaceState(): void {
@@ -115,7 +128,9 @@ export class PlaceComponent {
                 name: 'Reservation timeout: ',
                 value: new Date(reservations[rName].timeout * 1000).toLocaleString('en-US'),
             });
-            this.table.renderRows();
+            if (this.table) {
+                this.table.renderRows();
+            }
         }
     }
 
@@ -131,9 +146,6 @@ export class PlaceComponent {
         this.hasNetworkSerialPort = false;
     }
 
-    public navigateToResource(resourceName: string) {
-        this.router.navigate(['resource/', resourceName, { placeName: this.place.name }]);
-    }
 
     public async acquirePlace() {
         const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
@@ -194,7 +206,9 @@ export class PlaceComponent {
             if (data !== undefined) {
                 this.place = data;
                 this.readPlaceState();
-                this.table.renderRows();
+                if(this.table) {
+                    this.table.renderRows();
+                }
 
                 if (this.place.reservation !== undefined && this.place.reservation !== null) {
                     this.loadReservation(this.place.reservation);

@@ -119,6 +119,17 @@ export class PlaceService {
         }
     }
 
+    public async createNewResource(resourceName: string): Promise<{ successful: boolean; errorMessage: string }> {
+        let response = await this.session.call('localhost.create_resource', [resourceName]);
+        if (response === true) {
+            return { successful: true, errorMessage: '' };
+        } else if (response === false) {
+            return { successful: false, errorMessage: 'An unknown error occured!' };
+        } else {
+            return { successful: false, errorMessage: response.error.message };
+        }
+    }
+    
     public async deletePlace(placeName: string): Promise<{ successful: boolean; errorMessage: string }> {
         let response = await this.session.call('localhost.delete_place', [placeName]);
 

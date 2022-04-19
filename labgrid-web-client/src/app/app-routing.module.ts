@@ -9,10 +9,12 @@ import { PlaceComponent } from './place/place.component';
 import { PlaceOverviewComponent } from './place-overview/place-overview.component';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
+import { ResourceSelectorComponent } from './resource-selector/resource-selector.component';
 
 const routes: Routes = [
     { path: '', component: PlaceOverviewComponent, canActivate: [LoginGuard] },
     { path: 'place/:placename', component: PlaceComponent, canActivate: [LoginGuard] },
+    { path: 'place/resource_selector/:placename', component: ResourceSelectorComponent, canActivate: [LoginGuard] },
     { path: 'resourceOverview', component: ResourceOverviewComponent, canActivate: [LoginGuard] },
     { path: 'resource/:resourceName', component: ResourceComponent, canActivate: [LoginGuard] },
     { path: 'login', component: LoginComponent },

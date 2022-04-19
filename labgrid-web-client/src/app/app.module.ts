@@ -15,9 +15,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatListModule } from '@angular/material/list'
+
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule }  from '@angular/material/progress-spinner';
+
+import {DragDropModule} from '@angular/cdk/drag-drop'; 
 
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
@@ -34,6 +39,9 @@ import { PlaceOverviewComponent } from './place-overview/place-overview.componen
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceOverviewComponent } from './resource-overview/resource-overview.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { ResourceSelectorComponent } from './resource-selector/resource-selector.component';
+import { CancelDialogComponent } from './dialogs/cancel-dialog/cancel-dialog.component';
+import { LoadingComponent } from './loading/loading.component';
 
 import { LoginService } from './auth/login.service';
 import { PlaceService } from './_services/place.service';
@@ -52,7 +60,13 @@ import { ResourceService } from './_services/resource.service';
         PlaceOverviewComponent,
         ResourceComponent,
         ResourceOverviewComponent,
+        PlaceOverviewComponent,
+        LoginComponent,
+        PlaceCreationDialogComponent,
+        ResourceSelectorComponent,
         SidebarComponent,
+        CancelDialogComponent,
+        LoadingComponent,
     ],
     imports: [
         AppRoutingModule,
@@ -70,9 +84,12 @@ import { ResourceService } from './_services/resource.service';
         MatPaginatorModule,
         MatSidenavModule,
         MatSnackBarModule,
+        MatListModule,
+        DragDropModule,
         MatTableModule,
         MatToolbarModule,
         MatTooltipModule,
+        MatProgressSpinnerModule,
         RouterModule.forRoot([{ path: 'place', component: PlaceComponent }]),
     ],
     providers: [LoginService, PlaceService, ResourceService],

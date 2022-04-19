@@ -20,6 +20,7 @@ export class PlaceOverviewComponent implements OnInit {
     places: Place[] = [];
     dataSource: MatTableDataSource<any> = new MatTableDataSource();
     displayedColumns: string[] = ['name', 'acquired_resources', 'acquired', 'isPowerStateOn', 'actions'];
+    loading = true;
 
     @ViewChild('paginator') paginator!: MatPaginator;
 
@@ -46,7 +47,7 @@ export class PlaceOverviewComponent implements OnInit {
             this.places = data;
             this.dataSource = new MatTableDataSource(this.places);
             this.dataSource.paginator = this.paginator;
-        });
+        }).then(() => this.loading = false);
     }
 
     getPowerStateIcon(isPowerStateOn: boolean): string {
