@@ -56,7 +56,9 @@ export class PlaceComponent {
                     this.place = data;
                     this.getResources();
                     this.readPlaceState();
-                    this.table.renderRows();
+                    if (this.table){
+                        this.table.renderRows();
+                    }
 
                     if (this.place.reservation !== undefined && this.place.reservation !== null) {
                         this.loadReservation(this.place.reservation);
@@ -124,7 +126,9 @@ export class PlaceComponent {
                 name: 'Reservation timeout: ',
                 value: new Date(reservations[rName].timeout * 1000).toLocaleString('en-US'),
             });
-            this.table.renderRows();
+            if (this.table) {
+                this.table.renderRows();
+            }
         }
     }
 
@@ -200,7 +204,9 @@ export class PlaceComponent {
             if (data !== undefined) {
                 this.place = data;
                 this.readPlaceState();
-                this.table.renderRows();
+                if(this.table) {
+                    this.table.renderRows();
+                }
 
                 if (this.place.reservation !== undefined && this.place.reservation !== null) {
                     this.loadReservation(this.place.reservation);

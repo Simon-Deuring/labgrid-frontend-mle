@@ -124,7 +124,22 @@ export class ResourceSelectorComponent implements OnInit {
     removedResources.forEach(async r => {
       response = await this._rs.releaseResource(r, this.place)
       if (response.successful) {
-        this._snackBar.open('Resources were acquired and released successfully.', 'OK', {
+        this._snackBar.open('Resources were released successfully.', 'OK', {
+          duration: 3000,
+          panelClass: ['success-snackbar'],
+        });
+      } else {
+        this._snackBar.open(response.errorMessage, 'OK', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+        });
+      }
+    })
+
+    addedResources.forEach(async r => {
+      response = await this._rs.acquireResource(r, this.place)
+      if (response.successful) {
+        this._snackBar.open('Resources were acquired successfully.', 'OK', {
           duration: 3000,
           panelClass: ['success-snackbar'],
         });
