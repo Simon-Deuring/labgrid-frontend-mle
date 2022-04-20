@@ -257,7 +257,7 @@ async def places(context: Session,
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
                 and place_name not in context.acquired_places
-                ):
+            ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
@@ -839,3 +839,9 @@ async def cli_command(context: Session, command: str) -> Union[str, LabbyError]:
         return so
     except Exception:
         return failed("Failed to execute cli command.")
+
+
+@labby_serialized
+async def username(context: Session) -> Union[str, LabbyError]:
+
+    return username if (username := context.user_name) else failed("Username has not been set correctly.")

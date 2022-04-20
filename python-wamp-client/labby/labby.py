@@ -28,7 +28,7 @@ from .rpc import (acquire, acquire_resource, add_match, cancel_reservation,
                   get_reservations, info, invalidates_cache, list_places,
                   places, places_names, poll_reservation, power_state,
                   refresh_reservations, release, release_resource, reset, resource,
-                  resource_by_name, resource_names, resource_overview)
+                  resource_by_name, resource_names, resource_overview, username)
 
 labby_sessions: List["LabbyClient"] = []
 frontend_sessions: List["RouterInterface"] = []
@@ -158,7 +158,8 @@ class LabbyClient(Session):
             self.acquired_places.remove(name)
 
         if self.frontend:
-            self.frontend.publish("localhost.onPlaceChanged", {'name':name, **(place_data or {})})
+            self.frontend.publish("localhost.onPlaceChanged", {
+                                  'name': name, **(place_data or {})})
 
 
 class RouterInterface(ApplicationSession):
@@ -242,7 +243,7 @@ class RouterInterface(ApplicationSession):
         self.register("console_close", console_close)
         self.register("cli_command", cli_command)
         self.register("reset", reset)
-
+        self.register("username", username)
 
     def onLeave(self, details):
         self.log.info("Session disconnected.")
