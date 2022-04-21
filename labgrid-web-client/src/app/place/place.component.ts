@@ -7,6 +7,7 @@ import { Resource } from '../../models/resource';
 import { PlaceDeletionDialogComponent } from '../dialogs/place-deletion-dialog/place-deletion-dialog.component';
 import { PlaceResetDialogComponent } from '../dialogs/place-reset-dialog/place-reset-dialog.component';
 
+import { LoginService } from '../auth/login.service';
 import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
 
@@ -36,6 +37,7 @@ export class PlaceComponent {
 
     constructor(
         private _dialog: MatDialog,
+        private _ls: LoginService,
         private _ps: PlaceService,
         private _rs: ResourceService,
         private _snackBar: MatSnackBar,
@@ -104,8 +106,7 @@ export class PlaceComponent {
             this.placeStates.push({ name: 'Power state: ', value: 'off' });
         }
 
-        // TODO: user has to be replaced by dynamic username
-        if (this.place.acquired === 'labby/dummy') {
+        if (this.place.acquired === this._ls.username) {
             this.isAcquiredByUser = true;
         } else {
             this.isAcquiredByUser = false;

@@ -1,32 +1,56 @@
 import { Injectable } from '@angular/core';
 
+import * as autobahn from 'autobahn-browser';
+
 @Injectable({
     providedIn: 'root',
 })
 export class LoginService {
-    isLoggedIn = true; // Set to false in production mode
-    username = '';
+    private session: any;
+
+    public isLoggedIn: boolean = true; // Set to false in production mode
+    public username: string = '';
 
     // Store the URL to redirect after logging in
     redirectUrl: string | null = null;
 
-    constructor() {}
+    constructor() {
+        const connection = new autobahn.Connection({
+            url: 'ws://localhost:8083/ws',
+            realm: 'frontend',
+        });
 
-    login(username: string, password: string): boolean {
+        let service = this;
+        connection.onopen = async function (session: any, details: any) {
+            service.session = session;
+            service.readUsername(session, service);
+        };
+
+        connection.open();
+    }
+
+    private async readUsername(session: any, service: any): Promise<void> {
+        // If the session is already set, the username can immediately be read.
+        // Otherwise the service waits for 1 second.
+        if (this.session === undefined) {
+            await new Promise((resolve, reject) => {
+                setTimeout(resolve, 1000);
+            });
+        }
+
+        const username = await session.call('localhost.username');
+        service.username = username;
+    }
+
+    public login(username: string, password: string): boolean {
         // TODO: Send login request to the backend
 
         // Hard-coded solution
-        if (username === 'Dummy' && password === 'Passwort123') {
-            this.isLoggedIn = true;
-            this.username = 'Dummy';
-
-            return true;
-        }
-
-        return false;
+        this.isLoggedIn = true;
+        return true;
     }
 
-    logout(): void {
+    public logout(): void {
         this.isLoggedIn = false;
     }
 }
