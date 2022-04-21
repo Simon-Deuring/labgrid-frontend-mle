@@ -1,5 +1,10 @@
 """
-A wamp client which registers a rpc function
+Labby Module:
+    Labby Client: Connection to the Labgrid coordinator
+    holds cache and is context for rpc calls.
+    
+    RouterInterface: Wamp router for the web client
+    to connect to. Registers rpc endpoints.
 """
 import asyncio
 import asyncio.log
@@ -51,7 +56,10 @@ class LabbyClient(Session):
     def __init__(self, config):
         # make sure only one active labby client exists
         self.user_name = f"{gethostname()}/{getuser()}"
+        # we need a reference to the frontend to directly publish topics on the frontend's side
         self.frontend = config.extra.get('frontend')
+        # equally we need to reference ourselves to the frontend because this reference is needed
+        # in rpc calls
         self.frontend.labby = self
         self.ssh_session = config.extra.get('ssh_session')
 
@@ -61,7 +69,8 @@ class LabbyClient(Session):
     def onConnect(self):
         self.log.info(
             f"Connected to Coordinator, joining realm '{self.config.realm}'")
-        # TODO load from config or get from frontend
+        # at he moment there is no authentication needed, we only provide the username
+        # and hostname
         self.join(self.config.realm, ['ticket'],
                   authid=f'client/{self.user_name}')
 
@@ -72,7 +81,7 @@ class LabbyClient(Session):
         self.log.error(
             "Only Ticket authentication enabled, atm. Aborting...")
         raise NotImplementedError(
-            "Only Ticket authentication enabled, atm")
+            "Only Ticket authentication enabled, atm.")
 
     async def onJoin(self, details):
         self.log.info("Joined Coordinator Session.")
@@ -82,11 +91,14 @@ class LabbyClient(Session):
                        "org.labgrid.coordinator.resource_changed")
         await places(self)
         await resource(self)
+        # start a loop to automatically refresh reservations
+        # as labgrid does not inform us on changes to reservations
         asyncio.create_task(refresh_reservations(self))
 
     def onLeave(self, details):
         self.log.info("Coordinator session disconnected.")
         self.disconnect()
+        # remove self from global reference list
         labby_sessions.remove(self)
 
     @invalidates_cache('power_states')
@@ -98,14 +110,21 @@ class LabbyClient(Session):
         """
         Listen on resource changes on coordinator and update cache on changes
         """
+        # the resource object is formed in the following way
+        # it is registered on the coordinator in the form
+        # exporter/group/resource_name/resource_data
         res = {exporter: {group_name: {resource_name: resource_data}}}
         if self.resources.get_soft() is None:
             self.resources.data = res
 
         if exporter not in self.resources.get_soft():
+            # the exporter was never before fetched from the coordinator
+            # so we have to cache it, which also means we don't yet
+            # have the resource data
             self.resources.get_soft()[exporter] = {
                 group_name: {resource_name: resource_data}}
         else:
+            # else we can just update an existing resource (or empty dict)
             self.resources.get_soft()[exporter].get(group_name, {}).update(
                 {resource_name: resource_data})
 
@@ -119,6 +138,7 @@ class LabbyClient(Session):
             self.log.info(
                 f"Resource {exporter}/{group_name}/{resource_name} deleted")
 
+        # power states are calculated from resources, it is safer to clear the cache here
         self.power_states = None  # Invalidate power state cache
         if self.frontend:
             self.frontend.publish("localhost.onResourceChanged",
@@ -130,17 +150,21 @@ class LabbyClient(Session):
         Listen on place changes on coordinator and update cache on changes
         """
         if self.places.get_soft() is not None and not place_data:
+            # place was deleted on coordinator, so we should delete it also
             del self.places[name]
             self.log.info(f"Place {name} deleted")
             return
 
         if self.places.get_soft() is None:
+            # places have never been cached
             self.places.data = {}
 
         if name not in self.places.get_soft():
+            # place with name has not yet been cached -> create it
             self.places.data[name] = place_data
             self.log.info(f"Place {name} created.")
         else:
+            # or update it if we found it
             self.places.get_soft()[name].update(place_data)
             self.log.info(f"Place {name} changed.")
         if (  # add place to acquired places, if we have acquired it previously
@@ -155,8 +179,10 @@ class LabbyClient(Session):
             and name in self.acquired_places
             and place_data['acquired'] != self.user_name
         ):
+            # acquisition has been removed from somewhere else
             self.acquired_places.remove(name)
 
+        # finally, inform the frontend of the changes
         if self.frontend:
             self.frontend.publish("localhost.onPlaceChanged", {
                                   'name': name, **(place_data or {})})
