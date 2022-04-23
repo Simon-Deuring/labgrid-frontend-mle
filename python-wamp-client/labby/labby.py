@@ -171,7 +171,6 @@ class RouterInterface(ApplicationSession):
         return self.labby
 
     def __init__(self, config):
-        globals()["FRONTEND_REF"] = self
         self.backend_url = config.extra.get("backend_url")
         self.backend_realm = config.extra.get("backend_realm")
         self.keyfile_path = config.extra.get("keyfile_path")

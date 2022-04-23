@@ -6,8 +6,12 @@ from attr import attrs, field
 from paramiko.channel import ChannelFile, ChannelStderrFile, ChannelStdinFile
 
 
-def _read_flush(channel: Union[ChannelFile, ChannelStderrFile], nbytes):
-    data = channel.read(nbytes)
+def _read_flush(channel: Union[ChannelFile, ChannelStderrFile]):
+    if channel.channel.closed or channel.channel.exit_status_ready():
+        raise OSError("Channel closed")
+    data = channel.readlines(1)  # read when at least one byte is written
+    # convert to string and chop off extra new lines
+    data = ''.join(map(lambda line: line[:-1], data))
     channel.flush()
     return data
 
@@ -26,24 +30,30 @@ class Console:
         assert self.ssh_session
         (self._sin, self._sout, self._serr) = self.ssh_session.exec_command(
             f"microcom -s {self.speed} -t {self.host}:{self.port}")
+        # from threading import Thread
 
-    async def write_to_stdin(self, data: str):
+        # def write_sin():
+        #     while not self._sin.channel.exit_status_ready():
+        #         data = input(">")
+        #         self._sin.write(f"{data}\n")
+        # Thread(target=write_sin).start()
+
+    def write_to_stdin(self, data: str):
         assert self._sin
-        print(data)
+        data = data if data[-1] == '\n' else f"{data}\n"
         data_bytes: bytes = bytes(data, encoding='utf-8')
-        await asyncio.get_event_loop().run_in_executor(None, self._sin.write, data_bytes)
+        self._sin.write(data_bytes)
+        self._sin.flush()
 
-    async def read_stdout(self, nbytes=1024) -> str:
+    async def read_stdout(self) -> str:
         assert self._sout
-        data = await asyncio.get_event_loop().run_in_executor(None, _read_flush, self._sout, nbytes)
-        print(data)
-        return data.decode('utf-8')
+        data = await asyncio.get_event_loop().run_in_executor(None, _read_flush, self._sout)
+        return data
 
-    async def read_stderr(self, nbytes=1024) -> str:
+    async def read_stderr(self) -> str:
         assert self._serr
-        data = await asyncio.get_event_loop().run_in_executor(None, _read_flush, self._serr, nbytes)
-        print(data)
-        return data.decode('utf-8')
+        data = await asyncio.get_event_loop().run_in_executor(None, _read_flush, self._serr)
+        return data
 
     def close(self):
         if self._sin:
@@ -55,3 +65,6 @@ class Console:
         if self._serr:
             self._serr.flush()
             self._serr.close()
+        self._sin.channel.close()
+        self._sout.channel.close()
+        self._serr.channel.close()
