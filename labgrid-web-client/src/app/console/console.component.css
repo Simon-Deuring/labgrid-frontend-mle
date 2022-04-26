@@ -12,10 +12,12 @@
 
 #input-area {
     outline: none;
+    min-width: 50px;
 }
 
 #input-area:focus {
     outline: none;
+    min-width: 50px;
 }
 
 .hidden {
