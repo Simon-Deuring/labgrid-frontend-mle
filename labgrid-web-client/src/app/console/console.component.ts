@@ -31,10 +31,10 @@ export class ConsoleComponent implements OnDestroy {
         if (this.subscribe === true && event.ctrlKey && event.key === 'q') {
             this.subscribe = false;
 
-            if (this.consoleElement !== null) {
+            if (this.consoleElement !== null && this.inputElement !== null) {
                 this.completeText += "\n\nEnter command. Try 'help' for a list of builtin commands\n";
                 this.consoleElement.innerText = this.completeText;
-                this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+                this.inputElement!.scrollIntoView(false);
 
                 this.allowInput = true;
                 if (this.inputElement !== null) {
@@ -58,23 +58,32 @@ export class ConsoleComponent implements OnDestroy {
 
                     this.completeText += '-> ' + userCommand + '\n';
                     this.consoleElement.innerText = this.completeText;
-                    this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+                    this.inputElement.scrollIntoView(false);
                     this.receivedAnswer = false;
 
                     // If the user types 'exit' the command can directly be processed
+                    if (userCommand === '') {
+                        this.allowInput = true;
+                        this.receivedAnswer = true;
+
+                        this.consoleElement.innerText = this.completeText;
+                        this.inputElement.scrollIntoView(false);
+                        return;
+                    }
                     if (userCommand === 'exit') {
                         this.allowInput = false;
 
                         this.completeText += '\n----------------------\n';
                         this.consoleElement.innerText = this.completeText;
-                        this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+                        this.inputElement.scrollIntoView(false);
                     }
                     // All other commands are sent to the backend
                     else {
                         this.lastCommand = '-> ' + userCommand;
 
                         await this.session.call('localhost.console_write', [this.place.name, '\x1c\n']);
-                        await this.session.call('localhost.console_write', [this.place.name, userCommand]);
+                        this.session.call('localhost.console_write', [this.place.name, userCommand]);
+
                         // Listen for the response
                         this.subscribe = true;
                     }
@@ -161,7 +170,9 @@ export class ConsoleComponent implements OnDestroy {
                         ) {
                             component.completeText += args[0] + '\n';
                             component.consoleElement.innerText = component.completeText;
-                            component.consoleElement.scrollTop = component.consoleElement.scrollHeight;
+                            if (component.inputElement !== null) {
+                                component.inputElement.scrollIntoView(false);
+                            }
 
                             component.receivedAnswer = true;
                         }
