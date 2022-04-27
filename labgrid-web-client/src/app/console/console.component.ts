@@ -34,7 +34,7 @@ export class ConsoleComponent implements OnDestroy {
             if (this.consoleElement !== null && this.inputElement !== null) {
                 this.completeText += "\n\nEnter command. Try 'help' for a list of builtin commands\n";
                 this.consoleElement.innerText = this.completeText;
-                this.inputElement!.scrollIntoView(false);
+                this.inputElement.scrollIntoView(false);
 
                 this.allowInput = true;
                 if (this.inputElement !== null) {
