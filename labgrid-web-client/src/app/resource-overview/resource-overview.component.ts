@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+
 import { Resource } from 'src/models/resource';
 import { ResourceService } from '../_services/resource.service';
 
@@ -8,7 +9,7 @@ import { ResourceService } from '../_services/resource.service';
     templateUrl: './resource-overview.component.html',
     styleUrls: ['./resource-overview.component.css'],
 })
-export class ResourceOverviewComponent implements OnInit {
+export class ResourceOverviewComponent {
     resources: Resource[] = [];
     serialPorts: Resource[] = [];
     powerPorts: Resource[] = [];
@@ -19,13 +20,14 @@ export class ResourceOverviewComponent implements OnInit {
     loading = true;
 
     constructor(private _rs: ResourceService, private router: Router) {
-        this._rs.getResources().then((data) => {
-            this.resources = data;
-            this.splitResources();
-        }).then(() => this.loading = false);
+        this._rs
+            .getResources()
+            .then((data) => {
+                this.resources = data;
+                this.splitResources();
+            })
+            .then(() => (this.loading = false));
     }
-
-    ngOnInit(): void {}
 
     public splitResources() {
         this.resources.forEach((resource) => {

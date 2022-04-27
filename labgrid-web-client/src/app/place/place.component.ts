@@ -7,6 +7,7 @@ import { Resource } from '../../models/resource';
 import { PlaceDeletionDialogComponent } from '../dialogs/place-deletion-dialog/place-deletion-dialog.component';
 import { PlaceResetDialogComponent } from '../dialogs/place-reset-dialog/place-reset-dialog.component';
 
+import { LoginService } from '../auth/login.service';
 import { PlaceService } from '../_services/place.service';
 import { ResourceService } from '../_services/resource.service';
 
@@ -36,6 +37,7 @@ export class PlaceComponent {
 
     constructor(
         private _dialog: MatDialog,
+        private _ls: LoginService,
         private _ps: PlaceService,
         private _rs: ResourceService,
         private _snackBar: MatSnackBar,
@@ -58,7 +60,7 @@ export class PlaceComponent {
                     this.place = data;
                     this.getResources();
                     this.readPlaceState();
-                    if (this.table){
+                    if (this.table) {
                         this.table.renderRows();
                     }
 
@@ -75,15 +77,16 @@ export class PlaceComponent {
     }
 
     private getResources(): void {
-        this._rs.getResourcesForPlace(this.place.name).then((resources) => {
-            this.resources = resources;
-        }).then(() => this.loading = false);
+        this._rs
+            .getResourcesForPlace(this.place.name)
+            .then((resources) => {
+                this.resources = resources;
+            })
+            .then(() => (this.loading = false));
     }
 
     public navigateToResource(resourceName: string) {
         this.router.navigate(['resource/', resourceName, { placeName: this.place.name }]);
-
-        
     }
 
     navigateToResourceSelector(placeName: string) {
@@ -103,8 +106,7 @@ export class PlaceComponent {
             this.placeStates.push({ name: 'Power state: ', value: 'off' });
         }
 
-        // TODO: user has to be replaced by dynamic username
-        if (this.place.acquired === 'labby/dummy') {
+        if (this.place.acquired === this._ls.username) {
             this.isAcquiredByUser = true;
         } else {
             this.isAcquiredByUser = false;
@@ -145,7 +147,6 @@ export class PlaceComponent {
         // If no NetworkSerialPort has been found for the place
         this.hasNetworkSerialPort = false;
     }
-
 
     public async acquirePlace() {
         const ret = await this._ps.acquirePlace(this.route.snapshot.url[this.route.snapshot.url.length - 1].path);
@@ -206,7 +207,7 @@ export class PlaceComponent {
             if (data !== undefined) {
                 this.place = data;
                 this.readPlaceState();
-                if(this.table) {
+                if (this.table) {
                     this.table.renderRows();
                 }
 

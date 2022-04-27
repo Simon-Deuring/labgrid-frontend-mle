@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { MatDialog } from '@angular/material/dialog';
@@ -43,11 +43,14 @@ export class PlaceOverviewComponent implements OnInit {
     }
 
     private loadPlaces(): void {
-        this._ps.getPlaces().then((data) => {
-            this.places = data;
-            this.dataSource = new MatTableDataSource(this.places);
-            this.dataSource.paginator = this.paginator;
-        }).then(() => this.loading = false);
+        this._ps
+            .getPlaces()
+            .then((data) => {
+                this.places = data;
+                this.dataSource = new MatTableDataSource(this.places);
+                this.dataSource.paginator = this.paginator;
+            })
+            .then(() => (this.loading = false));
     }
 
     getPowerStateIcon(isPowerStateOn: boolean): string {

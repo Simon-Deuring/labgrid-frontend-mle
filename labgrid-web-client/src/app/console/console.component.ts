@@ -19,20 +19,24 @@ export class ConsoleComponent implements OnDestroy {
 
     connectionError: boolean = false;
     allowInput: boolean = false;
+    public receivedAnswer: boolean = true;
+
+    private lastCommand: string = '';
 
     private session: any;
     private subscribe: boolean = true;
-    private unsubscribe = async (event: KeyboardEvent): Promise<void> => {
-        // Called when a user types Ctrl + c
-        if (this.subscribe === true && event.ctrlKey && event.key === 'c') {
+
+    private toConsoleMenu = async (event: KeyboardEvent): Promise<void> => {
+        // Called when a user types Ctrl + q
+        if (this.subscribe === true && event.ctrlKey && event.key === 'q') {
             this.subscribe = false;
 
-            if (this.consoleElement !== null) {
-                this.completeText += "\n\nEnter command. Try 'help' for a list of builtin commands\n-> ";
+            if (this.consoleElement !== null && this.inputElement !== null) {
+                this.completeText += "\n\nEnter command. Try 'help' for a list of builtin commands\n";
                 this.consoleElement.innerText = this.completeText;
-                this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
-                this.allowInput = true;
+                this.inputElement!.scrollIntoView(false);
 
+                this.allowInput = true;
                 if (this.inputElement !== null) {
                     // This workaround is needed for focus() to work
                     window.setTimeout(() => {
@@ -42,43 +46,46 @@ export class ConsoleComponent implements OnDestroy {
             }
         }
         // Called when the user types Enter
-        else if (this.subscribe === false && event.key === 'Enter') {
+        else if (event.key === 'Enter') {
             event.preventDefault();
+            this.subscribe = false;
 
             if (this.consoleElement != null && this.inputElement !== null) {
                 let userCommand = this.inputElement.textContent;
+
                 if (userCommand !== null) {
                     this.inputElement.textContent = '';
 
-                    this.completeText += userCommand + '\n';
+                    this.completeText += '-> ' + userCommand + '\n';
                     this.consoleElement.innerText = this.completeText;
-                    this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+                    this.inputElement.scrollIntoView(false);
+                    this.receivedAnswer = false;
 
                     // If the user types 'exit' the command can directly be processed
+                    if (userCommand === '') {
+                        this.allowInput = true;
+                        this.receivedAnswer = true;
+
+                        this.consoleElement.innerText = this.completeText;
+                        this.inputElement.scrollIntoView(false);
+                        return;
+                    }
                     if (userCommand === 'exit') {
+                        this.allowInput = false;
+
                         this.completeText += '\n----------------------\n';
                         this.consoleElement.innerText = this.completeText;
+                        this.inputElement.scrollIntoView(false);
                     }
                     // All other commands are sent to the backend
                     else {
-                        let response = await this.session.call('localhost.console_write', [
-                            this.place.name,
-                            userCommand,
-                        ]);
+                        this.lastCommand = '-> ' + userCommand;
 
-                        if (response.error) {
-                            this.completeText += response.error.message + '\n';
-                        } else {
-                            this.completeText += response + '\n';
-                        }
-                        this.completeText += '-> ';
-                        this.consoleElement.innerText = this.completeText;
-                        this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
+                        await this.session.call('localhost.console_write', [this.place.name, '\x1c\n']);
+                        this.session.call('localhost.console_write', [this.place.name, userCommand]);
 
-                        // This workaround is needed for focus() to work
-                        window.setTimeout(() => {
-                            this.inputElement?.focus();
-                        }, 0);
+                        // Listen for the response
+                        this.subscribe = true;
                     }
                 }
             }
@@ -152,9 +159,23 @@ export class ConsoleComponent implements OnDestroy {
                 session.subscribe('localhost.consoles.' + component.place.name, (args: string[]) => {
                     // Called when a new message is received
                     if (component.subscribe === true && component.consoleElement !== null) {
-                        component.completeText += '\n' + args[0];
-                        component.consoleElement.innerText = component.completeText;
-                        component.consoleElement.scrollTop = component.consoleElement.scrollHeight;
+                        if (
+                            args[0] !== component.lastCommand &&
+                            !args[0].startsWith('connected to 127.0.1.1') &&
+                            args[0] !== 'Escape character: Ctrl-\\' &&
+                            args[0] !== 'Type the escape character followed by c to get to the menu or q to quit' &&
+                            args[0] !== '' &&
+                            args[0] !== '->' &&
+                            args[0] !== "Enter command. Try 'help' for a list of builtin commands"
+                        ) {
+                            component.completeText += args[0] + '\n';
+                            component.consoleElement.innerText = component.completeText;
+                            if (component.inputElement !== null) {
+                                component.inputElement.scrollIntoView(false);
+                            }
+
+                            component.receivedAnswer = true;
+                        }
                     }
                 });
             } else {
@@ -169,8 +190,8 @@ export class ConsoleComponent implements OnDestroy {
         this.consoleElement = document.getElementById('output-area');
         this.inputElement = document.getElementById('input-area');
 
-        // If the user types ctrl + c the console stops displaying new messages
-        document.addEventListener('keydown', this.unsubscribe);
+        // If the user types ctrl + q the console stops displaying new messages
+        document.addEventListener('keydown', this.toConsoleMenu);
 
         if (this.consoleElement !== null) {
             this.completeText =
@@ -194,7 +215,7 @@ export class ConsoleComponent implements OnDestroy {
                 this.networkSerialPort.params.port +
                 '\nconnected to 127.0.0.1 (port ' +
                 this.networkSerialPort.params.port +
-                ')\nType Ctrl + c to get to the menu';
+                ')\nType Ctrl + q to get to the menu';
 
             this.consoleElement.innerText = this.completeText;
         }
@@ -202,7 +223,7 @@ export class ConsoleComponent implements OnDestroy {
 
     // Called when the component is destroyed
     async ngOnDestroy(): Promise<void> {
-        document.removeEventListener('keydown', this.unsubscribe);
+        document.removeEventListener('keydown', this.toConsoleMenu);
 
         if (
             this.session != undefined &&

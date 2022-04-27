@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoginService } from '../auth/login.service';
 
@@ -7,9 +7,7 @@ import { LoginService } from '../auth/login.service';
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.css'],
 })
-export class LoginComponent implements OnInit {
-    ngOnInit(): void {}
-
+export class LoginComponent {
     // Used to hide or display the password input
     hide: boolean = true;
 

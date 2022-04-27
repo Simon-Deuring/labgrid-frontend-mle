@@ -4,6 +4,7 @@ Generic RPC functions for labby
 
 # import asyncio
 import asyncio
+from cgi import print_exception
 import os
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
@@ -12,7 +13,6 @@ import yaml
 from attr import attrib, attrs
 from autobahn.wamp.exception import ApplicationError
 from labby.console import Console
-from labby.labby_ssh import Channel
 
 from labby.resource import LabbyResource, NetworkSerialPort, PowerAction, power_resources, power_resource_from_name
 
@@ -257,7 +257,7 @@ async def places(context: Session,
         # it has been acquired in a previous session
         if (place_data and place_data['acquired'] == context.user_name
                 and place_name not in context.acquired_places
-            ):
+                ):
             context.acquired_places.add(place_name)
         if place is not None and place_name != place:
             continue
@@ -642,17 +642,27 @@ async def console(context: Session, place: PlaceName):
     async def _read(read_fn,):
         while place in context.open_consoles:
             try:
-                await context.publish(f"localhost.consoles.{place}", await read_fn())
-            except:
-                context.log.error(f"Console on {place} read failed")
+                data = await read_fn()
+                assert context.frontend
+                context.frontend.publish(f"localhost.consoles.{place}", data)
+            except (OSError, EOFError):
+                print_exception()
+                context.log.error(f"Console closed read on {place}.")
                 _con.close()
                 if place in context.open_consoles:
                     del context.open_consoles[place]
-
-    # async def _watchdog():
-
-    asyncio.create_task(_read(_con.read_stdout))
-    asyncio.create_task(_read(_con.read_stderr))
+                    print("Closing read.")
+            except:
+                print_exception()
+                context.log.error(f"Console on {place} read failed.")
+                _con.close()
+                if place in context.open_consoles:
+                    del context.open_consoles[place]
+                    print("Closing read exc.")
+    asyncio.run_coroutine_threadsafe(
+        _read(_con.read_stdout), asyncio.get_event_loop())
+    asyncio.run_coroutine_threadsafe(
+        _read(_con.read_stderr), asyncio.get_event_loop())
     return True
 
 
@@ -663,10 +673,13 @@ async def console_write(context: Session, place: PlaceName, data: str) -> Union[
         return failed(f"Place {place} is not acquired.")
     if not (_console := context.open_consoles.get(place)):
         return failed(f"Place {place} has no open consoles.")
-
+    if not data:
+        # data was empty
+        return failed(f"Could not write to Console {place}. Data was empty")
     try:
-        await _console.write_to_stdin(data)
-    except:
+        _console.write_to_stdin(data)
+    except Exception as e:
+        context.log.exception(e)
         return failed(f"Failed to write to Console {place}.")
     #
     # do stuff
@@ -681,6 +694,8 @@ async def console_close(context: Session, place: PlaceName) -> Optional[LabbyErr
         return failed(f"Place {place} is not acquired.")
     if not context.open_consoles.get(place):
         return failed(f"Place {place} has no open consoles.")
+    context.log.info(f"Closing console on {place}.")
+    context.open_consoles[place].close()
     del context.open_consoles[place]
 
 
@@ -843,5 +858,4 @@ async def cli_command(context: Session, command: str) -> Union[str, LabbyError]:
 
 @labby_serialized
 async def username(context: Session) -> Union[str, LabbyError]:
-
-    return username if (username := context.user_name) else failed("Username has not been set correctly.")
+    return context.user_name or failed("Username has not been set correctly.")

@@ -23,11 +23,6 @@
     width: 50% !important;
 }
 
-.action-bar {
-    width: 800px;
-    max-width: 100%;
-}
-
 .action-bar > * {
     margin-top: 16px;
     margin-right: 16px;
@@ -38,16 +33,16 @@
     color: #ff595e;
 }
 
-@media only screen and (min-width: 560px) {
+@media only screen and (min-width: 480px) {
     .action-bar {
         display: flex;
         width: 100%;
         max-width: 800px;
-        min-width: 520px;
+        min-width: 440px;
     }
 }
 
-@media only screen and (max-width: 560px) {
+@media only screen and (max-width: 480px) {
     .action-bar {
         width: 300px;
     }

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Resource } from '../../models/resource';
 
 import * as autobahn from 'autobahn-browser';
-import { HttpClient } from '@angular/common/http';
+
 import { Place } from 'src/models/place';
+import { Resource } from 'src/models/resource';
 
 @Injectable({
     providedIn: 'root',
@@ -11,7 +11,7 @@ import { Place } from 'src/models/place';
 export class ResourceService {
     private session: any;
 
-    constructor(private _http: HttpClient) {
+    constructor() {
         const connection = new autobahn.Connection({
             url: 'ws://localhost:8083/ws',
             realm: 'frontend',
@@ -26,178 +26,106 @@ export class ResourceService {
     }
 
     public async getResources(): Promise<Resource[]> {
-        // If the python-wamp-client is not available the following line can be used to load test data
-        // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-
-        // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
-        if (this.session) {
-            const resources = (await this.session.call('localhost.resource_overview')) as Resource[];
-            return resources;
-        } else {
+        // If the session is already set, the resources can immediately be read.
+        // Otherwise the service waits for 1 second.
+        if (this.session === undefined) {
             await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const resources = (await this.session.call('localhost.resource_overview')) as Resource[];
-            return resources;
         }
+
+        const resources = (await this.session.call('localhost.resource_overview')) as Resource[];
+        return resources;
     }
 
     public async getResourcesForPlace(placeName: string): Promise<Resource[]> {
-        // If the python-wamp-client is not available the following lines can be used to load test data
-        // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-        // const matchingResources = resources.filter(element => element.acquired === placeName);
-        // return matchingResources;
-
-        // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
-        if (this.session) {
-            const resources = (await this.session.call('localhost.resource_overview', [placeName])) as Resource[];
-            return resources;
-        } else {
+        // If the session is already set, the resources for the given place can immediately be read.
+        // Otherwise the service waits for 1 second.
+        if (this.session === undefined) {
             await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const resources = (await this.session.call('localhost.resource_overview', [placeName])) as Resource[];
-            return resources;
         }
+
+        const resources = (await this.session.call('localhost.resource_overview', [placeName])) as Resource[];
+        return resources;
     }
 
     public async getResourceByName(resourceName: string, placeName: string): Promise<Resource> {
-        // If the python-wamp-client is not available the following lines can be used to load test data
-        // const resources = await this._http.get('../assets/resources.json').toPromise() as Resource[];
-        // const match = resources.find(element => element.name === resourceName && element.acquired === placeName.trim());
-        // if (!match){
-        //     throw new Error('No such match');
-        // }
-        // match.place = match.acquired;
-        // return match;
-
-        // If the session is already set the places can immediately be read.
-        // Otherwise we wait 1 second.
-        if (this.session) {
-            const result = (await this.session.call('localhost.resource_by_name', [resourceName])) as Resource[];
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            return result[0];
-        } else {
+        // If the session is already set, the requested resource can immediately be read.
+        // Otherwise the service waits for 1 second.
+        if (this.session === undefined) {
             await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
                 setTimeout(resolve, 1000);
             });
-            const result = (await this.session.call('localhost.resource_by_name', [resourceName])) as Resource[];
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            return result[0];
+        }
+
+        const result = (await this.session.call('localhost.resource_by_name', [resourceName])) as Resource[];
+        if (!result) {
+            throw new Error('No such resource');
+        }
+        return result[0];
+    }
+
+    public async createResource(
+        resourceName: string,
+        placeName: string
+    ): Promise<{ successful: boolean; errorMessage: string }> {
+        const result = await this.session.call('localhost.create_resource', [placeName, resourceName]);
+
+        if (result === true) {
+            return { successful: true, errorMessage: '' };
+        } else {
+            return { successful: false, errorMessage: result.error.message };
         }
     }
 
-    public async deleteResource(resourceName: string, placeName: string): Promise<Resource> {
-        // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
-        if (this.session) {
-            const result = (await this.session.call('localhost.delete_resource', [placeName, resourceName])) as Resource[];
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            return result[0];
+    public async deleteResource(
+        resourceName: string,
+        placeName: string
+    ): Promise<{ successful: boolean; errorMessage: string }> {
+        const result = await this.session.call('localhost.delete_resource', [placeName, resourceName]);
+
+        if (result === true) {
+            return { successful: true, errorMessage: '' };
         } else {
-            await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
-                setTimeout(resolve, 1000);
-            });
-            const result = (await this.session.call('localhost.delete_resource', [placeName, resourceName])) as Resource[];
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            return result[0];
+            return { successful: false, errorMessage: result.error.message };
         }
     }
 
-    public async createResource(resourceName: string, placeName: string): Promise<Resource> {
-        // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
-        if (this.session) {
-            const result = (await this.session.call('localhost.create_resource', [placeName, resourceName])) as Resource[];
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            return result[0];
+    public async acquireResource(
+        resourceName: string,
+        placeName: string
+    ): Promise<{ successful: boolean; errorMessage: string }> {
+        const result = await this.session.call('localhost.acquire_resource', [
+            placeName,
+            'cup',
+            placeName,
+            resourceName,
+        ]);
+
+        if (result === true) {
+            return { successful: true, errorMessage: '' };
         } else {
-            await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
-                setTimeout(resolve, 1000);
-            });
-            const result = (await this.session.call('localhost.create_resource', [placeName, resourceName])) as Resource[];
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            return result[0];
+            return { successful: false, errorMessage: result.error.message };
         }
     }
 
+    public async releaseResource(
+        resourceName: string,
+        placeName: string
+    ): Promise<{ successful: boolean; errorMessage: string }> {
+        const result = await this.session.call('localhost.release_resource', [
+            placeName,
+            'cup',
+            placeName,
+            resourceName,
+        ]);
 
-    public async acquireResource(resourceName: string, place: Place): Promise<{ successful: boolean; errorMessage: string }> {
-        // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
-        if (this.session) {
-            const result = (await this.session.call('localhost.acquire_resource', [place.name, 'cup', place.name, resourceName]));
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            if (result === true) {
-                return { successful: true, errorMessage: '' };
-            } else {
-                return { successful: false, errorMessage: result.error.message };
-            }
+        if (result === true) {
+            return { successful: true, errorMessage: '' };
         } else {
-            await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
-                setTimeout(resolve, 1000);
-            });
-            const result = (await this.session.call('localhost.acquire_resource', [place.name, 'cup', place.name, resourceName]));
-            if (!result) {
-                throw new Error('No such resource');
-            }
-            if (result === true) {
-                return { successful: true, errorMessage: '' };
-            } else {
-                return { successful: false, errorMessage: result.error.message };
-            }
-        }
-    }
-
-    public async releaseResource(resourceName: string, place: Place): Promise<{ successful: boolean; errorMessage: string }> {
-        // If the session is already set the data can immediately be read.
-        // Otherwise we wait 1 second.
-        if (this.session) {
-            const result = (await this.session.call('localhost.release_resource', [place.name, 'cup', place.name, resourceName]));
-            if (!result) {
-                throw new Error('Failed to release resource');
-            }
-            if (result === true) {
-                return { successful: true, errorMessage: '' };
-            } else {
-                return { successful: false, errorMessage: result.error.message };
-            }
-        } else {
-            await new Promise((resolve, reject) => {
-                // The 1000 milliseconds is a critical variable. It may be adapted in the future.
-                setTimeout(resolve, 1000);
-            });
-            const result = (await this.session.call('localhost.release_resource', [place.name, 'cup', place.name, resourceName]));
-            if (!result) {
-                throw new Error('Failed to release resource');
-            }
-            if (result === true) {
-                return { successful: true, errorMessage: '' };
-            } else {
-                return { successful: false, errorMessage: result.error.message };
-            }
+            return { successful: false, errorMessage: result.error.message };
         }
     }
 }
