@@ -35,14 +35,12 @@ export class ConsoleComponent implements OnDestroy {
                 this.completeText += "\n\nEnter command. Try 'help' for a list of builtin commands\n";
                 this.consoleElement.innerText = this.completeText;
                 this.inputElement.scrollIntoView(false);
-
                 this.allowInput = true;
-                if (this.inputElement !== null) {
-                    // This workaround is needed for focus() to work
-                    window.setTimeout(() => {
-                        this.inputElement?.focus();
-                    }, 0);
-                }
+
+                // This workaround is needed for focus() to work
+                window.setTimeout(() => {
+                    this.inputElement?.focus();
+                }, 0);
             }
         }
         // Called when the user types Enter
@@ -170,11 +168,14 @@ export class ConsoleComponent implements OnDestroy {
                         ) {
                             component.completeText += args[0] + '\n';
                             component.consoleElement.innerText = component.completeText;
+                            component.receivedAnswer = true;
+
                             if (component.inputElement !== null) {
                                 component.inputElement.scrollIntoView(false);
+                                window.setTimeout(() => {
+                                    component.inputElement?.focus();
+                                }, 0);
                             }
-
-                            component.receivedAnswer = true;
                         }
                     }
                 });
