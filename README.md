@@ -7,6 +7,10 @@ See [python-wamp-client](https://github.com/Simon-Deuring/labgrid-frontend-mle/t
 
 ## Web Client
 
+### Quick Start
+
+For a quick start you can copy the content of labgrid-web-client/dist and host it on a web server. The dist folder contains a pre-built version of the web frontend.
+
 ### Development
 
 Run `npm run start` to start a development server. Then navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
